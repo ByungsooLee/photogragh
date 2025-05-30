@@ -1,7 +1,8 @@
 'use client';
 
 import styled, { keyframes } from 'styled-components';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import type { Photo } from '../lib/microcms';
 
 interface FilmStripProps {
   baseDuration: number;
@@ -9,7 +10,8 @@ interface FilmStripProps {
   isVertical?: boolean;
   position?: 'left' | 'right' | 'center';
   isReversed?: boolean;
-  onPhotoClick?: (photo: { url: string; title: string; caption: string; position: { x: number; y: number } }) => void;
+  onPhotoClick: (photo: { url: string; title: string; caption: string; position: { x: number; y: number } }) => void;
+  photos: Photo[];
 }
 
 const scrollHorizontal = keyframes`
@@ -176,7 +178,7 @@ const StripWrapper = styled.div<StripWrapperProps>`
   }
 `;
 
-const Strip = styled.div<{ $isVertical?: boolean; duration: number; $isReversed?: boolean }>`
+const Strip = styled.div<{ $isVertical?: boolean; duration: number; $isReversed?: boolean; $baseDuration: number; $stripWidth: number; $stripHeight: number }>`
   display: flex;
   flex-direction: ${props => props.$isVertical ? 'column' : 'row'};
   height: 100%;
@@ -317,10 +319,10 @@ const Content = styled.div`
   background: linear-gradient(135deg, rgba(34,34,34,0.8) 0%, rgba(17,17,17,0.8) 100%);
 `;
 
-const Photo = styled.div<{ $isPicked?: boolean }>`
+const Photo = styled.div<{ $isPicked?: boolean; $imageUrl?: string }>`
   width: 100%;
   height: 100%;
-  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200"><rect fill="%23333" width="300" height="200"/><text x="150" y="100" text-anchor="middle" fill="%23d4af37" font-size="20" font-family="serif" opacity="0.5">PHOTO</text></svg>') center/cover;
+  background: ${props => props.$imageUrl ? `url(${props.$imageUrl})` : 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'200\'><rect fill=\'%23333\' width=\'300\' height=\'200\'/><text x=\'150\' y=\'100\' text-anchor=\'middle\' fill=\'%23d4af37\' font-size=\'20\' font-family=\'serif\' opacity=\'0.5\'>PHOTO</text></svg>")'} center/cover;
   border-radius: 5px;
   filter: sepia(20%) contrast(1.1);
   transition: all 0.3s ease;
@@ -357,17 +359,29 @@ const Spotlight = styled.div<{ x: number; y: number }>`
   }
 `;
 
-export default function FilmStrip({ 
-  baseDuration, 
-  stripId, 
-  isVertical, 
-  position, 
-  isReversed,
-  onPhotoClick 
-}: FilmStripProps) {
+const FilmStrip: React.FC<FilmStripProps> = ({
+  baseDuration,
+  stripId,
+  isVertical,
+  position,
+  isReversed = false,
+  onPhotoClick,
+  photos
+}) => {
+  const stripRef = useRef<HTMLDivElement>(null);
+  const [stripWidth, setStripWidth] = useState(0);
+  const [stripHeight, setStripHeight] = useState(0);
   const [spotlightPosition, setSpotlightPosition] = useState({ x: 0, y: 0 });
   const [isSpotlightVisible, setIsSpotlightVisible] = useState(false);
   const [pickedFrame, setPickedFrame] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (stripRef.current) {
+      const rect = stripRef.current.getBoundingClientRect();
+      setStripWidth(rect.width);
+      setStripHeight(rect.height);
+    }
+  }, []);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     setSpotlightPosition({ x: e.clientX, y: e.clientY });
@@ -381,24 +395,17 @@ export default function FilmStrip({
     setIsSpotlightVisible(false);
   };
 
-  const handleFrameClick = (index: number, event: React.MouseEvent<HTMLDivElement>) => {
+  const handlePhotoClick = (photo: Photo, event: React.MouseEvent) => {
     const rect = event.currentTarget.getBoundingClientRect();
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
-
-    setPickedFrame(index);
-    
-    setTimeout(() => {
-      if (onPhotoClick) {
-        onPhotoClick({
-          url: 'https://example.com/photo.jpg', // 実際の画像URLに置き換える
-          title: `Photo ${index + 1}`,
-          caption: `A beautiful moment captured on film ${index + 1}`,
-          position: { x, y }
-        });
+    onPhotoClick({
+      url: photo.url,
+      title: photo.title,
+      caption: photo.caption,
+      position: {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2
       }
-      setPickedFrame(null);
-    }, 500);
+    });
   };
 
   return (
@@ -408,19 +415,19 @@ export default function FilmStrip({
         y={spotlightPosition.y} 
         className={isSpotlightVisible ? 'visible' : ''}
       />
-      <StripWrapper $isVertical={isVertical} position={position} $stripId={stripId}>
-        <Strip $isVertical={isVertical} duration={baseDuration} $isReversed={isReversed}>
-          {Array.from({ length: 40 }).map((_, index) => (
+      <StripWrapper $isVertical={isVertical} position={position} $stripId={stripId} ref={stripRef}>
+        <Strip $isVertical={isVertical} duration={baseDuration} $isReversed={isReversed} $baseDuration={baseDuration} $stripWidth={stripWidth} $stripHeight={stripHeight}>
+          {photos.map((photo, index) => (
             <Frame 
               key={`${stripId}-${index}`}
               $isVertical={isVertical}
               className={pickedFrame === index ? 'picked' : ''}
-              onClick={(e) => handleFrameClick(index, e)}
+              onClick={(e) => handlePhotoClick(photo, e)}
             >
               <Perforations side="left" />
               <Perforations side="right" />
               <Content>
-                <Photo $isPicked={pickedFrame === index} />
+                <Photo $isPicked={pickedFrame === index} $imageUrl={photo.url} />
               </Content>
             </Frame>
           ))}
@@ -429,12 +436,12 @@ export default function FilmStrip({
               key={`${stripId}-clone-${index}`}
               className={`clone ${pickedFrame === index + 40 ? 'picked' : ''}`}
               $isVertical={isVertical}
-              onClick={(e) => handleFrameClick(index + 40, e)}
+              onClick={(e) => handlePhotoClick(photos[index % photos.length], e)}
             >
               <Perforations side="left" />
               <Perforations side="right" />
               <Content>
-                <Photo $isPicked={pickedFrame === index + 40} />
+                <Photo $isPicked={pickedFrame === index + 40} $imageUrl={photos[index % photos.length].url} />
               </Content>
             </Frame>
           ))}
@@ -442,4 +449,6 @@ export default function FilmStrip({
       </StripWrapper>
     </>
   );
-} 
+};
+
+export default FilmStrip; 
