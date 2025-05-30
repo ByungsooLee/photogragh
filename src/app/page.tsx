@@ -7,6 +7,7 @@ import Footer from '../components/Footer';
 import Modal from '../components/Modal';
 import FilmStrip from '../components/FilmStrip';
 import Spotlight from '../components/Spotlight';
+import { getPhotos, type Photo } from '../lib/microcms';
 
 const SpeedIndicator = styled.div<{ $show: boolean }>`
   position: fixed;
@@ -58,6 +59,23 @@ export default function Home() {
   const [modalTitle, setModalTitle] = useState('');
   const [modalCaption, setModalCaption] = useState('');
   const [modalSourcePosition, setModalSourcePosition] = useState<{ x: number; y: number } | undefined>();
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      try {
+        const fetchedPhotos = await getPhotos();
+        setPhotos(fetchedPhotos);
+      } catch (error) {
+        console.error('Error fetching photos:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPhotos();
+  }, []);
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
@@ -95,6 +113,10 @@ export default function Home() {
     setIsModalOpen(true);
   };
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <FilmGallery>
       <Header speed={currentSpeed} showSpeedIndicator={showSpeedIndicator} />
@@ -105,6 +127,7 @@ export default function Home() {
           stripId="strip1"
           isVertical={false}
           onPhotoClick={handlePhotoClick}
+          photos={photos}
         />
         <FilmStrip
           baseDuration={85}
@@ -112,12 +135,14 @@ export default function Home() {
           isVertical={false}
           isReversed={true}
           onPhotoClick={handlePhotoClick}
+          photos={photos}
         />
         <FilmStrip
           baseDuration={78}
           stripId="strip3"
           isVertical={false}
           onPhotoClick={handlePhotoClick}
+          photos={photos}
         />
         <FilmStrip
           baseDuration={82}
@@ -125,12 +150,14 @@ export default function Home() {
           isVertical={false}
           isReversed={true}
           onPhotoClick={handlePhotoClick}
+          photos={photos}
         />
         <FilmStrip
           baseDuration={88}
           stripId="strip5"
           isVertical={false}
           onPhotoClick={handlePhotoClick}
+          photos={photos}
         />
         <FilmStrip
           baseDuration={120}
@@ -138,12 +165,14 @@ export default function Home() {
           isVertical={true}
           position="left"
           onPhotoClick={handlePhotoClick}
+          photos={photos}
         />
         <FilmStrip
           baseDuration={120}
           stripId="vstrip1"
           isVertical={true}
           onPhotoClick={handlePhotoClick}
+          photos={photos}
         />
         <FilmStrip
           baseDuration={120}
@@ -151,6 +180,7 @@ export default function Home() {
           isVertical={true}
           position="right"
           onPhotoClick={handlePhotoClick}
+          photos={photos}
         />
       </FilmContainer>
       <Modal
