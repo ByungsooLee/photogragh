@@ -44,6 +44,12 @@ const FilmContainer = styled.div`
   align-items: center;
 `;
 
+const FooterWrapper = styled.div<{ $isHidden: boolean }>`
+  opacity: ${props => props.$isHidden ? 0 : 1};
+  visibility: ${props => props.$isHidden ? 'hidden' : 'visible'};
+  transition: all 0.3s ease;
+`;
+
 export default function Home() {
   const [currentSpeed, setCurrentSpeed] = useState(20);
   const [showSpeedIndicator, setShowSpeedIndicator] = useState(false);
@@ -155,7 +161,9 @@ export default function Home() {
         caption={modalCaption}
         sourcePosition={modalSourcePosition}
       />
-      <Footer />
+      <FooterWrapper $isHidden={isModalOpen}>
+        <Footer />
+      </FooterWrapper>
       <SpeedIndicator $show={showSpeedIndicator}>
         Speed: {currentSpeed}x
       </SpeedIndicator>
