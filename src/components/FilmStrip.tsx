@@ -1,40 +1,16 @@
 'use client';
 
-import styled, { keyframes } from 'styled-components';
-import { useState, useEffect, useRef } from 'react';
+import styled from 'styled-components';
+import { useState, useRef } from 'react';
 import type { Photo } from '../lib/microcms';
 
 interface FilmStripProps {
-  baseDuration: number;
   stripId: string;
   isVertical?: boolean;
   position?: 'left' | 'right' | 'center';
-  isReversed?: boolean;
   onPhotoClick: (photo: { url: string; title: string; caption: string; position: { x: number; y: number } }) => void;
   photos: Photo[];
 }
-
-const scrollHorizontal = keyframes`
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(-25%, 0, 0);
-  }
-`;
-
-const scrollVertical = keyframes`
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(0, -25%, 0);
-  }
-`;
-
-const fadeInStrip = keyframes`
-  to { opacity: 1; }
-`;
 
 interface StripWrapperProps {
   $isVertical?: boolean;
@@ -44,7 +20,7 @@ interface StripWrapperProps {
 
 const StripWrapper = styled.div<StripWrapperProps>`
   position: ${props => props.$isVertical ? 'absolute' : 'relative'};
-  width: ${props => props.$isVertical ? '200px' : '120%'};
+  width: ${props => props.$isVertical ? '200px' : '100%'};
   height: ${props => props.$isVertical ? '120%' : 'auto'};
   min-height: ${props => props.$isVertical ? 'auto' : '220px'};
   left: ${props => {
@@ -55,12 +31,10 @@ const StripWrapper = styled.div<StripWrapperProps>`
         default: return '50%';
       }
     }
-    return '-10%';
+    return '0';
   }};
   top: ${props => props.$isVertical ? '-10%' : 'auto'};
-  overflow: visible;
-  opacity: 0;
-  animation: ${fadeInStrip} 1s forwards;
+  overflow: hidden;
   margin: ${props => props.$isVertical ? '0' : '15px 0'};
   z-index: ${props => {
     if (props.$isVertical) {
@@ -121,7 +95,7 @@ const StripWrapper = styled.div<StripWrapperProps>`
   }
 
   @media (max-width: 1024px) {
-    width: ${props => props.$isVertical ? '180px' : '130%'};
+    width: ${props => props.$isVertical ? '180px' : '100%'};
     min-height: ${props => props.$isVertical ? 'auto' : '200px'};
     left: ${props => {
       if (props.$isVertical) {
@@ -131,13 +105,13 @@ const StripWrapper = styled.div<StripWrapperProps>`
           default: return '50%';
         }
       }
-      return '-15%';
+      return '0';
     }};
     margin: ${props => props.$isVertical ? '0' : '12px 0'};
   }
 
   @media (max-width: 768px) {
-    width: ${props => props.$isVertical ? '160px' : '150%'};
+    width: ${props => props.$isVertical ? '160px' : '100%'};
     min-height: ${props => props.$isVertical ? 'auto' : '180px'};
     left: ${props => {
       if (props.$isVertical) {
@@ -147,13 +121,13 @@ const StripWrapper = styled.div<StripWrapperProps>`
           default: return '50%';
         }
       }
-      return '-25%';
+      return '0';
     }};
     margin: ${props => props.$isVertical ? '0' : '10px 0'};
   }
 
   @media (max-width: 480px) {
-    width: ${props => props.$isVertical ? '140px' : '150%'};
+    width: ${props => props.$isVertical ? '140px' : '100%'};
     min-height: ${props => props.$isVertical ? 'auto' : '160px'};
     left: ${props => {
       if (props.$isVertical) {
@@ -163,28 +137,22 @@ const StripWrapper = styled.div<StripWrapperProps>`
           default: return '50%';
         }
       }
-      return '-25%';
+      return '0';
     }};
     margin: ${props => props.$isVertical ? '0' : '8px 0'};
   }
 `;
 
-const Strip = styled.div<{ $isVertical?: boolean; duration: number; $isReversed?: boolean; $baseDuration: number; $stripWidth: number; $stripHeight: number }>`
+const Strip = styled.div<{ $isVertical?: boolean }>`
   display: flex;
   flex-direction: ${props => props.$isVertical ? 'column' : 'row'};
   height: 100%;
-  width: ${props => props.$isVertical ? '100%' : '200%'};
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  perspective: 1000px;
-  transform-style: preserve-3d;
-  animation: ${props => props.$isVertical ? scrollVertical : scrollHorizontal} ${props => props.duration}s infinite linear;
-  animation-direction: ${props => props.$isReversed ? 'reverse' : 'normal'};
+  width: 100%;
   gap: ${props => props.$isVertical ? '20px' : '40px'};
   padding: ${props => props.$isVertical ? '20px 0' : '15px 30px'};
   position: relative;
   align-items: center;
+  overflow: hidden;
 
   @media (max-width: 1024px) {
     gap: 30px;
@@ -222,9 +190,6 @@ const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
     0 5px 20px rgba(0,0,0,0.5),
     inset 0 0 15px rgba(0,0,0,0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  will-change: transform;
   cursor: pointer;
 
   &::after {
@@ -241,7 +206,7 @@ const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
   }
 
   &:hover {
-    transform: scale(1.05) translateZ(30px);
+    transform: scale(1.05);
     box-shadow: 
       0 10px 30px rgba(212, 175, 55, 0.3),
       0 5px 20px rgba(0,0,0,0.7),
@@ -267,13 +232,13 @@ const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
 
   @keyframes pickUp {
     0% {
-      transform: scale(1.05) translateZ(30px);
+      transform: scale(1.05);
     }
     50% {
-      transform: scale(1.2) translateZ(100px) rotate(5deg);
+      transform: scale(1.2);
     }
     100% {
-      transform: scale(1.5) translateZ(200px) rotate(0deg);
+      transform: scale(1.5);
     }
   }
 
@@ -371,35 +336,18 @@ const Spotlight = styled.div<{ x: number; y: number }>`
   mix-blend-mode: overlay;
   opacity: 0;
   transition: opacity 0.3s ease;
-
-  &.visible {
-    opacity: 1;
-  }
 `;
 
 const FilmStrip: React.FC<FilmStripProps> = ({
-  baseDuration,
   stripId,
   isVertical,
   position,
-  isReversed = false,
   onPhotoClick,
   photos
 }) => {
-  const stripRef = useRef<HTMLDivElement>(null);
-  const [stripWidth, setStripWidth] = useState(0);
-  const [stripHeight, setStripHeight] = useState(0);
   const [spotlightPosition, setSpotlightPosition] = useState({ x: 0, y: 0 });
   const [isSpotlightVisible, setIsSpotlightVisible] = useState(false);
   const [pickedFrame, setPickedFrame] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (stripRef.current) {
-      const rect = stripRef.current.getBoundingClientRect();
-      setStripWidth(rect.width);
-      setStripHeight(rect.height);
-    }
-  }, []);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     setSpotlightPosition({ x: e.clientX, y: e.clientY });
@@ -431,10 +379,10 @@ const FilmStrip: React.FC<FilmStripProps> = ({
       <Spotlight 
         x={spotlightPosition.x} 
         y={spotlightPosition.y} 
-        className={isSpotlightVisible ? 'visible' : ''}
+        style={{ opacity: isSpotlightVisible ? 1 : 0 }}
       />
-      <StripWrapper $isVertical={isVertical} position={position} $stripId={stripId} ref={stripRef}>
-        <Strip $isVertical={isVertical} duration={baseDuration} $isReversed={isReversed} $baseDuration={baseDuration} $stripWidth={stripWidth} $stripHeight={stripHeight}>
+      <StripWrapper $isVertical={isVertical} position={position} $stripId={stripId}>
+        <Strip $isVertical={isVertical}>
           {photos.map((photo, index) => (
             <Frame
               key={`${stripId}-${index}`}
@@ -446,20 +394,6 @@ const FilmStrip: React.FC<FilmStripProps> = ({
               <Perforations side="right" />
               <Content>
                 <Photo $isPicked={pickedFrame === index} $imageUrl={photo.url} />
-              </Content>
-            </Frame>
-          ))}
-          {Array.from({ length: 40 }).map((_, index) => (
-            <Frame 
-              key={`${stripId}-clone-${index}`}
-              className={`clone ${pickedFrame === index + 40 ? 'picked' : ''}`}
-              $isVertical={isVertical}
-              onClick={(e) => handlePhotoClick(photos[index % photos.length], e)}
-            >
-              <Perforations side="left" />
-              <Perforations side="right" />
-              <Content>
-                <Photo $isPicked={pickedFrame === index + 40} $imageUrl={photos[index % photos.length].url} />
               </Content>
             </Frame>
           ))}
