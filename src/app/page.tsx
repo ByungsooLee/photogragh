@@ -106,23 +106,26 @@ export default function Home() {
         />
         <FilmStrip
           stripId="vstripL"
-          isVertical={true}
+          isVertical
           position="left"
           onPhotoClick={handlePhotoClick}
           photos={photos}
+          className="hidden md:block"
         />
         <FilmStrip
-          stripId="vstrip1"
-          isVertical={true}
+          stripId="vstripC"
+          isVertical
+          position="center"
           onPhotoClick={handlePhotoClick}
           photos={photos}
         />
         <FilmStrip
           stripId="vstripR"
-          isVertical={true}
+          isVertical
           position="right"
           onPhotoClick={handlePhotoClick}
           photos={photos}
+          className="hidden md:block"
         />
       </FilmContainer>
       <Modal

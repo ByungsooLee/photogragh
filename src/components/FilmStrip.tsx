@@ -10,12 +10,14 @@ interface FilmStripProps {
   position?: 'left' | 'right' | 'center';
   onPhotoClick: (photo: { url: string; title: string; caption: string; position: { x: number; y: number } }) => void;
   photos: Photo[];
+  className?: string;
 }
 
 interface StripWrapperProps {
   $isVertical?: boolean;
   position?: string;
   $stripId?: string;
+  className?: string;
 }
 
 const StripWrapper = styled.div<StripWrapperProps>`
@@ -26,38 +28,40 @@ const StripWrapper = styled.div<StripWrapperProps>`
   left: ${props => {
     if (props.$isVertical) {
       switch (props.position) {
-        case 'left': return '18%';
-        case 'right': return '82%';
+        case 'left': return '0%';
+        case 'right': return '100%';
         default: return '50%';
       }
     }
     return '0';
   }};
-  top: ${props => props.$isVertical ? '-10%' : 'auto'};
+  top: ${props => props.$isVertical ? '0' : 'auto'};
   overflow: hidden;
   margin: ${props => props.$isVertical ? '0' : '15px 0'};
   z-index: ${props => {
     if (props.$isVertical) {
       switch (props.position) {
-        case 'left': return props.$stripId === 'vstripL' ? '10' : '6';
-        case 'right': return '8';
-        default: return '7';
+        case 'left': return props.$stripId === 'vstripL' ? '6' : '5';
+        case 'right': return '7';
+        default: return '8';
       }
     }
     const zIndices: Record<string, number> = {
       'strip1': 5,
-      'strip2': 9,
+      'strip2': 7,
       'strip3': 6,
       'strip4': 8,
-      'strip5': 7
+      'strip5': 9
     };
     return props.$stripId ? zIndices[props.$stripId] || 6 : 6;
   }};
   transform: ${props => {
     if (props.$isVertical) {
-      const rotation = props.position === 'left' ? '-7deg' : 
-                      props.position === 'right' ? '7deg' : '-3deg';
-      return `translateX(-50%) rotate(${rotation})`;
+      const rotation = props.position === 'left' ? '-12deg' : 
+                      props.position === 'right' ? '12deg' : '-3deg';
+      return props.position === 'left' ? `rotate(${rotation})` :
+             props.position === 'right' ? `translateX(-100%) rotate(${rotation})` :
+             `translateX(-50%) rotate(${rotation})`;
     }
     const rotations: Record<string, string> = {
       'strip1': '-8deg',
@@ -68,10 +72,20 @@ const StripWrapper = styled.div<StripWrapperProps>`
     };
     return `rotate(${props.$stripId ? rotations[props.$stripId] || '0deg' : '0deg'})`;
   }};
-  transform-origin: center center;
+  transform-origin: ${props => props.$isVertical ? 'top center' : 'center center'};
   box-shadow: ${props => props.$isVertical ? 
     '0 0 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(212, 175, 55, 0.1)' : 
     'none'};
+  display: ${props => {
+    if (props.$isVertical && (props.position === 'left' || props.position === 'right')) {
+      return 'none';
+    }
+    return 'block';
+  }};
+
+  @media (min-width: 768px) {
+    display: block;
+  }
 
   &::before,
   &::after {
@@ -96,48 +110,124 @@ const StripWrapper = styled.div<StripWrapperProps>`
 
   @media (max-width: 1024px) {
     width: ${props => props.$isVertical ? '180px' : '100%'};
+    height: ${props => props.$isVertical ? '120%' : 'auto'};
     min-height: ${props => props.$isVertical ? 'auto' : '200px'};
     left: ${props => {
       if (props.$isVertical) {
         switch (props.position) {
-          case 'left': return '15%';
-          case 'right': return '85%';
+          case 'left': return '0%';
+          case 'right': return '100%';
           default: return '50%';
         }
       }
       return '0';
+    }};
+    top: ${props => props.$isVertical ? '0' : 'auto'};
+    transform-origin: ${props => props.$isVertical ? 'top center' : 'center center'};
+    transform: ${props => {
+      if (props.$isVertical) {
+        const rotation = props.position === 'left' ? '-8deg' : 
+                        props.position === 'right' ? '8deg' : '-2deg';
+        return props.position === 'left' ? `rotate(${rotation})` :
+               props.position === 'right' ? `translateX(-100%) rotate(${rotation})` :
+               `translateX(-50%) rotate(${rotation})`;
+      }
+      const rotations: Record<string, string> = {
+        'strip1': '-8deg',
+        'strip2': '6deg',
+        'strip3': '-4deg',
+        'strip4': '7deg',
+        'strip5': '-6deg'
+      };
+      return `rotate(${props.$stripId ? rotations[props.$stripId] || '0deg' : '0deg'})`;
     }};
     margin: ${props => props.$isVertical ? '0' : '12px 0'};
   }
 
   @media (max-width: 768px) {
     width: ${props => props.$isVertical ? '160px' : '100%'};
+    height: ${props => props.$isVertical ? '120%' : 'auto'};
     min-height: ${props => props.$isVertical ? 'auto' : '180px'};
     left: ${props => {
       if (props.$isVertical) {
         switch (props.position) {
-          case 'left': return '15%';
-          case 'right': return '85%';
+          case 'left': return '0%';
+          case 'right': return '100%';
           default: return '50%';
         }
       }
       return '0';
     }};
+    top: ${props => props.$isVertical ? '0' : 'auto'};
+    transform-origin: ${props => props.$isVertical ? 'top center' : 'center center'};
+    transform: ${props => {
+      if (props.$isVertical) {
+        const rotation = props.position === 'left' ? '-5deg' : 
+                        props.position === 'right' ? '5deg' : '-1deg';
+        return props.position === 'left' ? `rotate(${rotation})` :
+               props.position === 'right' ? `translateX(-100%) rotate(${rotation})` :
+               `translateX(-50%) rotate(${rotation})`;
+      }
+      const rotations: Record<string, string> = {
+        'strip1': '-8deg',
+        'strip2': '6deg',
+        'strip3': '-4deg',
+        'strip4': '7deg',
+        'strip5': '-6deg'
+      };
+      return `rotate(${props.$stripId ? rotations[props.$stripId] || '0deg' : '0deg'})`;
+    }};
     margin: ${props => props.$isVertical ? '0' : '10px 0'};
+    z-index: ${props => {
+      if (props.$isVertical) {
+        if (props.position === 'center') {
+          return '7';
+        }
+        return '5';
+      }
+      const zIndices: Record<string, number> = {
+        'strip1': 6,
+        'strip2': 8,
+        'strip3': 7,
+        'strip4': 9,
+        'strip5': 10
+      };
+      return props.$stripId ? zIndices[props.$stripId] || 6 : 6;
+    }};
   }
 
   @media (max-width: 480px) {
     width: ${props => props.$isVertical ? '140px' : '100%'};
+    height: ${props => props.$isVertical ? '120%' : 'auto'};
     min-height: ${props => props.$isVertical ? 'auto' : '160px'};
     left: ${props => {
       if (props.$isVertical) {
         switch (props.position) {
-          case 'left': return '12%';
-          case 'right': return '88%';
+          case 'left': return '0%';
+          case 'right': return '100%';
           default: return '50%';
         }
       }
       return '0';
+    }};
+    top: ${props => props.$isVertical ? '0' : 'auto'};
+    transform-origin: ${props => props.$isVertical ? 'top center' : 'center center'};
+    transform: ${props => {
+      if (props.$isVertical) {
+        const rotation = props.position === 'left' ? '-3deg' : 
+                        props.position === 'right' ? '3deg' : '-1deg';
+        return props.position === 'left' ? `rotate(${rotation})` :
+               props.position === 'right' ? `translateX(-100%) rotate(${rotation})` :
+               `translateX(-50%) rotate(${rotation})`;
+      }
+      const rotations: Record<string, string> = {
+        'strip1': '-8deg',
+        'strip2': '6deg',
+        'strip3': '-4deg',
+        'strip4': '7deg',
+        'strip5': '-6deg'
+      };
+      return `rotate(${props.$stripId ? rotations[props.$stripId] || '0deg' : '0deg'})`;
     }};
     margin: ${props => props.$isVertical ? '0' : '8px 0'};
   }
@@ -343,7 +433,8 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   isVertical,
   position,
   onPhotoClick,
-  photos
+  photos,
+  className
 }) => {
   const [spotlightPosition, setSpotlightPosition] = useState({ x: 0, y: 0 });
   const [isSpotlightVisible, setIsSpotlightVisible] = useState(false);
@@ -381,7 +472,12 @@ const FilmStrip: React.FC<FilmStripProps> = ({
         y={spotlightPosition.y} 
         style={{ opacity: isSpotlightVisible ? 1 : 0 }}
       />
-      <StripWrapper $isVertical={isVertical} position={position} $stripId={stripId}>
+      <StripWrapper 
+        $isVertical={isVertical} 
+        position={position} 
+        $stripId={stripId}
+        className={className}
+      >
         <Strip $isVertical={isVertical}>
           {photos.map((photo, index) => (
             <Frame
