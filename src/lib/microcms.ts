@@ -5,6 +5,10 @@ export type Photo = {
   url: string;
   title: string;
   caption: string;
+  position?: {
+    x: number;
+    y: number;
+  };
 };
 
 type MicroCMSResponse = {
