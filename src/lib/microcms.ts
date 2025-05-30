@@ -5,6 +5,9 @@ export type Photo = {
   url: string;
   title: string;
   caption: string;
+  image: {
+    url: string;
+  };
   position?: {
     x: number;
     y: number;
@@ -49,6 +52,7 @@ export const getPhotos = async (): Promise<Photo[]> => {
         url: content.image.url,
         title: content.title || 'Untitled',
         caption: content.caption || '',
+        image: content.image
       };
     });
 
@@ -67,5 +71,8 @@ const getDummyPhotos = (): Photo[] => {
     url: `https://picsum.photos/800/1200?random=${i}`,
     title: `Photo ${i + 1}`,
     caption: `A beautiful moment captured on film ${i + 1}`,
+    image: {
+      url: `https://picsum.photos/800/1200?random=${i}`
+    }
   }));
 }; 
