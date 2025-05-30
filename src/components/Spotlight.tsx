@@ -1,7 +1,7 @@
 'use client';
 
 import styled from 'styled-components';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface SpotlightProps {
   intensity?: number;
@@ -9,18 +9,26 @@ interface SpotlightProps {
   blur?: number;
 }
 
-const SpotlightContainer = styled.div<{ x: number; y: number; intensity: number; size: number; blur: number }>`
+const SpotlightContainer = styled.div<{ $sourceX: number; $sourceY: number }>`
   position: fixed;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 100;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   background: radial-gradient(
-    circle at ${props => props.x}% ${props => props.y}%,
-    transparent ${props => props.size}%,
-    rgba(0, 0, 0, ${props => props.intensity}) ${props => props.size + props.blur}%
+    circle at ${props => props.$sourceX}px ${props => props.$sourceY}px,
+    rgba(212, 175, 55, 0.15) 0%,
+    transparent 50%
   );
-  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: 1000;
+  mix-blend-mode: overlay;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  &.visible {
+    opacity: 1;
+  }
 `;
 
 export default function Spotlight({ intensity = 0.4, size = 10, blur = 50 }: SpotlightProps) {
@@ -28,6 +36,7 @@ export default function Spotlight({ intensity = 0.4, size = 10, blur = 50 }: Spo
   const position = useRef({ x: 50, y: 50 });
   const targetPosition = useRef({ x: 50, y: 50 });
   const animationFrameRef = useRef<number | undefined>(undefined);
+  const [isSpotlightVisible, setIsSpotlightVisible] = useState(false);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -56,14 +65,22 @@ export default function Spotlight({ intensity = 0.4, size = 10, blur = 50 }: Spo
     };
   }, []);
 
+  const handleMouseEnter = () => {
+    setIsSpotlightVisible(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsSpotlightVisible(false);
+  };
+
   return (
     <SpotlightContainer
       ref={containerRef}
-      x={position.current.x}
-      y={position.current.y}
-      intensity={intensity}
-      size={size}
-      blur={blur}
+      $sourceX={position.current.x}
+      $sourceY={position.current.y}
+      className={isSpotlightVisible ? 'visible' : ''}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     />
   );
 } 

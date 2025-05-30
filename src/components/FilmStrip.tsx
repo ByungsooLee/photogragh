@@ -1,49 +1,68 @@
 'use client';
 
 import styled, { keyframes } from 'styled-components';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface FilmStripProps {
   baseDuration: number;
   stripId: string;
   isVertical?: boolean;
-  position?: 'left' | 'right' | 'center';
+  position?: 'left' | 'right';
   isReversed?: boolean;
-  onPhotoClick?: (photo: { url: string; title: string; caption: string; position: { x: number; y: number } }) => void;
+  onPhotoClick: (photo: { url: string; title: string; caption: string; position: { x: number; y: number } }) => void;
 }
 
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
 const scrollHorizontal = keyframes`
-  0% {
+  from {
     transform: translate3d(0, 0, 0);
   }
-  100% {
+  to {
     transform: translate3d(-25%, 0, 0);
   }
 `;
 
-const scrollVertical = keyframes`
-  0% {
+const scrollHorizontalReverse = keyframes`
+  from {
+    transform: translate3d(-25%, 0, 0);
+  }
+  to {
     transform: translate3d(0, 0, 0);
   }
-  100% {
+`;
+
+const scrollVertical = keyframes`
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
     transform: translate3d(0, -25%, 0);
   }
 `;
 
-const fadeInStrip = keyframes`
-  to { opacity: 1; }
+const scrollVerticalReverse = keyframes`
+  from {
+    transform: translate3d(0, -25%, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
 `;
 
 interface StripWrapperProps {
   $isVertical?: boolean;
-  position?: string;
-  $stripId?: string;
+  position?: 'left' | 'right';
+  $stripId: string;
 }
 
 const StripWrapper = styled.div<StripWrapperProps>`
   position: ${props => props.$isVertical ? 'absolute' : 'relative'};
   width: ${props => props.$isVertical ? '200px' : '150%'};
-  height: ${props => props.$isVertical ? '120%' : 'auto'};
+  height: ${props => props.$isVertical ? '400%' : 'auto'};
   left: ${props => {
     if (props.$isVertical) {
       switch (props.position) {
@@ -57,7 +76,7 @@ const StripWrapper = styled.div<StripWrapperProps>`
   top: ${props => props.$isVertical ? '-10%' : 'auto'};
   overflow: hidden;
   opacity: 0;
-  animation: ${fadeInStrip} 1s forwards;
+  animation: ${fadeIn} 1s forwards;
   margin: ${props => props.$isVertical ? '0' : '10px 0'};
   z-index: ${props => {
     if (props.$isVertical) {
@@ -118,7 +137,8 @@ const StripWrapper = styled.div<StripWrapperProps>`
   }
 
   @media (max-width: 768px) {
-    width: ${props => props.$isVertical ? '150px' : '150%'};
+    width: ${props => props.$isVertical ? '160px' : '150%'};
+    height: ${props => props.$isVertical ? '400%' : 'auto'};
     left: ${props => {
       if (props.$isVertical) {
         switch (props.position) {
@@ -147,7 +167,8 @@ const StripWrapper = styled.div<StripWrapperProps>`
   }
 
   @media (max-width: 480px) {
-    width: ${props => props.$isVertical ? '100px' : '150%'};
+    width: ${props => props.$isVertical ? '140px' : '150%'};
+    height: ${props => props.$isVertical ? '400%' : 'auto'};
     left: ${props => {
       if (props.$isVertical) {
         switch (props.position) {
@@ -176,21 +197,30 @@ const StripWrapper = styled.div<StripWrapperProps>`
   }
 `;
 
-const Strip = styled.div<{ $isVertical?: boolean; duration: number; $isReversed?: boolean }>`
+const Strip = styled.div<{ $isReversed: boolean; $speed: number; $isVertical: boolean }>`
   display: flex;
   flex-direction: ${props => props.$isVertical ? 'column' : 'row'};
   height: 100%;
-  width: ${props => props.$isVertical ? '100%' : '200%'};
+  width: ${props => props.$isVertical ? '100%' : '400%'};
   will-change: transform;
-  transform: translateZ(0);
+  transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   perspective: 1000px;
   transform-style: preserve-3d;
-  animation: ${props => props.$isVertical ? scrollVertical : scrollHorizontal} ${props => props.duration}s infinite linear;
-  animation-direction: ${props => props.$isReversed ? 'reverse' : 'normal'};
+  animation: ${props => {
+    if (props.$isVertical) {
+      return props.$isReversed ? scrollVerticalReverse : scrollVertical;
+    }
+    return props.$isReversed ? scrollHorizontalReverse : scrollHorizontal;
+  }} ${props => props.$isVertical ? 120 / props.$speed : 80 / props.$speed}s infinite linear;
+  animation-timing-function: linear;
   gap: ${props => props.$isVertical ? '20px' : '30px'};
   padding: ${props => props.$isVertical ? '20px 0' : '0 15px'};
   position: relative;
+
+  &:hover {
+    animation-play-state: paused;
+  }
 `;
 
 const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
@@ -270,6 +300,19 @@ const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
 
   @media (max-width: 768px) {
     width: ${props => {
+      if (props.$isVertical) return '120px';
+      return props.isPortrait ? '120px' : '160px';
+    }};
+    height: ${props => {
+      if (props.$isVertical) return '160px';
+      return props.isPortrait ? '160px' : '120px';
+    }};
+    border-width: 1px;
+    border-radius: 6px;
+  }
+
+  @media (max-width: 480px) {
+    width: ${props => {
       if (props.$isVertical) return '100px';
       return props.isPortrait ? '100px' : '140px';
     }};
@@ -277,17 +320,8 @@ const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
       if (props.$isVertical) return '140px';
       return props.isPortrait ? '140px' : '100px';
     }};
-  }
-
-  @media (max-width: 480px) {
-    width: ${props => {
-      if (props.$isVertical) return '70px';
-      return props.isPortrait ? '70px' : '100px';
-    }};
-    height: ${props => {
-      if (props.$isVertical) return '100px';
-      return props.isPortrait ? '100px' : '70px';
-    }};
+    border-width: 1px;
+    border-radius: 4px;
   }
 `;
 
@@ -335,14 +369,14 @@ const Photo = styled.div<{ $isPicked?: boolean }>`
   `}
 `;
 
-const Spotlight = styled.div<{ x: number; y: number }>`
+const Spotlight = styled.div<{ $x: number; $y: number }>`
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
   background: radial-gradient(
-    circle at ${props => props.x}px ${props => props.y}px,
+    circle at ${props => props.$x}px ${props => props.$y}px,
     rgba(212, 175, 55, 0.15) 0%,
     transparent 50%
   );
@@ -357,23 +391,30 @@ const Spotlight = styled.div<{ x: number; y: number }>`
   }
 `;
 
-export default function FilmStrip({ 
-  baseDuration, 
-  stripId, 
-  isVertical, 
-  position, 
-  isReversed,
-  onPhotoClick 
-}: FilmStripProps) {
+export default function FilmStrip({ baseDuration, stripId, isVertical = false, isReversed = false, position, onPhotoClick }: FilmStripProps) {
+  const [speed, setSpeed] = useState(1);
   const [spotlightPosition, setSpotlightPosition] = useState({ x: 0, y: 0 });
   const [isSpotlightVisible, setIsSpotlightVisible] = useState(false);
   const [pickedFrame, setPickedFrame] = useState<number | null>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const newSpeed = Math.max(0.5, Math.min(20, speed + (e.deltaY > 0 ? -0.2 : 0.2)));
+      setSpeed(newSpeed);
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, [speed]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    setSpotlightPosition({ x: e.clientX, y: e.clientY });
-  };
-
-  const handleMouseEnter = () => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setSpotlightPosition({
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100
+    });
     setIsSpotlightVisible(true);
   };
 
@@ -381,63 +422,74 @@ export default function FilmStrip({
     setIsSpotlightVisible(false);
   };
 
-  const handleFrameClick = (index: number, event: React.MouseEvent<HTMLDivElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
-
+  const handleFrameClick = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
     setPickedFrame(index);
-    
-    setTimeout(() => {
-      if (onPhotoClick) {
-        onPhotoClick({
-          url: 'https://example.com/photo.jpg', // 実際の画像URLに置き換える
-          title: `Photo ${index + 1}`,
-          caption: `A beautiful moment captured on film ${index + 1}`,
-          position: { x, y }
-        });
+    const rect = e.currentTarget.getBoundingClientRect();
+    onPhotoClick({
+      url: '/photos/photo1.jpg',
+      title: 'Photo Title',
+      caption: 'Photo Caption',
+      position: {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2
       }
+    });
+
+    // モーダルが閉じられた後に状態をリセット
+    const resetPickedFrame = () => {
       setPickedFrame(null);
-    }, 500);
+    };
+
+    // モーダルが閉じられたことを検知するためのイベントリスナーを追加
+    window.addEventListener('modalClosed', resetPickedFrame, { once: true });
+  };
+
+  // フィルムストリップのフレームを生成する関数
+  const generateFrames = () => {
+    const frames = [];
+    const frameCount = 40;
+    
+    // 4セットのフレームを生成（よりスムーズなループのため）
+    for (let set = 0; set < 4; set++) {
+      for (let i = 0; i < frameCount; i++) {
+        const frameIndex = set * frameCount + i;
+        frames.push(
+          <Frame 
+            key={`${stripId}-set${set}-${i}`}
+            className={`${set > 0 ? 'clone' : ''} ${pickedFrame === frameIndex ? 'picked' : ''}`}
+            $isVertical={isVertical}
+            onClick={(e) => handleFrameClick(frameIndex, e)}
+          >
+            <Perforations side="left" />
+            <Perforations side="right" />
+            <Content>
+              <Photo $isPicked={pickedFrame === frameIndex} />
+            </Content>
+          </Frame>
+        );
+      }
+    }
+    return frames;
   };
 
   return (
     <>
       <Spotlight 
-        x={spotlightPosition.x} 
-        y={spotlightPosition.y} 
+        $x={spotlightPosition.x} 
+        $y={spotlightPosition.y} 
         className={isSpotlightVisible ? 'visible' : ''}
       />
       <StripWrapper $isVertical={isVertical} position={position} $stripId={stripId}>
-        <Strip $isVertical={isVertical} duration={baseDuration} $isReversed={isReversed}>
-          {Array.from({ length: 40 }).map((_, index) => (
-            <Frame 
-              key={`${stripId}-${index}`}
-              $isVertical={isVertical}
-              className={pickedFrame === index ? 'picked' : ''}
-              onClick={(e) => handleFrameClick(index, e)}
-            >
-              <Perforations side="left" />
-              <Perforations side="right" />
-              <Content>
-                <Photo $isPicked={pickedFrame === index} />
-              </Content>
-            </Frame>
-          ))}
-          {Array.from({ length: 40 }).map((_, index) => (
-            <Frame 
-              key={`${stripId}-clone-${index}`}
-              className={`clone ${pickedFrame === index + 40 ? 'picked' : ''}`}
-              $isVertical={isVertical}
-              onClick={(e) => handleFrameClick(index + 40, e)}
-            >
-              <Perforations side="left" />
-              <Perforations side="right" />
-              <Content>
-                <Photo $isPicked={pickedFrame === index + 40} />
-              </Content>
-            </Frame>
-          ))}
+        <Strip 
+          $isReversed={isReversed} 
+          $speed={speed} 
+          $isVertical={isVertical}
+          ref={stripRef}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
+          {generateFrames()}
         </Strip>
       </StripWrapper>
     </>
