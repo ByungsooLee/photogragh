@@ -44,8 +44,9 @@ interface StripWrapperProps {
 
 const StripWrapper = styled.div<StripWrapperProps>`
   position: ${props => props.$isVertical ? 'absolute' : 'relative'};
-  width: ${props => props.$isVertical ? '200px' : '150%'};
+  width: ${props => props.$isVertical ? '200px' : '120%'};
   height: ${props => props.$isVertical ? '120%' : 'auto'};
+  min-height: ${props => props.$isVertical ? 'auto' : '220px'};
   left: ${props => {
     if (props.$isVertical) {
       switch (props.position) {
@@ -54,13 +55,13 @@ const StripWrapper = styled.div<StripWrapperProps>`
         default: return '50%';
       }
     }
-    return '-25%';
+    return '-10%';
   }};
   top: ${props => props.$isVertical ? '-10%' : 'auto'};
-  overflow: hidden;
+  overflow: visible;
   opacity: 0;
   animation: ${fadeInStrip} 1s forwards;
-  margin: ${props => props.$isVertical ? '0' : '10px 0'};
+  margin: ${props => props.$isVertical ? '0' : '15px 0'};
   z-index: ${props => {
     if (props.$isVertical) {
       switch (props.position) {
@@ -85,11 +86,11 @@ const StripWrapper = styled.div<StripWrapperProps>`
       return `translateX(-50%) rotate(${rotation})`;
     }
     const rotations: Record<string, string> = {
-      'strip1': '-12deg',
-      'strip2': '8deg',
-      'strip3': '-5deg',
-      'strip4': '10deg',
-      'strip5': '-8deg'
+      'strip1': '-8deg',
+      'strip2': '6deg',
+      'strip3': '-4deg',
+      'strip4': '7deg',
+      'strip5': '-6deg'
     };
     return `rotate(${props.$stripId ? rotations[props.$stripId] || '0deg' : '0deg'})`;
   }};
@@ -119,8 +120,25 @@ const StripWrapper = styled.div<StripWrapperProps>`
     transform: rotate(180deg);
   }
 
+  @media (max-width: 1024px) {
+    width: ${props => props.$isVertical ? '180px' : '130%'};
+    min-height: ${props => props.$isVertical ? 'auto' : '200px'};
+    left: ${props => {
+      if (props.$isVertical) {
+        switch (props.position) {
+          case 'left': return '15%';
+          case 'right': return '85%';
+          default: return '50%';
+        }
+      }
+      return '-15%';
+    }};
+    margin: ${props => props.$isVertical ? '0' : '12px 0'};
+  }
+
   @media (max-width: 768px) {
-    width: ${props => props.$isVertical ? '150px' : '150%'};
+    width: ${props => props.$isVertical ? '160px' : '150%'};
+    min-height: ${props => props.$isVertical ? 'auto' : '180px'};
     left: ${props => {
       if (props.$isVertical) {
         switch (props.position) {
@@ -131,25 +149,12 @@ const StripWrapper = styled.div<StripWrapperProps>`
       }
       return '-25%';
     }};
-    transform: ${props => {
-      if (props.$isVertical) {
-        const rotation = props.position === 'left' ? '-5deg' : 
-                        props.position === 'right' ? '5deg' : '-3deg';
-        return `translateX(-50%) rotate(${rotation})`;
-      }
-      const rotations: Record<string, string> = {
-        'strip1': '-8deg',
-        'strip2': '6deg',
-        'strip3': '-4deg',
-        'strip4': '7deg',
-        'strip5': '-6deg'
-      };
-      return `rotate(${props.$stripId ? rotations[props.$stripId] || '0deg' : '0deg'})`;
-    }};
+    margin: ${props => props.$isVertical ? '0' : '10px 0'};
   }
 
   @media (max-width: 480px) {
-    width: ${props => props.$isVertical ? '100px' : '150%'};
+    width: ${props => props.$isVertical ? '140px' : '150%'};
+    min-height: ${props => props.$isVertical ? 'auto' : '160px'};
     left: ${props => {
       if (props.$isVertical) {
         switch (props.position) {
@@ -160,21 +165,7 @@ const StripWrapper = styled.div<StripWrapperProps>`
       }
       return '-25%';
     }};
-    transform: ${props => {
-      if (props.$isVertical) {
-        const rotation = props.position === 'left' ? '-3deg' : 
-                        props.position === 'right' ? '3deg' : '-3deg';
-        return `translateX(-50%) rotate(${rotation})`;
-      }
-      const rotations: Record<string, string> = {
-        'strip1': '-5deg',
-        'strip2': '4deg',
-        'strip3': '-3deg',
-        'strip4': '5deg',
-        'strip5': '-4deg'
-      };
-      return `rotate(${props.$stripId ? rotations[props.$stripId] || '0deg' : '0deg'})`;
-    }};
+    margin: ${props => props.$isVertical ? '0' : '8px 0'};
   }
 `;
 
@@ -190,9 +181,25 @@ const Strip = styled.div<{ $isVertical?: boolean; duration: number; $isReversed?
   transform-style: preserve-3d;
   animation: ${props => props.$isVertical ? scrollVertical : scrollHorizontal} ${props => props.duration}s infinite linear;
   animation-direction: ${props => props.$isReversed ? 'reverse' : 'normal'};
-  gap: ${props => props.$isVertical ? '20px' : '30px'};
-  padding: ${props => props.$isVertical ? '20px 0' : '0 15px'};
+  gap: ${props => props.$isVertical ? '20px' : '40px'};
+  padding: ${props => props.$isVertical ? '20px 0' : '15px 30px'};
   position: relative;
+  align-items: center;
+
+  @media (max-width: 1024px) {
+    gap: 30px;
+    padding: 12px 25px;
+  }
+
+  @media (max-width: 768px) {
+    gap: 20px;
+    padding: 10px 15px;
+  }
+
+  @media (max-width: 480px) {
+    gap: 15px;
+    padding: 8px 10px;
+  }
 `;
 
 const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
@@ -270,25 +277,36 @@ const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
     }
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
     width: ${props => {
-      if (props.$isVertical) return '100px';
-      return props.isPortrait ? '100px' : '140px';
+      if (props.$isVertical) return '160px';
+      return props.isPortrait ? '160px' : '200px';
     }};
     height: ${props => {
+      if (props.$isVertical) return '200px';
+      return props.isPortrait ? '200px' : '160px';
+    }};
+  }
+
+  @media (max-width: 768px) {
+    width: ${props => {
       if (props.$isVertical) return '140px';
-      return props.isPortrait ? '140px' : '100px';
+      return props.isPortrait ? '140px' : '180px';
+    }};
+    height: ${props => {
+      if (props.$isVertical) return '180px';
+      return props.isPortrait ? '180px' : '140px';
     }};
   }
 
   @media (max-width: 480px) {
     width: ${props => {
-      if (props.$isVertical) return '70px';
-      return props.isPortrait ? '70px' : '100px';
+      if (props.$isVertical) return '120px';
+      return props.isPortrait ? '120px' : '160px';
     }};
     height: ${props => {
-      if (props.$isVertical) return '100px';
-      return props.isPortrait ? '100px' : '70px';
+      if (props.$isVertical) return '160px';
+      return props.isPortrait ? '160px' : '120px';
     }};
   }
 `;
