@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import Header from '../components/Header';
-import Footer from '../components/Footer';
 import Modal from '../components/Modal';
 import FilmStrip from '../components/FilmStrip';
 import { getPhotos, type Photo } from '../lib/microcms';
@@ -26,12 +25,6 @@ const FilmContainer = styled.div`
   flex-direction: column;
   justify-content: space-evenly;
   align-items: center;
-`;
-
-const FooterWrapper = styled.div<{ $isHidden: boolean }>`
-  opacity: ${props => props.$isHidden ? 0 : 1};
-  visibility: ${props => props.$isHidden ? 'hidden' : 'visible'};
-  transition: all 0.3s ease;
 `;
 
 export default function Home() {
@@ -136,9 +129,6 @@ export default function Home() {
         caption={modalCaption}
         sourcePosition={modalSourcePosition}
       />
-      <FooterWrapper $isHidden={isModalOpen}>
-        <Footer />
-      </FooterWrapper>
     </FilmGallery>
   );
 }

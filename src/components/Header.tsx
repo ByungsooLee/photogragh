@@ -2,7 +2,7 @@
 
 import styled from 'styled-components';
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { FaInstagram } from 'react-icons/fa';
 
 const HeaderContainer = styled.header`
   position: fixed;
@@ -13,10 +13,11 @@ const HeaderContainer = styled.header`
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-  padding: 1rem;
+  padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 80px;
 `;
 
 const Logo = styled.h1`
@@ -48,23 +49,16 @@ const MenuButton = styled.button`
   }
 `;
 
-const Nav = styled.nav<{ $isOpen: boolean }>`
+const Nav = styled.nav`
   display: flex;
   align-items: center;
   gap: 2rem;
+  margin-left: auto;
+  position: relative;
+  z-index: 1002;
 
   @media (max-width: 1024px) {
-    position: fixed;
-    top: 0;
-    right: ${props => props.$isOpen ? '0' : '-100%'};
-    width: 100%;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.95);
-    backdrop-filter: blur(10px);
-    flex-direction: column;
-    justify-content: center;
-    transition: right 0.3s ease;
-    z-index: 1001;
+    display: none;
   }
 `;
 
@@ -74,6 +68,10 @@ const NavLink = styled.a`
   font-size: 1rem;
   transition: all 0.3s ease;
   position: relative;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  display: inline-block;
 
   &::after {
     content: '';
@@ -88,47 +86,45 @@ const NavLink = styled.a`
 
   &:hover {
     color: var(--light-gold);
+    background: rgba(212, 175, 55, 0.1);
     &::after {
       width: 100%;
     }
   }
-
-  @media (max-width: 1024px) {
-    font-size: 1.2rem;
-    padding: 1rem;
-    width: 100%;
-    text-align: center;
-  }
 `;
 
-const FooterContent = styled.div`
-  display: none;
-
-  @media (max-width: 1024px) {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 2rem;
-    padding-top: 2rem;
-    border-top: 1px solid rgba(212, 175, 55, 0.2);
-  }
-`;
-
-const SocialLinks = styled.div`
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-`;
-
-const SocialLink = styled.a`
+const InstagramIcon = styled(FaInstagram)`
+  font-size: 2rem;
   color: var(--dark-gold);
-  font-size: 1.2rem;
   transition: all 0.3s ease;
+  padding: 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
 
   &:hover {
     color: var(--light-gold);
     transform: scale(1.1);
+    background: rgba(212, 175, 55, 0.1);
+  }
+`;
+
+const MobileMenu = styled.div<{ $isOpen: boolean }>`
+  display: none;
+
+  @media (max-width: 1024px) {
+    display: ${props => props.$isOpen ? 'flex' : 'none'};
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    z-index: 1001;
   }
 `;
 
@@ -142,10 +138,9 @@ const CloseButton = styled.button`
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0.5rem;
-  display: none;
 
-  @media (max-width: 1024px) {
-    display: block;
+  @media (min-width: 1025px) {
+    display: none;
   }
 `;
 
@@ -163,30 +158,26 @@ const Header: React.FC = () => {
   return (
     <HeaderContainer>
       <Logo>Photogragh</Logo>
+      <Nav>
+        <NavLink href="#gallery">Gallery</NavLink>
+        <NavLink href="#about">About</NavLink>
+        <NavLink href="#contact">Contact</NavLink>
+        <NavLink href="https://instagram.com" target="_blank" rel="noopener noreferrer">
+          Instagram
+        </NavLink>
+      </Nav>
       <MenuButton onClick={() => setIsMenuOpen(true)}>
         ☰
       </MenuButton>
-      <AnimatePresence>
-        {isMenuOpen && (
-          <Nav $isOpen={isMenuOpen}>
-            <CloseButton onClick={() => setIsMenuOpen(false)}>×</CloseButton>
-            <NavLink href="#about">About</NavLink>
-            <NavLink href="#gallery">Gallery</NavLink>
-            <NavLink href="#contact">Contact</NavLink>
-            <FooterContent>
-              <p>© 2024 Photogragh. All rights reserved.</p>
-              <SocialLinks>
-                <SocialLink href="https://instagram.com" target="_blank" rel="noopener noreferrer">
-                  Instagram
-                </SocialLink>
-                <SocialLink href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-                  Twitter
-                </SocialLink>
-              </SocialLinks>
-            </FooterContent>
-          </Nav>
-        )}
-      </AnimatePresence>
+      <MobileMenu $isOpen={isMenuOpen}>
+        <CloseButton onClick={() => setIsMenuOpen(false)}>×</CloseButton>
+        <NavLink href="https://instagram.com" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)}>
+          <InstagramIcon />
+        </NavLink>
+        <NavLink href="#gallery" onClick={() => setIsMenuOpen(false)}>Gallery</NavLink>
+        <NavLink href="#about" onClick={() => setIsMenuOpen(false)}>About</NavLink>
+        <NavLink href="#contact" onClick={() => setIsMenuOpen(false)}>Contact</NavLink>
+      </MobileMenu>
     </HeaderContainer>
   );
 };
