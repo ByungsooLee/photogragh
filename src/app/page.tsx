@@ -122,6 +122,7 @@ export default function Home() {
         />
       </FilmContainer>
       <Modal
+        key={modalImage}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         imageUrl={modalImage}

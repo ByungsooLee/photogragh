@@ -2,7 +2,7 @@
 
 import styled from 'styled-components';
 import Header from '@/components/Header';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 const AboutContainer = styled.div`
   min-height: 100vh;
@@ -13,6 +13,12 @@ const AboutContainer = styled.div`
   align-items: center;
   justify-content: center;
   padding: 20px;
+  @media (max-width: 768px) {
+    padding: 0;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+  }
 
   &::before {
     content: '';
@@ -47,589 +53,312 @@ const AboutContainer = styled.div`
 `;
 
 const TicketWrapper = styled.div`
-  max-width: 900px;
-  width: 100%;
-  min-height: 400px;
-  perspective: 1000px;
-  z-index: 10;
-  padding: 20px;
-  touch-action: none;
-
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
   @media (max-width: 768px) {
-    padding: 10px;
-    min-height: 320px;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin-top: 0;
   }
 `;
 
-const Ticket = styled.div<{ $rotateX: number; $rotateY: number; $isFlipped: boolean }>`
-  background: linear-gradient(135deg, #f5e6d3 0%, #e8d4b0 100%);
-  color: #2c1810;
-  border-radius: 15px;
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(0, 0, 0, 0.1);
+const Ticket = styled.div<{ $isReverse: boolean; $isClicked: boolean }>`
+  display: flex;
+  flex-direction: ${props => props.$isReverse ? 'row-reverse' : 'row'};
+  width: 420px;
+  height: 170px;
+  background: transparent;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
   position: relative;
-  width: 100%;
-  min-height: 400px;
-  overflow: hidden;
-  padding-bottom: 32px;
-  transform: rotateX(${props => props.$rotateX}deg) rotateY(${props => props.$rotateY}deg) ${props => props.$isFlipped ? 'rotateY(180deg)' : ''};
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  transform-style: preserve-3d;
-  will-change: transform;
-  touch-action: none;
-
-  &:hover {
-  
-    box-shadow: 
-      0 25px 50px rgba(0, 0, 0, 0.5),
-      0 0 0 1px rgba(0, 0, 0, 0.1);
+  overflow: visible;
+  transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: ${props => props.$isClicked ? 'translateZ(100px) scale(0.8) rotate(15deg)' : 'none'};
+  opacity: ${props => props.$isClicked ? '0' : '1'};
+  perspective: 1000px;
+  @media (max-width: 1024px) {
+    width: 92vw;
+    height: 38vw;
+    min-height: 140px;
+    max-width: 420px;
+    max-height: 200px;
   }
-
-  &:active {
-    cursor: grabbing;
-    transition: transform 0.05s ease-out;
-  }
-
-  @media (max-width: 768px) {
-    transform: ${props => props.$isFlipped ? 'rotateY(180deg)' : 'none'};
-    box-shadow: 
-      0 10px 20px rgba(0, 0, 0, 0.3),
-      0 0 0 1px rgba(0, 0, 0, 0.1);
-    
-    &:hover {
-      transform: ${props => props.$isFlipped ? 'rotateY(180deg)' : 'scale(1.01)'};
-    }
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-      repeating-linear-gradient(
-        90deg,
-        transparent,
-        transparent 100px,
-        rgba(0, 0, 0, 0.02) 100px,
-        rgba(0, 0, 0, 0.02) 101px
-      ),
-      repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 100px,
-        rgba(0, 0, 0, 0.02) 100px,
-        rgba(0, 0, 0, 0.02) 101px
-      );
-    pointer-events: none;
-  }
-`;
-
-const Perforation = styled.div`
-  position: absolute;
-  right: 35%;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 5px,
-    #1a1a1a 5px,
-    #1a1a1a 10px
-  );
-  z-index: 5;
-
-  &::before {
-    content: '✂ - - - - - - - - - - - - - - - - -';
+  @media (max-width: 600px) {
+    flex-direction: row !important;
+    width: 94vw;
+    height: 44vw;
+    min-height: 140px;
+    max-width: 340px;
+    max-height: 180px;
+    transform: ${props => props.$isClicked ? 'translate(-50%, -50%) rotate(105deg) translateZ(100px) scale(0.8)' : 'translate(-50%, -50%) rotate(90deg)'};
     position: absolute;
     left: 50%;
-    transform: translateX(-50%);
-    top: 20px;
-    font-size: 12px;
-    color: rgba(44, 24, 16, 0.3);
-    white-space: nowrap;
-    letter-spacing: 2px;
-  }
-
-  @media (max-width: 768px) {
-    right: 0;
     top: 50%;
-    bottom: auto;
-    width: 100%;
-    height: 2px;
-    background: repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 5px,
-      #1a1a1a 5px,
-      #1a1a1a 10px
-    );
-
-    &::before {
-      content: '✂ - - - - - - - - - - - - - - - - -';
-      top: 50%;
-      left: 0;
-      transform: translateY(-50%);
-      writing-mode: vertical-rl;
-      text-orientation: mixed;
-    }
   }
 `;
 
-const TicketContent = styled.div`
+const FilmPart = styled.div`
+  background: #222;
+  width: 90px;
+  height: 100%;
+  border-radius: 16px 0 0 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.18);
+  z-index: 2;
+  @media (max-width: 600px) {
+    width: 90px;
+    border-radius: 16px 0 0 16px;
+  }
+`;
+const FilmHoles = styled.div`
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  backface-visibility: hidden;
-  z-index: 1;
-  display: flex;
-`;
-
-const TicketContentInner = styled.div`
-  display: grid;
-  grid-template-columns: 65% 35%;
-  width: 100%;
-  height: 100%;
-  min-height: 400px;
-  padding-bottom: 32px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    min-height: auto;
-  }
-`;
-
-const MainSection = styled.div`
-  padding: 40px;
-  position: relative;
-
-  @media (max-width: 768px) {
-    padding: 30px 20px;
-  }
-`;
-
-const CinemaName = styled.div`
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 18px;
-  letter-spacing: 4px;
-  opacity: 0.6;
-  margin-bottom: 20px;
-  text-transform: uppercase;
-`;
-
-const MovieTitle = styled.h1`
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 48px;
-  line-height: 1;
-  letter-spacing: 2px;
-  margin-bottom: 10px;
-  text-transform: uppercase;
-  color: #8b0000;
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
-  text-decoration: none;
-
-  @media (max-width: 768px) {
-    font-size: 36px;
-    text-align: center;
-  }
-`;
-
-const Starring = styled.p`
-  font-size: 14px;
-  opacity: 0.8;
-  margin-bottom: 30px;
-`;
-
-const MovieDetails = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  margin-bottom: 30px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
-`;
-
-const DetailItem = styled.div`
-  position: relative;
-`;
-
-const DetailLabel = styled.div`
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  opacity: 0.6;
-  margin-bottom: 5px;
-`;
-
-const DetailValue = styled.div`
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-`;
-
-const SkillsSection = styled.div`
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px dashed rgba(44, 24, 16, 0.3);
-`;
-
-const SkillsLabel = styled.div`
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  opacity: 0.6;
-  margin-bottom: 10px;
-`;
-
-const SkillsList = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-
-  @media (max-width: 768px) {
-    justify-content: center;
-  }
-`;
-
-const SkillTag = styled.span`
-  background: rgba(139, 0, 0, 0.1);
-  padding: 4px 12px;
-  border-radius: 15px;
-  font-size: 12px;
-  border: 1px solid rgba(139, 0, 0, 0.2);
-`;
-
-const StubSection = styled.div`
-  background: linear-gradient(135deg, #e8d4b0 0%, #d4a574 100%);
-  padding: 40px 30px;
-  position: relative;
+  left: 0; top: 0; bottom: 0;
+  width: 18px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border-left: 2px dashed rgba(44, 24, 16, 0.3);
-
-  @media (max-width: 768px) {
-    border-left: none;
-    border-top: 2px dashed rgba(44, 24, 16, 0.3);
-    padding: 30px 20px;
-    text-align: center;
+  height: 90%;
+  z-index: 3;
+  @media (max-width: 600px) {
+    width: 18px;
+    height: 90%;
+    left: 0;
+    top: 0;
+    bottom: 0;
   }
 `;
-
-const StubHeader = styled.div`
-  text-align: center;
-`;
-
-const AdmitOne = styled.div`
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 24px;
-  letter-spacing: 3px;
-  margin-bottom: 10px;
-  color: #8b0000;
-`;
-
-const TicketNumber = styled.div`
-  font-size: 12px;
-  opacity: 0.6;
-  margin-bottom: 20px;
-`;
-
-const SeatInfo = styled.div`
-  text-align: center;
-  margin: 30px 0;
-
-  @media (max-width: 768px) {
-    margin: 20px 0;
+const FilmHole = styled.div`
+  width: 14px;
+  height: 12px;
+  background: #fff;
+  border-radius: 4px;
+  margin: 2px 0;
+  @media (max-width: 600px) {
+    width: 14px;
+    height: 12px;
+    margin: 2px 0;
   }
 `;
-
-const SeatRow = styled.div`
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 36px;
-  letter-spacing: 2px;
-  color: #2c1810;
-`;
-
-const SeatNumber = styled.div`
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 36px;
-  letter-spacing: 2px;
-  color: #2c1810;
-`;
-
-const SeatLabel = styled.div`
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  opacity: 0.6;
-`;
-
-const Barcode = styled.div`
-  margin-top: auto;
-  text-align: center;
-
-  @media (max-width: 768px) {
-    margin-top: 20px;
-  }
-`;
-
-const BarcodeLines = styled.div`
+const BarcodeArea = styled.div`
+  flex: 1;
   display: flex;
+  align-items: center;
   justify-content: center;
-  height: 50px;
-  margin-bottom: 5px;
-  gap: 2px;
-`;
-
-const BarcodeLine = styled.div`
-  width: 2px;
-  height: 100%;
-  background: #2c1810;
-
-  &:nth-child(odd) {
-    width: 4px;
-  }
-
-  &:nth-child(3n) {
-    height: 80%;
-    align-self: flex-end;
-  }
-`;
-
-const BarcodeNumber = styled.div`
-  font-size: 10px;
-  opacity: 0.6;
-  letter-spacing: 2px;
-`;
-
-const ContactInfo = styled.div`
-  position: absolute;
-  bottom: 20px;
-  left: 40px;
-  display: flex;
-  gap: 20px;
-  font-size: 12px;
-  opacity: 0.6;
-
-  @media (max-width: 768px) {
-    position: static;
-    justify-content: center;
-    margin-top: 20px;
-  }
-`;
-
-const ContactItem = styled.a`
-  text-decoration: none;
-  color: inherit;
-  transition: opacity 0.3s ease;
-
-  &:hover {
-    opacity: 1;
-  }
-`;
-
-const TicketBack = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
-  height: 100%;
-  background: url('/cinema_ticket_bg.png') center center/cover no-repeat, #ff00ff33;
-  border-radius: 15px;
-  padding: 0;
+`;
+const BarcodeImg2 = styled.div`
+  width: 48px;
+  height: 80px;
+  background: repeating-linear-gradient(
+    to right,
+    #222 0 2px, #fff 2px 6px
+  );
+  border-radius: 4px;
+`;
+const MainPart = styled.div`
+  flex: 1;
+  background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%);
+  border-radius: 0 16px 16px 0;
+  color: #fff;
+  padding: 22px 24px 18px 24px;
+  position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  backface-visibility: hidden;
-  z-index: 2;
-  transform: rotateY(180deg);
-  cursor: pointer;
-  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.1);
+  justify-content: flex-start;
+  min-width: 0;
   overflow: hidden;
+  @media (max-width: 600px) {
+    border-radius: 0 12px 12px 0;
+    padding: 14px 10px 10px 10px;
+    writing-mode: initial;
+    text-orientation: initial;
+    align-items: flex-start;
+    > * {
+      transform: none;
+      margin: initial;
+      text-align: initial;
+      width: initial;
+      max-width: initial;
+    }
+  }
+`;
+const MainTitle = styled.div`
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.1rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-transform: lowercase;
+  span { font-size: 1.1rem; font-weight: normal; margin-left: 4px; }
+`;
+const MainSub = styled.div`
+  font-size: 1rem;
+  opacity: 0.7;
+  margin-bottom: 8px;
+`;
+const MainTime = styled.div`
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+`;
+const PlayIcon = styled.span`
+  font-size: 1.1rem;
+  margin-right: 6px;
+`;
+const MainStars = styled.div`
+  color: #fffde7;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+`;
+const MainInfo = styled.div`
+  font-size: 1rem;
+  margin-top: auto;
+  font-weight: bold;
+  letter-spacing: 1px;
+`;
+
+const FilmReel = styled.div`
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  opacity: 0;
+  animation: filmReel 2s ease-in-out;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 255, 255, 0.1) 2px,
+    rgba(255, 255, 255, 0.1) 4px
+  );
+
+  @keyframes filmReel {
+    0% { opacity: 0; transform: translateY(100%); }
+    20% { opacity: 1; transform: translateY(0); }
+    80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-100%); }
+  }
+`;
+
+const PosterImg = styled.img`
+  width: 90vw;
+  max-width: 420px;
+  height: auto;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  margin: 0 auto;
+  display: block;
+  animation: posterDrop 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  z-index: 2;
+
+  @keyframes posterDrop {
+    0% { 
+      opacity: 0;
+      transform: translateY(-100vh) rotate(-10deg);
+      filter: brightness(0.5) contrast(1.2);
+    }
+    60% {
+      opacity: 1;
+      transform: translateY(20px) rotate(5deg);
+      filter: brightness(1.2) contrast(1.1);
+    }
+    80% {
+      transform: translateY(-10px) rotate(-2deg);
+    }
+    100% { 
+      opacity: 1;
+      transform: translateY(0) rotate(0);
+      filter: brightness(1) contrast(1);
+    }
+  }
 `;
 
 export default function About() {
-  const [rotateX, setRotateX] = useState(5);
-  const [rotateY, setRotateY] = useState(-2);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [startY, setStartY] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const ticketRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+  const [isClicked, setIsClicked] = useState(false);
+  const [showPoster, setShowPoster] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+    const checkDevice = () => {
+      setIsMobile(window.innerWidth <= 600);
+      setIsTablet(window.innerWidth > 600 && window.innerWidth <= 1024);
     };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (isMobile) return;
-    setIsDragging(true);
-    setStartX(e.clientX);
-    setStartY(e.clientY);
-  };
+  // レスポンシブで左右反転
+  const isReverse = isMobile || isTablet;
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || isMobile) return;
-    
-    const deltaX = e.clientX - startX;
-    const deltaY = e.clientY - startY;
-    
-    setRotateY(rotateY + deltaX * 0.1);
-    setRotateX(rotateX - deltaY * 0.1);
-    
-    setStartX(e.clientX);
-    setStartY(e.clientY);
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isMobile) return;
-    const touch = e.touches[0];
-    setIsDragging(true);
-    setStartX(touch.clientX);
-    setStartY(touch.clientY);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || !isMobile) return;
-    const touch = e.touches[0];
-    
-    const deltaX = touch.clientX - startX;
-    const deltaY = touch.clientY - startY;
-    
-    setRotateY(rotateY + deltaX * 0.1);
-    setRotateX(rotateX - deltaY * 0.1);
-    
-    setStartX(touch.clientX);
-    setStartY(touch.clientY);
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-  };
-
-  useEffect(() => {
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    window.addEventListener('mouseup', handleMouseUp);
-    return () => window.removeEventListener('mouseup', handleMouseUp);
-  }, []);
-
-  const handleClick = () => {
-    if (isDragging) return; // ドラッグ中はフリップしない
-    setIsFlipped(!isFlipped);
+  const handleTicketClick = () => {
+    if (isClicked || showPoster) return;
+    setIsClicked(true);
+    setTimeout(() => {
+      setShowPoster(true);
+    }, 800);
   };
 
   return (
     <AboutContainer>
       <Header />
       <TicketWrapper>
-        <Ticket 
-          ref={ticketRef}
-          $rotateX={rotateX}
-          $rotateY={rotateY}
-          $isFlipped={isFlipped}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onClick={handleClick}
-        >
-          <Perforation />
-          <TicketContent>
-            <TicketContentInner>
-              <MainSection>
-                <CinemaName>Life Cinema Complex</CinemaName>
-                <MovieTitle>The DataEngineer</MovieTitle>
-                <Starring>Starring: Byungsoo Lee</Starring>
-                
-                <MovieDetails>
-                  <DetailItem>
-                    <DetailLabel>Runtime</DetailLabel>
-                    <DetailValue>∞ minutes</DetailValue>
-                  </DetailItem>
-                  <DetailItem>
-                    <DetailLabel>Genre</DetailLabel>
-                    <DetailValue>Programmer / Photographer</DetailValue>
-                  </DetailItem>
-                  <DetailItem>
-                    <DetailLabel>Director</DetailLabel>
-                    <DetailValue>Serenity & Inspiration</DetailValue>
-                  </DetailItem>
-                  <DetailItem>
-                    <DetailLabel>Release Date</DetailLabel>
-                    <DetailValue>Since 1995</DetailValue>
-                  </DetailItem>
-                </MovieDetails>
-                
-                <SkillsSection>
-                  <SkillsLabel>Special Features</SkillsLabel>
-                  <SkillsList>
-                    <SkillTag>Sony a7R III</SkillTag>
-                    <SkillTag>24-105mm G</SkillTag>
-                  </SkillsList>
-                </SkillsSection>
-                
-                <ContactInfo>
-                  <ContactItem href="#">📧 Email: not yet</ContactItem>
-                  <ContactItem href="#">💼 Portfolio</ContactItem>
-                </ContactInfo>
-              </MainSection>
-              
-              <StubSection>
-                <StubHeader>
-                  <AdmitOne>ADMIT ONE</AdmitOne>
-                  <TicketNumber>No. 20250531</TicketNumber>
-                </StubHeader>
-                
-                <SeatInfo>
-                  <SeatLabel>Row</SeatLabel>
-                  <SeatRow>VIP</SeatRow>
-                  <SeatLabel style={{ marginTop: '20px' }}>Seat</SeatLabel>
-                  <SeatNumber>A-1</SeatNumber>
-                </SeatInfo>
-                
-                <Barcode>
-                  <BarcodeLines>
-                    {[...Array(15)].map((_, i) => (
-                      <BarcodeLine key={i} />
-                    ))}
-                  </BarcodeLines>
-                  <BarcodeNumber>8 901234 567890</BarcodeNumber>
-                </Barcode>
-              </StubSection>
-            </TicketContentInner>
-            <TicketBack>
-              {/* ここに元のテキストやデザイン要素を復元。画像表示は削除。必要に応じて以前の内容を記載。*/}
-              {/* 例: "Thank you for visiting!" などのメッセージや装飾のみ */}
-            </TicketBack>
-          </TicketContent>
-        </Ticket>
+        {!showPoster && (
+          <div style={{position:'relative', width:'100%', height:'100%'}}>
+            <Ticket 
+              $isReverse={isReverse} 
+              $isClicked={isClicked}
+              onClick={handleTicketClick} 
+              style={{
+                cursor: isClicked ? 'default' : 'pointer',
+                transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+            >
+              {/* 黒いフィルム部分 */}
+              <FilmPart>
+                <FilmHoles>
+                  {[...Array(7)].map((_, i) => (
+                    <FilmHole key={i} />
+                  ))}
+                </FilmHoles>
+                <BarcodeArea>
+                  <BarcodeImg2 />
+                </BarcodeArea>
+              </FilmPart>
+              {/* 赤いメイン部分 */}
+              <MainPart>
+                <MainTitle>cinema <span>ticket</span></MainTitle>
+                <MainSub>Lorem ipsum</MainSub>
+                <MainTime>
+                  <PlayIcon>▶</PlayIcon> 21.00
+                </MainTime>
+                <MainStars>★ ★ ★ ★ ★</MainStars>
+                <MainInfo>THEATER 1 / SEAT 16</MainInfo>
+                <MainStars style={{opacity:0.2, fontSize:'2.5rem', position:'absolute', right:10, bottom:10}}>★</MainStars>
+              </MainPart>
+            </Ticket>
+            {isClicked && <FilmReel />}
+          </div>
+        )}
+        {showPoster && (
+          <PosterImg 
+            src="/images/cinema-paradiso-poster.jpg" 
+            alt="Cinema Paradiso"
+          />
+        )}
       </TicketWrapper>
     </AboutContainer>
   );

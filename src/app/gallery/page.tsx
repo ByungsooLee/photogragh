@@ -19,27 +19,20 @@ interface Photo extends MicroCMSPhoto {
 
 // スタイル定義
 const GalleryContainer = styled.div`
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  padding-top: 220px;
   background: var(--bg-dark);
-  position: relative;
-  padding-left: 40px;
-  padding-right: 40px;
-  @media (max-width: 1024px) {
-    padding-left: 0;
-    padding-right: 0;
-    padding-top: 200px;
-  }
-  @media (max-width: 600px) {
-    padding-left: 0;
-    padding-right: 0;
-    padding-top: 180px;
+  padding-top: 80px; // ヘッダーの高さ分のパディング
+
+  @media (max-width: 768px) {
+    padding-top: 160px; // SPではカテゴリーとフィルター分の余白を追加
   }
 `;
 
 const FilterContainer = styled.div`
   position: fixed;
-  top: 80px;
+  top: 140px; // カテゴリーの下に配置
   left: 0;
   right: 0;
   z-index: 100;
@@ -50,17 +43,10 @@ const FilterContainer = styled.div`
   gap: 2rem;
   align-items: center;
   border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-  @media (max-width: 1024px) {
-    flex-direction: row;
-    gap: 1rem;
+
+  @media (max-width: 768px) {
+    top: 120px; // SPではカテゴリーの下に配置
     padding: 0.5rem 1rem;
-    align-items: center;
-  }
-  @media (max-width: 600px) {
-    flex-direction: column;
-    gap: 0.5rem;
-    padding: 0.5rem 0.5rem;
-    align-items: stretch;
   }
 `;
 
@@ -83,9 +69,12 @@ const FilmContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  @media (max-width: 1024px) {
-    padding: 0;
+  margin-top: 60px; // フィルター分の余白を追加
+
+  @media (max-width: 768px) {
+    padding: 1rem;
     gap: 1rem;
+    margin-top: 40px; // SPでは余白を調整
   }
 `;
 
@@ -398,17 +387,17 @@ export default function Gallery() {
 
   // カテゴリーの一覧
   const categories = [
-    { value: 'all', label: 'すべて' },
-    { value: 'portrait', label: 'ポートレート' },
-    { value: 'bath', label: 'バス' },
-    { value: 'person', label: '人物' }
+    { value: 'all', label: 'All' },
+    { value: 'portrait', label: 'Portrait' },
+    { value: 'bath', label: 'Bath' },
+    { value: 'person', label: 'Person' }
   ];
 
   // 日付の一覧（実際のデータから生成）
   const dates = [
-    { value: 'all', label: 'すべて' },
-    { value: '2024-03', label: '2024年3月' },
-    { value: '2024-02', label: '2024年2月' },
+    { value: 'all', label: 'All' },
+    { value: '2024-03', label: '2024/3' },
+    { value: '2024-02', label: '2024/2' },
     // 他の日付を追加
   ];
 
@@ -450,8 +439,10 @@ export default function Gallery() {
       { root: null, rootMargin: '0px', threshold: 0.1 }
     );
     observer.observe(loaderRef.current);
+    // 修正: refを変数に退避
+    const currentLoader = loaderRef.current;
     return () => {
-      if (loaderRef.current) observer.unobserve(loaderRef.current);
+      if (currentLoader) observer.unobserve(currentLoader);
     };
   }, [fetchMorePhotos]);
 
@@ -464,20 +455,18 @@ export default function Gallery() {
             options={categories}
             value={selectedCategory}
             onChange={v => setSelectedCategory(v as Category)}
-            label="カテゴリー:"
+            label="Category:"
           />
         </FilterGroup>
-
         <FilterGroup>
           <CustomSelect
             options={dates}
             value={selectedDate}
             onChange={v => setSelectedDate(v)}
-            label="撮影日:"
+            label="Date:"
           />
         </FilterGroup>
       </FilterContainer>
-
       <FilmContainer>
         {isLoading ? (
           <div>Loading...</div>

@@ -247,13 +247,6 @@ const CloseHint = styled.div`
   @media (max-width: 768px) {
     opacity: 1;
   }
-
-  &::after {
-    content: '↑ スワイプして閉じる';
-    display: block;
-    margin-top: 4px;
-    font-size: 0.8rem;
-  }
 `;
 
 const Modal: React.FC<ModalProps> = ({
@@ -342,7 +335,7 @@ const Modal: React.FC<ModalProps> = ({
           <Title>{title}</Title>
           <Caption>{caption}</Caption>
         </InfoPanel>
-        <CloseHint />
+        <CloseHint>Swipe up or sideways to close</CloseHint>
       </ModalContent>
     </ModalOverlay>
   );

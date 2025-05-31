@@ -183,8 +183,8 @@ const Header: React.FC = () => {
       <Nav>
         <NavLink href="/gallery">Gallery</NavLink>
         <NavLink href="/about">About</NavLink>
-        <NavLink href="/#contact">Contact</NavLink>
-        <NavLink href="https://instagram.com" target="_blank" rel="noopener noreferrer">
+        <NavLink href="/contact">Contact</NavLink>
+        <NavLink href="/instagram">
           Instagram
         </NavLink>
       </Nav>
@@ -193,12 +193,12 @@ const Header: React.FC = () => {
       </MenuButton>
       <MobileMenu $isOpen={isMenuOpen}>
         <CloseButton onClick={() => setIsMenuOpen(false)}>×</CloseButton>
-        <NavLink href="https://instagram.com" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)}>
+        <NavLink href="/instagram" onClick={() => setIsMenuOpen(false)}>
           <InstagramIcon />
         </NavLink>
         <NavLink href="/gallery" onClick={() => setIsMenuOpen(false)}>Gallery</NavLink>
         <NavLink href="/about" onClick={() => setIsMenuOpen(false)}>About</NavLink>
-        <NavLink href="/#contact" onClick={() => setIsMenuOpen(false)}>Contact</NavLink>
+        <NavLink href="/contact" onClick={() => setIsMenuOpen(false)}>Contact</NavLink>
       </MobileMenu>
     </HeaderContainer>
   );
