@@ -96,16 +96,15 @@ const FilmStripRow = styled.div`
   gap: 0;
   position: relative;
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: 100vw;
+  margin: 0;
   background: #111;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 4px #000;
+  border-radius: 0;
+  box-shadow: none;
   min-height: 320px;
-  padding: 32px 0;
+  padding: 0;
   overflow-x: visible;
   align-items: stretch;
-
   @media (max-width: 1024px) {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -182,13 +181,7 @@ const FilmHole = styled.div`
 `;
 // 画像間の仕切り線
 const FilmDivider = styled.div`
-  width: 6px;
-  background: #000;
-  margin: 0 0px;
-  z-index: 2;
-  @media (max-width: 600px) {
-    display: none;
-  }
+  display: none;
 `;
 
 // GalleryImageはImageのラッパー用スタイルだけに
@@ -395,7 +388,12 @@ export default function Gallery() {
   }, [selectedCategory, selectedDate, photos]);
 
   useEffect(() => {
-    setIsLoadedArr(Array(filteredPhotos.length).fill(false));
+    setIsLoadedArr(prev => {
+      if (filteredPhotos.length > prev.length) {
+        return [...prev, ...Array(filteredPhotos.length - prev.length).fill(false)];
+      }
+      return prev.slice(0, filteredPhotos.length);
+    });
   }, [filteredPhotos.length]);
 
   // カテゴリーの一覧
@@ -509,6 +507,12 @@ export default function Gallery() {
                         cursor: 'pointer',
                         position: 'relative',
                         boxSizing: 'border-box',
+                        margin: 0,
+                        padding: 0,
+                        borderRadius: 0,
+                        boxShadow: 'none',
+                        width: '100%',
+                        height: '100%',
                       }}
                     >
                       <GalleryImageWrapper>
@@ -516,16 +520,18 @@ export default function Gallery() {
                           src={photo.url + '?w=400&fm=webp'}
                           alt={photo.title}
                           width={400}
-                          height={600}
+                          height={400}
                           style={{
                             width: '100%',
                             height: '100%',
                             objectFit: 'cover',
-                            borderRadius: '6px',
+                            borderRadius: 0,
                             filter: 'sepia(12%) contrast(1.08) brightness(1.08) saturate(1.1)',
                             opacity: isLoadedArr[idx] ? 1 : 0,
-                            transition: 'opacity 0.7s cubic-bezier(0.4,0,0.2,1)',
-                            boxShadow: '0 2px 16px rgba(0,0,0,0.18)'
+                            transition: 'opacity 0.2s cubic-bezier(0.4,0,0.2,1)',
+                            boxShadow: 'none',
+                            margin: 0,
+                            padding: 0,
                           }}
                           onLoad={() => {
                             setIsLoadedArr(prev => {
@@ -534,7 +540,9 @@ export default function Gallery() {
                               return next;
                             });
                           }}
-                          {...(idx < 6 ? { priority: true } : { loading: 'lazy' })}
+                          priority={idx < 12}
+                          placeholder="blur"
+                          blurDataURL={photo.url + '?w=10&blur=20&fm=webp'}
                           unoptimized={false}
                         />
                       </GalleryImageWrapper>
@@ -554,6 +562,12 @@ export default function Gallery() {
                       cursor: 'pointer',
                       position: 'relative',
                       boxSizing: 'border-box',
+                      margin: 0,
+                      padding: 0,
+                      borderRadius: 0,
+                      boxShadow: 'none',
+                      width: '100%',
+                      height: '100%',
                     }}
                   >
                     <GalleryImageWrapper>
@@ -561,16 +575,18 @@ export default function Gallery() {
                         src={photo.url + '?w=400&fm=webp'}
                         alt={photo.title}
                         width={400}
-                        height={600}
+                        height={400}
                         style={{
                           width: '100%',
                           height: '100%',
                           objectFit: 'cover',
-                          borderRadius: '6px',
+                          borderRadius: 0,
                           filter: 'sepia(12%) contrast(1.08) brightness(1.08) saturate(1.1)',
                           opacity: isLoadedArr[idx] ? 1 : 0,
-                          transition: 'opacity 0.7s cubic-bezier(0.4,0,0.2,1)',
-                          boxShadow: '0 2px 16px rgba(0,0,0,0.18)'
+                          transition: 'opacity 0.2s cubic-bezier(0.4,0,0.2,1)',
+                          boxShadow: 'none',
+                          margin: 0,
+                          padding: 0,
                         }}
                         onLoad={() => {
                           setIsLoadedArr(prev => {
@@ -579,7 +595,9 @@ export default function Gallery() {
                             return next;
                           });
                         }}
-                        {...(idx < 6 ? { priority: true } : { loading: 'lazy' })}
+                        priority={idx < 12}
+                        placeholder="blur"
+                        blurDataURL={photo.url + '?w=10&blur=20&fm=webp'}
                         unoptimized={false}
                       />
                     </GalleryImageWrapper>
