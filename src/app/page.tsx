@@ -39,7 +39,7 @@ export default function Home() {
   useEffect(() => {
     const fetchPhotos = async () => {
       try {
-        const fetchedPhotos = await getPhotos();
+        const { photos: fetchedPhotos } = await getPhotos();
         setPhotos(fetchedPhotos);
       } catch (error) {
         console.error('Error fetching photos:', error);

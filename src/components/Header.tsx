@@ -181,7 +181,7 @@ const Header: React.FC = () => {
         <Logo>Photogragh</Logo>
       </LogoLink>
       <Nav>
-        <NavLink href="/#gallery">Gallery</NavLink>
+        <NavLink href="/gallery">Gallery</NavLink>
         <NavLink href="/about">About</NavLink>
         <NavLink href="/#contact">Contact</NavLink>
         <NavLink href="https://instagram.com" target="_blank" rel="noopener noreferrer">
@@ -196,7 +196,7 @@ const Header: React.FC = () => {
         <NavLink href="https://instagram.com" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)}>
           <InstagramIcon />
         </NavLink>
-        <NavLink href="/#gallery" onClick={() => setIsMenuOpen(false)}>Gallery</NavLink>
+        <NavLink href="/gallery" onClick={() => setIsMenuOpen(false)}>Gallery</NavLink>
         <NavLink href="/about" onClick={() => setIsMenuOpen(false)}>About</NavLink>
         <NavLink href="/#contact" onClick={() => setIsMenuOpen(false)}>Contact</NavLink>
       </MobileMenu>

@@ -23,6 +23,7 @@ type MicroCMSResponse = {
       url: string;
     };
   }>;
+  totalCount?: number;
 };
 
 const client = createClient({
@@ -30,19 +31,23 @@ const client = createClient({
   apiKey: '26vuPmeJCBFmgs1DtAUURZZgq0gGSKs0w6YN',
 });
 
-export const getPhotos = async (): Promise<Photo[]> => {
+export const getPhotos = async (params?: { limit?: number; offset?: number }): Promise<{ photos: Photo[]; totalCount?: number }> => {
   try {
     console.log('Fetching photos from microCMS...');
     const response = await client.get<MicroCMSResponse>({
       endpoint: 'photos',
-      queries: { fields: ['id', 'title', 'caption', 'image'] }
+      queries: {
+        fields: ['id', 'title', 'caption', 'image'],
+        ...(params?.limit ? { limit: params.limit } : {}),
+        ...(params?.offset ? { offset: params.offset } : {})
+      }
     });
 
     console.log('microCMS response:', response);
 
     if (!response.contents || response.contents.length === 0) {
       console.log('No photos found, using dummy photos');
-      return getDummyPhotos();
+      return { photos: getDummyPhotos(), totalCount: 40 };
     }
 
     const photos = response.contents.map(content => {
@@ -57,10 +62,10 @@ export const getPhotos = async (): Promise<Photo[]> => {
     });
 
     console.log('Processed photos:', photos);
-    return photos;
+    return { photos, totalCount: response.totalCount };
   } catch (error) {
     console.error('Error fetching photos:', error);
-    return getDummyPhotos();
+    return { photos: getDummyPhotos(), totalCount: 40 };
   }
 };
 

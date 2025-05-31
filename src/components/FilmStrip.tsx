@@ -426,15 +426,14 @@ const Content = styled.div`
   background: linear-gradient(135deg, rgba(34,34,34,0.8) 0%, rgba(17,17,17,0.8) 100%);
 `;
 
-const Photo = styled.div<{ $isPicked?: boolean; $imageUrl?: string }>`
+const Photo = styled.img<{ $isPicked?: boolean; $isLoaded?: boolean }>`
   width: 100%;
   height: 100%;
-  background: ${props => props.$imageUrl
-    ? `url(${props.$imageUrl}) center/cover`
-    : 'url("/film_blur.jpg") center/cover'};
+  object-fit: cover;
   border-radius: 5px;
   filter: sepia(20%) contrast(1.1);
-  transition: all 0.3s ease;
+  transition: all 0.3s ease, opacity 0.7s cubic-bezier(0.4,0,0.2,1);
+  opacity: ${props => props.$isLoaded ? 1 : 0};
 
   ${Frame}:hover & {
     filter: sepia(0%) contrast(1.2) brightness(1.1);
@@ -484,6 +483,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   const [displayedPhotos, setDisplayedPhotos] = useState<Photo[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const frameRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [isLoadedArr, setIsLoadedArr] = useState<boolean[]>([]);
 
   // デバイスタイプの検出
   useEffect(() => {
@@ -743,6 +743,11 @@ const FilmStrip: React.FC<FilmStripProps> = ({
     frameRefs.current[index] = el;
   };
 
+  // displayedPhotosが変わるたびにisLoadedArrを初期化
+  useEffect(() => {
+    setIsLoadedArr(Array(displayedPhotos.length).fill(false));
+  }, [displayedPhotos.length]);
+
   return (
     <>
       <Spotlight 
@@ -772,25 +777,38 @@ const FilmStrip: React.FC<FilmStripProps> = ({
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          {displayedPhotos.map((photo, index) => (
-            <Frame
-              key={`${stripId}-${index}`}
-              ref={setFrameRef(index)}
-              $isVertical={isVertical}
-              className={pickedFrame === index ? 'picked' : ''}
-              onClick={(e) => handlePhotoClick(photo, e)}
-              data-index={index}
-            >
-              <Perforations side="left" />
-              <Perforations side="right" />
-              <Content>
-                <Photo 
-                  $isPicked={pickedFrame === index} 
-                  $imageUrl={photo.url}
-                />
-              </Content>
-            </Frame>
-          ))}
+          {displayedPhotos.map((photo, index) => {
+            console.log('photo.url', photo.url);
+            return (
+              <Frame
+                key={`${stripId}-${index}`}
+                ref={setFrameRef(index)}
+                $isVertical={isVertical}
+                className={pickedFrame === index ? 'picked' : ''}
+                onClick={(e) => handlePhotoClick(photo, e)}
+                data-index={index}
+              >
+                <Perforations side="left" />
+                <Perforations side="right" />
+                <Content>
+                  <Photo
+                    src={photo.url}
+                    alt={photo.title}
+                    $isPicked={pickedFrame === index}
+                    $isLoaded={isLoadedArr[index]}
+                    onLoad={() => {
+                      console.log('onLoad fired', photo.url);
+                      setIsLoadedArr(prev => {
+                        const next = [...prev];
+                        next[index] = true;
+                        return next;
+                      });
+                    }}
+                  />
+                </Content>
+              </Frame>
+            );
+          })}
         </Strip>
       </StripWrapper>
     </>
