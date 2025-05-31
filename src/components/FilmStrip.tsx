@@ -426,80 +426,12 @@ const Content = styled.div`
   background: linear-gradient(135deg, rgba(34,34,34,0.8) 0%, rgba(17,17,17,0.8) 100%);
 `;
 
-// キャッシュの設定
-const CACHE_CONFIG = {
-  maxSize: 50,  // 最大キャッシュ数
-  ttl: 5 * 60 * 1000,  // キャッシュの有効期限（5分）
-};
-
-interface CacheEntry {
-  url: string;
-  timestamp: number;
-  data: string;  // base64エンコードされた画像データ
-}
-
-// キャッシュマネージャー
-class ImageCache {
-  private cache: Map<string, CacheEntry> = new Map();
-  private queue: string[] = [];
-
-  constructor(private maxSize: number, private ttl: number) {}
-
-  async get(url: string): Promise<string | null> {
-    const entry = this.cache.get(url);
-    if (!entry) return null;
-
-    // TTLチェック
-    if (Date.now() - entry.timestamp > this.ttl) {
-      this.delete(url);
-      return null;
-    }
-
-    // 使用頻度の更新
-    this.updateQueue(url);
-    return entry.data;
-  }
-
-  async set(url: string, data: string): Promise<void> {
-    // キャッシュサイズの制限チェック
-    if (this.cache.size >= this.maxSize) {
-      const oldestUrl = this.queue.shift();
-      if (oldestUrl) this.delete(oldestUrl);
-    }
-
-    this.cache.set(url, {
-      url,
-      timestamp: Date.now(),
-      data
-    });
-    this.updateQueue(url);
-  }
-
-  private delete(url: string): void {
-    this.cache.delete(url);
-    this.queue = this.queue.filter(u => u !== url);
-  }
-
-  private updateQueue(url: string): void {
-    this.queue = this.queue.filter(u => u !== url);
-    this.queue.push(url);
-  }
-
-  clear(): void {
-    this.cache.clear();
-    this.queue = [];
-  }
-}
-
-const imageCache = new ImageCache(CACHE_CONFIG.maxSize, CACHE_CONFIG.ttl);
-
-const Photo = styled.div<{ $isPicked?: boolean; $imageUrl?: string; $isCached?: boolean }>`
+const Photo = styled.div<{ $isPicked?: boolean; $imageUrl?: string }>`
   width: 100%;
   height: 100%;
-  background: ${props => {
-    if (!props.$imageUrl) return 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'200\'><rect fill=\'%23333\' width=\'300\' height=\'200\'/><text x=\'150\' y=\'100\' text-anchor=\'middle\' fill=\'%23d4af37\' font-size=\'20\' font-family=\'serif\' opacity=\'0.5\'>PHOTO</text></svg>")';
-    return props.$isCached ? `url(${props.$imageUrl})` : `url(${props.$imageUrl})`;
-  }} center/cover;
+  background: ${props => props.$imageUrl
+    ? `url(${props.$imageUrl}) center/cover`
+    : 'url("/film_blur.jpg") center/cover'};
   border-radius: 5px;
   filter: sepia(20%) contrast(1.1);
   transition: all 0.3s ease;
@@ -532,31 +464,6 @@ const Spotlight = styled.div<{ x: number; y: number }>`
   transition: opacity 0.3s ease;
 `;
 
-// グローバルなスクロール位置の状態
-let globalScrollPosition = 0;
-const scrollListeners = new Set<(position: number) => void>();
-
-const updateGlobalScroll = (position: number) => {
-  globalScrollPosition = position;
-  scrollListeners.forEach(listener => listener(position));
-};
-
-// スクロール速度の設定
-const SCROLL_SPEEDS = {
-  vertical: {
-    auto: 0.15,    // 自動スクロール
-    wheel: 0.2,    // ホイール操作
-    touch: 0.3,    // タッチ操作
-    tablet: 0.25   // タブレット
-  },
-  horizontal: {
-    auto: 0.4,     // 自動スクロール
-    wheel: 0.5,    // ホイール操作
-    touch: 0.6,    // タッチ操作
-    tablet: 0.45   // タブレット
-  }
-};
-
 const FilmStrip: React.FC<FilmStripProps> = ({
   stripId,
   isVertical,
@@ -568,7 +475,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   const [spotlightPosition, setSpotlightPosition] = useState({ x: 0, y: 0 });
   const [isSpotlightVisible, setIsSpotlightVisible] = useState(false);
   const [pickedFrame, setPickedFrame] = useState<number | null>(null);
-  const [scrollPosition, setScrollPosition] = useState(globalScrollPosition);
+  const [scrollPosition, setScrollPosition] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   const [isTablet, setIsTablet] = useState(false);
@@ -576,8 +483,6 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   const autoScrollRef = useRef<number | null>(null);
   const [displayedPhotos, setDisplayedPhotos] = useState<Photo[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [preloadedPhotos, setPreloadedPhotos] = useState<Set<string>>(new Set());
-  const [cachedPhotos, setCachedPhotos] = useState<Set<string>>(new Set());
   const frameRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // デバイスタイプの検出
@@ -596,73 +501,22 @@ const FilmStrip: React.FC<FilmStripProps> = ({
 
   // スクロール速度の取得
   const getScrollSpeed = (type: 'auto' | 'wheel' | 'touch'): number => {
+    const SCROLL_SPEEDS = {
+      vertical: {
+        auto: 0.15,    // 自動スクロール
+        wheel: 0.2,    // ホイール操作
+        touch: 0.3,    // タッチ操作
+        tablet: 0.25   // タブレット
+      },
+      horizontal: {
+        auto: 0.4,     // 自動スクロール
+        wheel: 0.5,    // ホイール操作
+        touch: 0.6,    // タッチ操作
+        tablet: 0.45   // タブレット
+      }
+    };
     const speeds = isVertical ? SCROLL_SPEEDS.vertical : SCROLL_SPEEDS.horizontal;
     return isTablet ? speeds.tablet : speeds[type];
-  };
-
-  // グローバルなスクロールイベントをリッスン
-  useEffect(() => {
-    const handleGlobalScroll = (position: number) => {
-      setScrollPosition(position);
-    };
-
-    scrollListeners.add(handleGlobalScroll);
-    return () => {
-      scrollListeners.delete(handleGlobalScroll);
-    };
-  }, []);
-
-  // 画像をbase64に変換
-  const convertToBase64 = (url: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error('Canvas context not available'));
-          return;
-        }
-        ctx.drawImage(img, 0, 0);
-        try {
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-          resolve(dataUrl);
-        } catch (error) {
-          reject(error);
-        }
-      };
-      img.onerror = reject;
-      img.src = url;
-    });
-  };
-
-  // 写真のプリロード（キャッシュ対応）
-  const preloadImage = async (url: string): Promise<void> => {
-    if (preloadedPhotos.has(url)) {
-      return;
-    }
-
-    try {
-      // キャッシュをチェック
-      const cachedData = await imageCache.get(url);
-      if (cachedData) {
-        setPreloadedPhotos(prev => new Set([...prev, url]));
-        setCachedPhotos(prev => new Set([...prev, url]));
-        return;
-      }
-
-      // 画像をロードしてキャッシュに保存
-      const base64Data = await convertToBase64(url);
-      await imageCache.set(url, base64Data);
-      
-      setPreloadedPhotos(prev => new Set([...prev, url]));
-      setCachedPhotos(prev => new Set([...prev, url]));
-    } catch (error) {
-      console.error('写真のプリロードに失敗しました:', error);
-    }
   };
 
   // 写真の表示を初期化
@@ -673,56 +527,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
     const tripledPhotos = [...photos, ...photos, ...photos];
     setDisplayedPhotos(tripledPhotos);
     setIsInitialized(true);
-
-    // 写真のプリロードを開始
-    const preloadAllPhotos = async () => {
-      try {
-        await Promise.all(photos.map(photo => preloadImage(photo.url)));
-      } catch (error) {
-        console.error('写真のプリロードに失敗しました:', error);
-      }
-    };
-
-    preloadAllPhotos();
-
-    // コンポーネントのアンマウント時にキャッシュをクリア
-    return () => {
-      imageCache.clear();
-    };
   }, [photos]);
-
-  // 表示範囲内の写真をプリロード
-  useEffect(() => {
-    if (!isInitialized || !stripRef.current) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const index = parseInt(entry.target.getAttribute('data-index') || '0', 10);
-            const photo = displayedPhotos[index];
-            if (photo && !preloadedPhotos.has(photo.url)) {
-              preloadImage(photo.url).catch(error => {
-                console.error('写真のプリロードに失敗しました:', error);
-              });
-            }
-          }
-        });
-      },
-      {
-        root: null,
-        rootMargin: '100% 0px',
-        threshold: 0.1
-      }
-    );
-
-    const frames = stripRef.current.querySelectorAll('[data-index]');
-    frames.forEach(frame => observer.observe(frame));
-
-    return () => {
-      frames.forEach(frame => observer.unobserve(frame));
-    };
-  }, [isInitialized, displayedPhotos, preloadedPhotos]);
 
   // スクロール位置の計算とリセット
   const calculateScrollPosition = (position: number): number => {
@@ -781,54 +586,11 @@ const FilmStrip: React.FC<FilmStripProps> = ({
     const calculatedPosition = calculateScrollPosition(scrollPosition + (smoothedDelta * scrollSpeed * scrollDirection));
     
     setScrollPosition(calculatedPosition);
-    updateGlobalScroll(calculatedPosition);
 
     setTimeout(() => {
       setIsAutoScrolling(true);
     }, 2000);
   };
-
-  // グローバルなスクロールイベントをリッスン
-  useEffect(() => {
-    let isScrolling = false;
-    let scrollTimeout: NodeJS.Timeout;
-
-    const handleGlobalWheel = (e: WheelEvent) => {
-      if (stripRef.current?.contains(e.target as Node)) {
-        return;
-      }
-
-      if (!isScrolling) {
-        setIsAutoScrolling(false);
-        isScrolling = true;
-      }
-
-      const scrollDirection = getScrollDirection();
-      let delta = 0;
-      if (isVertical) {
-        delta = e.deltaY;
-      } else {
-        delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      }
-      const scrollSpeed = getScrollSpeed('wheel');
-      const calculatedPosition = calculateScrollPosition(scrollPosition + (delta * scrollSpeed * scrollDirection));
-      
-      setScrollPosition(calculatedPosition);
-      updateGlobalScroll(calculatedPosition);
-
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        isScrolling = false;
-        setIsAutoScrolling(true);
-      }, 2000);
-    };
-
-    window.addEventListener('wheel', handleGlobalWheel, { passive: false });
-    return () => {
-      window.removeEventListener('wheel', handleGlobalWheel);
-      clearTimeout(scrollTimeout);
-    };
-  }, [isVertical, position, scrollPosition]);
 
   // 自動スクロールの処理
   useEffect(() => {
@@ -849,11 +611,9 @@ const FilmStrip: React.FC<FilmStripProps> = ({
         if (Math.abs(newPosition - lastPosition) > 5) {
           const interpolatedPosition = lastPosition + (newPosition - lastPosition) * 0.1;
           setScrollPosition(interpolatedPosition);
-          updateGlobalScroll(interpolatedPosition);
           lastPosition = interpolatedPosition;
         } else {
           setScrollPosition(newPosition);
-          updateGlobalScroll(newPosition);
           lastPosition = newPosition;
         }
         
@@ -869,7 +629,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
         cancelAnimationFrame(autoScrollRef.current);
       }
     };
-  }, [isAutoScrolling, scrollPosition, isVertical, position, isTablet, isInitialized]);
+  }, [isAutoScrolling, scrollPosition, isVertical, isTablet, isInitialized]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     setSpotlightPosition({ x: e.clientX, y: e.clientY });
@@ -927,7 +687,6 @@ const FilmStrip: React.FC<FilmStripProps> = ({
     const calculatedPosition = calculateScrollPosition(scrollPosition + (smoothedDelta * scrollSpeed * scrollDirection));
     
     setScrollPosition(calculatedPosition);
-    updateGlobalScroll(calculatedPosition);
     setTouchStart({
       x: touch.clientX,
       y: touch.clientY
@@ -941,72 +700,6 @@ const FilmStrip: React.FC<FilmStripProps> = ({
       setIsAutoScrolling(true);
     }, 2000);
   };
-
-  // タッチイベントのグローバルリスナー
-  useEffect(() => {
-    let touchStart: { x: number; y: number } | null = null;
-    let isTouching = false;
-
-    const handleGlobalTouchStart = (e: TouchEvent) => {
-      if (stripRef.current?.contains(e.target as Node)) {
-        return;
-      }
-      isTouching = true;
-      setIsAutoScrolling(false);
-      const touch = e.touches[0];
-      touchStart = {
-        x: touch.clientX,
-        y: touch.clientY
-      };
-    };
-
-    const handleGlobalTouchMove = (e: TouchEvent) => {
-      if (!touchStart || !isTouching) return;
-
-      const touch = e.touches[0];
-      const deltaX = touch.clientX - touchStart.x;
-      const deltaY = touch.clientY - touchStart.y;
-
-      const scrollDirection = getScrollDirection();
-      let delta = 0;
-      if (isVertical) {
-        delta = deltaY;
-      } else {
-        delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
-      }
-
-      const scrollSpeed = getScrollSpeed('touch');
-      const calculatedPosition = calculateScrollPosition(scrollPosition + (delta * scrollSpeed * scrollDirection));
-      
-      setScrollPosition(calculatedPosition);
-      updateGlobalScroll(calculatedPosition);
-      touchStart = {
-        x: touch.clientX,
-        y: touch.clientY
-      };
-    };
-
-    const handleGlobalTouchEnd = () => {
-      isTouching = false;
-      touchStart = null;
-      // タッチ操作終了後、2秒後に自動スクロールを再開
-      setTimeout(() => {
-        setIsAutoScrolling(true);
-      }, 2000);
-    };
-
-    window.addEventListener('touchstart', handleGlobalTouchStart, { passive: false });
-    window.addEventListener('touchmove', handleGlobalTouchMove, { passive: false });
-    window.addEventListener('touchend', handleGlobalTouchEnd);
-    window.addEventListener('touchcancel', handleGlobalTouchEnd);
-
-    return () => {
-      window.removeEventListener('touchstart', handleGlobalTouchStart);
-      window.removeEventListener('touchmove', handleGlobalTouchMove);
-      window.removeEventListener('touchend', handleGlobalTouchEnd);
-      window.removeEventListener('touchcancel', handleGlobalTouchEnd);
-    };
-  }, [isVertical, position, scrollPosition, isTablet]);
 
   // フレームの位置を監視して必要に応じて写真を更新
   useEffect(() => {
@@ -1049,23 +742,6 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   const setFrameRef = (index: number) => (el: HTMLDivElement | null) => {
     frameRefs.current[index] = el;
   };
-
-  // ローディング状態の表示
-  const LoadingOverlay = styled.div`
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.5);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-
-    &.loading {
-      opacity: 1;
-    }
-  `;
 
   return (
     <>
@@ -1111,11 +787,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                 <Photo 
                   $isPicked={pickedFrame === index} 
                   $imageUrl={photo.url}
-                  $isCached={cachedPhotos.has(photo.url)}
                 />
-                <LoadingOverlay className={!preloadedPhotos.has(photo.url) ? 'loading' : ''}>
-                  <LoadingSpinner />
-                </LoadingOverlay>
               </Content>
             </Frame>
           ))}
@@ -1124,21 +796,5 @@ const FilmStrip: React.FC<FilmStripProps> = ({
     </>
   );
 };
-
-// ローディングスピナーのスタイル
-const LoadingSpinner = styled.div`
-  width: 30px;
-  height: 30px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: var(--dark-gold);
-  animation: spin 1s linear infinite;
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-`;
 
 export default FilmStrip; 

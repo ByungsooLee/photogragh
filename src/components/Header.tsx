@@ -3,6 +3,7 @@
 import styled from 'styled-components';
 import { useState, useEffect } from 'react';
 import { FaInstagram } from 'react-icons/fa';
+import Link from 'next/link';
 
 const HeaderContainer = styled.header`
   position: fixed;
@@ -26,6 +27,25 @@ const Logo = styled.h1`
   color: var(--dark-gold);
   margin: 0;
   text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+  text-decoration: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  background: none !important;
+  &::after {
+    display: none !important;
+    content: none !important;
+  }
+`;
+
+const LogoLink = styled(Link)`
+  text-decoration: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  background: none !important;
+  &::after {
+    display: none !important;
+    content: none !important;
+  }
 `;
 
 const MenuButton = styled.button`
@@ -62,7 +82,7 @@ const Nav = styled.nav`
   }
 `;
 
-const NavLink = styled.a`
+const NavLink = styled(Link)`
   color: var(--dark-gold);
   text-decoration: none;
   font-size: 1rem;
@@ -157,11 +177,13 @@ const Header: React.FC = () => {
 
   return (
     <HeaderContainer>
-      <Logo>Photogragh</Logo>
+      <LogoLink href="/" passHref>
+        <Logo>Photogragh</Logo>
+      </LogoLink>
       <Nav>
-        <NavLink href="#gallery">Gallery</NavLink>
-        <NavLink href="#about">About</NavLink>
-        <NavLink href="#contact">Contact</NavLink>
+        <NavLink href="/#gallery">Gallery</NavLink>
+        <NavLink href="/about">About</NavLink>
+        <NavLink href="/#contact">Contact</NavLink>
         <NavLink href="https://instagram.com" target="_blank" rel="noopener noreferrer">
           Instagram
         </NavLink>
@@ -174,9 +196,9 @@ const Header: React.FC = () => {
         <NavLink href="https://instagram.com" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)}>
           <InstagramIcon />
         </NavLink>
-        <NavLink href="#gallery" onClick={() => setIsMenuOpen(false)}>Gallery</NavLink>
-        <NavLink href="#about" onClick={() => setIsMenuOpen(false)}>About</NavLink>
-        <NavLink href="#contact" onClick={() => setIsMenuOpen(false)}>Contact</NavLink>
+        <NavLink href="/#gallery" onClick={() => setIsMenuOpen(false)}>Gallery</NavLink>
+        <NavLink href="/about" onClick={() => setIsMenuOpen(false)}>About</NavLink>
+        <NavLink href="/#contact" onClick={() => setIsMenuOpen(false)}>Contact</NavLink>
       </MobileMenu>
     </HeaderContainer>
   );
