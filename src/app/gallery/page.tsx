@@ -1,6 +1,7 @@
 'use client';
 
 import styled from 'styled-components';
+import Image from 'next/image';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import FilmStrip from '@/components/FilmStrip';
 import Header from '@/components/Header';
@@ -21,7 +22,7 @@ interface Photo extends MicroCMSPhoto {
 // スタイル定義
 const GalleryContainer = styled.div`
   min-height: 100vh;
-  padding-top: 80px;
+  padding-top: 220px;
   background: var(--bg-dark);
   position: relative;
   padding-left: 40px;
@@ -34,7 +35,7 @@ const GalleryContainer = styled.div`
   @media (max-width: 600px) {
     padding-left: 0;
     padding-right: 0;
-    padding-top: 200px;
+    padding-top: 180px;
   }
 `;
 
@@ -137,6 +138,7 @@ const FilmStripRow = styled.div`
   min-height: 320px;
   padding: 32px 0;
   overflow-x: visible;
+  align-items: stretch;
 
   @media (max-width: 1024px) {
     display: grid;
@@ -151,11 +153,13 @@ const FilmStripRow = styled.div`
     box-shadow: none;
     background: none;
     overflow-x: hidden;
+    align-items: stretch;
   }
   @media (max-width: 600px) {
     gap: 0;
     min-height: 160px;
     padding: 0;
+    align-items: stretch;
   }
 `;
 // 上下黒帯
@@ -221,16 +225,14 @@ const FilmDivider = styled.div`
   }
 `;
 
-// 画像のfilter強化
-const GalleryImage = styled.img<{ $isLoaded: boolean }>`
+// GalleryImageはImageのラッパー用スタイルだけに
+const GalleryImageWrapper = styled.div`
   width: 100%;
+  aspect-ratio: 2/3;
   height: 100%;
-  object-fit: cover;
+  position: relative;
   border-radius: 12px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.18);
-  opacity: ${props => props.$isLoaded ? 1 : 0};
-  transition: opacity 0.7s cubic-bezier(0.4,0,0.2,1);
-  filter: sepia(12%) contrast(1.08) brightness(1.08) saturate(1.1);
+  overflow: hidden;
 `;
 
 const Caption = styled.div`
@@ -247,7 +249,7 @@ const Caption = styled.div`
 `;
 
 // フィルム風モーダル
-const FilmModalFrame = styled.div`
+const FilmModalFrame = styled.div<{ $isPortrait?: boolean }>`
   position: relative;
   background: #111;
   border-radius: 16px;
@@ -256,10 +258,24 @@ const FilmModalFrame = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 320px;
-  min-height: 320px;
-  aspect-ratio: 4/3;
+  min-width: ${props => props.$isPortrait ? '400px' : '600px'};
+  min-height: ${props => props.$isPortrait ? '600px' : '400px'};
+  width: ${props => props.$isPortrait ? '40vw' : '60vw'};
+  height: auto;
+  aspect-ratio: ${props => props.$isPortrait ? '2/3' : '4/3'};
   margin: 0 auto;
+  @media (max-width: 1024px) {
+    min-width: 220px;
+    width: 90vw;
+    min-height: 220px;
+    aspect-ratio: ${props => props.$isPortrait ? '2/3' : '4/3'};
+  }
+  @media (max-width: 600px) {
+    min-width: 0;
+    width: 98vw;
+    min-height: 160px;
+    aspect-ratio: ${props => props.$isPortrait ? '2/3' : '4/3'};
+  }
 `;
 const FilmModalBand = styled.div`
   position: absolute;
@@ -542,26 +558,33 @@ export default function Gallery() {
                           boxSizing: 'border-box',
                         }}
                       >
-                        <GalleryImage
-                          src={photo.url}
-                          alt={photo.title}
-                          $isLoaded={isLoadedArr[idx]}
-                          loading="lazy"
-                          onLoad={() => {
-                            setIsLoadedArr(prev => {
-                              const next = [...prev];
-                              next[idx] = true;
-                              return next;
-                            });
-                          }}
-                          style={{
-                            width: '100%',
-                            aspectRatio: '2/3',
-                            objectFit: 'cover',
-                            borderRadius: '6px',
-                            boxShadow: '0 2px 16px rgba(0,0,0,0.18)'
-                          }}
-                        />
+                        <GalleryImageWrapper>
+                          <Image
+                            src={photo.url + '?w=400&fm=webp'}
+                            alt={photo.title}
+                            width={400}
+                            height={600}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              borderRadius: '6px',
+                              filter: 'sepia(12%) contrast(1.08) brightness(1.08) saturate(1.1)',
+                              opacity: isLoadedArr[idx] ? 1 : 0,
+                              transition: 'opacity 0.7s cubic-bezier(0.4,0,0.2,1)',
+                              boxShadow: '0 2px 16px rgba(0,0,0,0.18)'
+                            }}
+                            onLoad={() => {
+                              setIsLoadedArr(prev => {
+                                const next = [...prev];
+                                next[idx] = true;
+                                return next;
+                              });
+                            }}
+                            {...(idx < 6 ? { priority: true } : { loading: 'lazy' })}
+                            unoptimized={false}
+                          />
+                        </GalleryImageWrapper>
                         <Caption style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 4 }}>{photo.title}</Caption>
                       </div>
                     ];
@@ -580,26 +603,33 @@ export default function Gallery() {
                         boxSizing: 'border-box',
                       }}
                     >
-                      <GalleryImage
-                        src={photo.url}
-                        alt={photo.title}
-                        $isLoaded={isLoadedArr[idx]}
-                        loading="lazy"
-                        onLoad={() => {
-                          setIsLoadedArr(prev => {
-                            const next = [...prev];
-                            next[idx] = true;
-                            return next;
-                          });
-                        }}
-                        style={{
-                          width: '100%',
-                          aspectRatio: '2/3',
-                          objectFit: 'cover',
-                          borderRadius: '6px',
-                          boxShadow: '0 2px 16px rgba(0,0,0,0.18)'
-                        }}
-                      />
+                      <GalleryImageWrapper>
+                        <Image
+                          src={photo.url + '?w=400&fm=webp'}
+                          alt={photo.title}
+                          width={400}
+                          height={600}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            borderRadius: '6px',
+                            filter: 'sepia(12%) contrast(1.08) brightness(1.08) saturate(1.1)',
+                            opacity: isLoadedArr[idx] ? 1 : 0,
+                            transition: 'opacity 0.7s cubic-bezier(0.4,0,0.2,1)',
+                            boxShadow: '0 2px 16px rgba(0,0,0,0.18)'
+                          }}
+                          onLoad={() => {
+                            setIsLoadedArr(prev => {
+                              const next = [...prev];
+                              next[idx] = true;
+                              return next;
+                            });
+                          }}
+                          {...(idx < 6 ? { priority: true } : { loading: 'lazy' })}
+                          unoptimized={false}
+                        />
+                      </GalleryImageWrapper>
                       <Caption style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 4 }}>{photo.title}</Caption>
                     </div>
                   );
@@ -615,8 +645,25 @@ export default function Gallery() {
           )}
         </FilmContainer>
         {isModalOpen && currentModalIndex !== null && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <FilmModalFrame>
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={() => setIsModalOpen(false)}
+          >
+            <FilmModalFrame
+              $isPortrait={(() => {
+                const img = filteredPhotos[currentModalIndex];
+                // 仮に画像URLにw/h情報がなければ、縦横比で判定（例: サムネイルのwidth/heightを使う）
+                // ここでは画像の幅・高さが分からない場合はURLの末尾やtitle等から判定するか、デフォルト横長
+                // 例: "?w=1200&h=1800" などがURLに含まれていれば判定
+                const match = img.url.match(/[?&]h=(\d+)/);
+                const h = match ? parseInt(match[1], 10) : undefined;
+                const wMatch = img.url.match(/[?&]w=(\d+)/);
+                const w = wMatch ? parseInt(wMatch[1], 10) : undefined;
+                if (w && h) return h > w;
+                return false;
+              })()}
+              onClick={e => e.stopPropagation()}
+            >
               <FilmModalBandTop />
               <FilmModalBandBottom />
               <FilmModalHolesTop>
@@ -648,18 +695,24 @@ export default function Gallery() {
               {currentModalIndex < filteredPhotos.length - 1 && (
                 <ModalArrowRight onClick={() => setCurrentModalIndex(currentModalIndex + 1)} aria-label="次の写真へ">&#8594;</ModalArrowRight>
               )}
-              <img
-                src={filteredPhotos[currentModalIndex].url}
-                alt={filteredPhotos[currentModalIndex].title}
-                style={{
-                  width: '100%',
-                  height: 'calc(100% - 64px)',
-                  objectFit: 'cover',
-                  borderRadius: '6px',
-                  boxShadow: '0 2px 16px rgba(0,0,0,0.18)',
-                  zIndex: 5
-                }}
-              />
+              <div style={{ position: 'relative', width: '100%', height: 'calc(100% - 64px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}>
+                <Image
+                  src={filteredPhotos[currentModalIndex].url + '?w=1200&fm=webp'}
+                  alt={filteredPhotos[currentModalIndex].title}
+                  fill
+                  style={{
+                    objectFit: 'contain',
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '6px',
+                    boxShadow: '0 2px 16px rgba(0,0,0,0.18)',
+                    background: '#222',
+                    zIndex: 5
+                  }}
+                  loading="eager"
+                  priority
+                />
+              </div>
               <Caption style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 6 }}>{filteredPhotos[currentModalIndex].title}</Caption>
               <button
                 onClick={() => setIsModalOpen(false)}
