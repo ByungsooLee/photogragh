@@ -472,8 +472,6 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   className
 }) => {
   const [spotlightPosition, setSpotlightPosition] = useState({ x: 0, y: 0 });
-  const [isSpotlightVisible, setIsSpotlightVisible] = useState(false);
-  const [pickedFrame, setPickedFrame] = useState<number | null>(null);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
@@ -635,14 +633,6 @@ const FilmStrip: React.FC<FilmStripProps> = ({
     setSpotlightPosition({ x: e.clientX, y: e.clientY });
   };
 
-  const handleMouseEnter = () => {
-    setIsSpotlightVisible(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsSpotlightVisible(false);
-  };
-
   const handlePhotoClick = (photo: Photo, event: React.MouseEvent) => {
     const rect = event.currentTarget.getBoundingClientRect();
     onPhotoClick({
@@ -753,7 +743,6 @@ const FilmStrip: React.FC<FilmStripProps> = ({
       <Spotlight 
         x={spotlightPosition.x} 
         y={spotlightPosition.y} 
-        style={{ opacity: isSpotlightVisible ? 1 : 0 }}
       />
       <StripWrapper 
         $isVertical={isVertical} 
@@ -784,7 +773,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                 key={`${stripId}-${index}`}
                 ref={setFrameRef(index)}
                 $isVertical={isVertical}
-                className={pickedFrame === index ? 'picked' : ''}
+                className={''}
                 onClick={(e) => handlePhotoClick(photo, e)}
                 data-index={index}
               >
@@ -794,7 +783,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                   <Photo
                     src={photo.url}
                     alt={photo.title}
-                    $isPicked={pickedFrame === index}
+                    $isPicked={false}
                     $isLoaded={isLoadedArr[index]}
                     onLoad={() => {
                       console.log('onLoad fired', photo.url);

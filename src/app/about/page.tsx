@@ -459,61 +459,6 @@ const TicketBack = styled.div`
   overflow: hidden;
 `;
 
-const ProjectionArea = styled.div`
-  position: absolute;
-  left: 50%;
-  top: 22.5%;
-  width: 38.5%;
-  height: 28.5%;
-  transform: translate(-50%, 0) rotateY(180deg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  background: rgba(255,255,255,0.12);
-`;
-
-const PhotoImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-  transform: rotateY(180deg);
-`;
-
-const FavoritePhoto = styled.div`
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  position: relative;
-  z-index: 1;
-`;
-
-const PhotoTitle = styled.h3`
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 24px;
-  color: #8b0000;
-  text-align: center;
-  margin: 0;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-`;
-
-const PhotoDescription = styled.p`
-  font-size: 14px;
-  color: #2c1810;
-  text-align: center;
-  margin: 0;
-  opacity: 0.8;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-`;
-
 export default function About() {
   const [rotateX, setRotateX] = useState(5);
   const [rotateY, setRotateY] = useState(-2);
@@ -523,7 +468,6 @@ export default function About() {
   const [isFlipped, setIsFlipped] = useState(false);
   const ticketRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const photoUrl = '/your-microcms-image.jpg'; // ここを実際のmicroCMS画像URLに置き換えてください
 
   useEffect(() => {
     const checkMobile = () => {
@@ -594,7 +538,7 @@ export default function About() {
     return () => window.removeEventListener('mouseup', handleMouseUp);
   }, []);
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = () => {
     if (isDragging) return; // ドラッグ中はフリップしない
     setIsFlipped(!isFlipped);
   };
