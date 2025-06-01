@@ -65,6 +65,12 @@ const ModalOverlay = styled.div<{ $isOpen: boolean }>`
   animation: ${fadeIn} 0.3s ease-out;
   touch-action: none;
   user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  overscroll-behavior: none;
 `;
 
 const ModalContent = styled.div`
@@ -95,6 +101,13 @@ const ImageContainer = styled.div`
   transform: translateZ(0);
   -webkit-font-smoothing: antialiased;
   padding: 20px;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  overscroll-behavior: none;
 
   &:active {
     cursor: grabbing;
@@ -484,21 +497,19 @@ const GalleryModal: React.FC<GalleryModalProps> = ({
     const deltaY = currentY - touchStartY.current;
     
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
-      const sensitivity = 1.2;
+      const sensitivity = 1.0;
       const maxOffset = window.innerWidth * 0.8;
       setDragOffset({ 
         x: Math.max(Math.min(deltaX * sensitivity, maxOffset), -maxOffset), 
         y: 0 
       });
-    } else {
-      setDragOffset({ x: 0, y: deltaY });
     }
   };
 
   const handleTouchEnd = () => {
     if (!isDragging) return;
 
-    const threshold = 30;
+    const threshold = 50;
     const deltaX = touchStartX.current - startX;
     const deltaY = touchStartY.current - startY;
     const isVerticalSwipe = Math.abs(deltaY) > Math.abs(deltaX);
