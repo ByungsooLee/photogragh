@@ -2,15 +2,14 @@
 
 import styled from 'styled-components';
 import Image from 'next/image';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { getPhotos, type Photo as MicroCMSPhoto } from '@/lib/microcms';
 import React from 'react';
-import { CustomSelect } from '@/components/CustomSelect';
 import Header from '@/components/Header';
-import GalleryModal from '../../components/GalleryModal';
+import { CustomSelect } from '@/components/CustomSelect';
 
 // カテゴリーの型定義
-type Category = 'all' | 'camp' | 'outdoor' | 'still-life' | 'cooking' | 'portrait' | 'landscape' | 'overseas' | 'bath' | 'person';
+type Category = 'all' | 'portrait' | 'bath' | 'person';
 
 // 写真データの型定義
 interface Photo extends MicroCMSPhoto {
@@ -20,218 +19,129 @@ interface Photo extends MicroCMSPhoto {
 
 // スタイル定義
 const GalleryContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: var(--bg-dark);
-  padding-top: 80px; // ヘッダーの高さ分のパディング
   width: 100%;
-  min-width: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
+  min-height: 100vh;
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+  padding-top: 80px;
+`;
 
-  @media (max-width: 768px) {
-    padding-top: 160px; // SPではカテゴリーとフィルター分の余白を追加
+const MainImageContainer = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+  &:active {
+    cursor: grabbing;
   }
 `;
 
-const FilterContainer = styled.div`
+const ImageWrapper = styled.div<{ $isTransitioning: boolean }>`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: ${props => props.$isTransitioning ? 'scale(0.98)' : 'scale(1)'};
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+`;
+
+const ThumbnailContainer = styled.div`
   position: fixed;
-  top: 140px; // カテゴリーの下に配置
+  bottom: 0;
   left: 0;
   right: 0;
-  z-index: 100;
+  height: 100px;
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(10px);
-  padding: 1rem 2rem;
   display: flex;
-  gap: 2rem;
   align-items: center;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-
-  @media (max-width: 768px) {
-    top: 120px; // SPではカテゴリーの下に配置
-    padding: 0.5rem 1rem;
+  padding: 0 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  z-index: 100;
+  scroll-behavior: smooth;
+  &::-webkit-scrollbar {
+    display: none;
   }
 `;
 
-const FilterGroup = styled.div`
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
-  @media (max-width: 600px) {
-    flex-direction: column;
-    gap: 0.2rem;
-    align-items: stretch;
-    width: 100%;
-  }
-`;
-
-const FilmContainer = styled.div`
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  margin-top: 60px; // フィルター分の余白を追加
-
-  @media (max-width: 768px) {
-    padding: 1rem;
-    gap: 1rem;
-    margin-top: 40px; // SPでは余白を調整
-  }
-`;
-
-// フィルムストリップ全体
-const FilmStripRow = styled.div`
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0;
+const ThumbnailWrapper = styled.div<{ $isActive: boolean }>`
   position: relative;
-  width: 100%;
-  max-width: 100vw;
+  min-width: 140px;
+  height: 80px;
+  margin-right: 8px;
+  cursor: pointer;
+  opacity: ${props => props.$isActive ? 1 : 0.5};
+  transition: all 0.3s ease;
+  border: 2px solid ${props => props.$isActive ? '#fff' : 'transparent'};
+
+  &:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+`;
+
+const Title = styled.h1`
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
   margin: 0;
-  background: #111;
-  border-radius: 0;
-  box-shadow: none;
-  min-height: 320px;
-  padding: 0;
-  overflow-x: visible;
-  align-items: stretch;
-  @media (max-width: 1024px) {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0;
-    max-width: 100vw;
-    width: 100vw;
-    margin: 0;
-    min-height: 220px;
-    padding: 0;
-    border-radius: 0;
-    box-shadow: none;
-    background: none;
-    overflow-x: hidden;
-    align-items: stretch;
+  z-index: 10;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+
+  &:hover {
+    opacity: 1;
   }
-  @media (max-width: 600px) {
-    gap: 0;
-    min-height: 160px;
-    padding: 0;
-    align-items: stretch;
+
+  @media (max-width: 768px) {
+    font-size: 1.4rem;
   }
-`;
-// 上下黒帯
-const FilmStripBand = styled.div`
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 32px;
-  background: #000;
-  z-index: 2;
-`;
-const FilmStripBandTop = styled(FilmStripBand)`
-  top: 0;
-  border-radius: 16px 16px 0 0;
-  @media (max-width: 1024px) {
-    display: none;
-  }
-`;
-const FilmStripBandBottom = styled(FilmStripBand)`
-  bottom: 0;
-  border-radius: 0 0 16px 16px;
-  @media (max-width: 1024px) {
-    display: none;
-  }
-`;
-// 穴（パーフォレーション）
-const FilmStripHoles = styled.div`
-  position: absolute;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: space-between;
-  z-index: 3;
-  pointer-events: none;
-`;
-const FilmStripHolesTop = styled(FilmStripHoles)`
-  top: 6px;
-  @media (max-width: 1024px) {
-    display: none;
-  }
-`;
-const FilmStripHolesBottom = styled(FilmStripHoles)`
-  bottom: 6px;
-  @media (max-width: 1024px) {
-    display: none;
-  }
-`;
-const FilmHole = styled.div`
-  width: 24px;
-  height: 14px;
-  background: #fff;
-  border-radius: 3px;
-  box-shadow: 0 1px 2px #0004;
-`;
-// 画像間の仕切り線
-const FilmDivider = styled.div`
-  display: none;
 `;
 
-// GalleryImageはImageのラッパー用スタイルだけに
-const GalleryImageWrapper = styled.div`
-  width: 100%;
-  aspect-ratio: 2/3;
-  height: 100%;
-  position: relative;
-  border-radius: 12px;
-  overflow: hidden;
+const CategoryContainer = styled.div`
+  position: fixed;
+  top: 100px;
+  left: 20px;
+  z-index: 10;
+  transform: scale(0.85);
+  transform-origin: top left;
 `;
 
-const Caption = styled.div`
-  width: 100%;
-  padding: 1.2rem 0.5rem 0.7rem 0.5rem;
-  text-align: center;
-  color: #fff;
-  font-family: 'Bebas Neue', 'Noto Serif JP', serif;
-  font-size: 1.25rem;
-  letter-spacing: 1.5px;
-  text-shadow: 0 2px 8px #000, 0 0 2px #b8941f;
-  background: linear-gradient(0deg, rgba(10,10,10,0.85) 60%, transparent 100%);
-  border-radius: 0 0 12px 12px;
-`;
+const CATEGORIES: Category[] = ['all', 'portrait', 'bath', 'person'];
 
 export default function Gallery() {
-  const [selectedCategory, setSelectedCategory] = useState<Category>('all');
-  const [selectedDate, setSelectedDate] = useState<string>('all');
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoadedArr, setIsLoadedArr] = useState<boolean[]>([]);
-  const [currentModalIndex, setCurrentModalIndex] = useState<number | null>(null);
-  const [totalCount, setTotalCount] = useState<number | undefined>(undefined);
-  const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const loaderRef = useRef<HTMLDivElement | null>(null);
-  const PHOTOS_PER_PAGE = 12;
-  const modalImageWrapperRef = useRef<HTMLDivElement | null>(null);
-  const [modalKey, setModalKey] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Category>('all');
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+  const scrollAccumulator = useRef(0);
+  const lastScrollTime = useRef(Date.now());
+  const thumbnailContainerRef = useRef<HTMLDivElement>(null);
+  const SCROLL_THRESHOLD = 10;
+  const SCROLL_COOLDOWN = 20;
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setTimeout(() => {
-      setCurrentModalIndex(null);
-      setModalKey('');
-    }, 100); // 100ms後に完全リセット
-  };
-
-  // microCMSから画像を取得
   useEffect(() => {
     const fetchPhotos = async () => {
-      setIsLoading(true);
       try {
-        const { photos: fetched, totalCount } = await getPhotos({ limit: PHOTOS_PER_PAGE, offset: 0 });
-        // 仮のロジック: 取得した順にportrait, bath, personを割り振る
+        const { photos: fetched } = await getPhotos({ limit: 50, offset: 0 });
         const categories: Category[] = ['portrait', 'bath', 'person'];
         const withMeta = fetched.map((p, i) => ({
           ...p,
@@ -239,278 +149,178 @@ export default function Gallery() {
           date: '2024-03-01'
         }));
         setPhotos(withMeta);
-        setFilteredPhotos(withMeta);
-        setTotalCount(totalCount);
       } catch {
         setPhotos([]);
-        setFilteredPhotos([]);
-        setTotalCount(undefined);
-      } finally {
-        setIsLoading(false);
       }
     };
     fetchPhotos();
   }, []);
 
-  // フィルタリング処理
+  // カテゴリーでフィルタリングされた写真を取得
+  const filteredPhotos = useMemo(() => {
+    if (selectedCategory === 'all') return photos;
+    return photos.filter(photo => photo.category === selectedCategory);
+  }, [photos, selectedCategory]);
+
+  // カテゴリーが変更されたときにインデックスをリセット
   useEffect(() => {
-    let filtered = photos;
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(photo => photo.category === selectedCategory);
-    }
-    if (selectedDate !== 'all') {
-      filtered = filtered.filter(photo => photo.date.startsWith(selectedDate));
-    }
-    setFilteredPhotos(filtered);
-  }, [selectedCategory, selectedDate, photos]);
+    setCurrentIndex(0);
+  }, [selectedCategory]);
 
+  // currentIndexが範囲外の場合にリセット
   useEffect(() => {
-    setIsLoadedArr(prev => {
-      if (filteredPhotos.length > prev.length) {
-        return [...prev, ...Array(filteredPhotos.length - prev.length).fill(false)];
-      }
-      return prev.slice(0, filteredPhotos.length);
-    });
-  }, [filteredPhotos.length]);
+    if (filteredPhotos.length > 0 && currentIndex >= filteredPhotos.length) {
+      setCurrentIndex(0);
+    }
+  }, [filteredPhotos, currentIndex]);
 
-  // カテゴリーの一覧
-  const categories = [
-    { value: 'all', label: 'All' },
-    { value: 'portrait', label: 'Portrait' },
-    { value: 'bath', label: 'Bath' },
-    { value: 'person', label: 'Person' }
-  ];
-
-  // 日付の一覧（実際のデータから生成）
-  const dates = [
-    { value: 'all', label: 'All' },
-    { value: '2024-03', label: '2024/3' },
-    { value: '2024-02', label: '2024/2' },
-    // 他の日付を追加
-  ];
-
-  const handlePhotoClick = (photo: Photo, idx: number) => {
-    setCurrentModalIndex(idx);
-    setModalKey(photo.url + '-' + Date.now());
-    setIsModalOpen(true);
+  const handleThumbnailClick = (index: number) => {
+    setCurrentIndex(index);
   };
 
-  // 無限スクロール: 追加取得
-  const fetchMorePhotos = useCallback(async () => {
-    if (isFetchingMore) return;
-    if (photos.length >= (totalCount || 0)) return;
-    setIsFetchingMore(true);
-    try {
-      const { photos: morePhotos } = await getPhotos({ limit: PHOTOS_PER_PAGE, offset: photos.length });
-      // 仮のロジック: 取得した順にportrait, bath, personを割り振る
-      const categories: Category[] = ['portrait', 'bath', 'person'];
-      const withMeta = morePhotos.map((p, i) => ({
-        ...p,
-        category: categories[(photos.length + i) % categories.length],
-        date: '2024-03-01'
-      }));
-      setPhotos(prev => [...prev, ...withMeta]);
-      setFilteredPhotos(prev => [...prev, ...withMeta]);
-    } finally {
-      setIsFetchingMore(false);
-    }
-  }, [isFetchingMore, photos.length, totalCount, PHOTOS_PER_PAGE]);
+  const handleScroll = useCallback((e: WheelEvent) => {
+    const now = Date.now();
+    if (now - lastScrollTime.current < SCROLL_COOLDOWN || filteredPhotos.length === 0) return;
 
-  // IntersectionObserverで下端検知
+    scrollAccumulator.current += e.deltaY;
+    const absDelta = Math.abs(scrollAccumulator.current);
+
+    if (absDelta > SCROLL_THRESHOLD) {
+      lastScrollTime.current = now;
+
+      if (scrollAccumulator.current > 0 && currentIndex < filteredPhotos.length - 1) {
+        setIsTransitioning(true);
+        setCurrentIndex(prev => prev + 1);
+        scrollAccumulator.current = 0;
+      } else if (scrollAccumulator.current < 0 && currentIndex > 0) {
+        setIsTransitioning(true);
+        setCurrentIndex(prev => prev - 1);
+        scrollAccumulator.current = 0;
+      }
+
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current);
+      }
+
+      scrollTimeout.current = setTimeout(() => {
+        setIsTransitioning(false);
+      }, 150);
+    }
+  }, [currentIndex, filteredPhotos.length]);
+
   useEffect(() => {
-    if (!loaderRef.current) return;
-    const observer = new window.IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          fetchMorePhotos();
-        }
-      },
-      { root: null, rootMargin: '0px', threshold: 0.1 }
-    );
-    observer.observe(loaderRef.current);
-    // 修正: refを変数に退避
-    const currentLoader = loaderRef.current;
-    return () => {
-      if (currentLoader) observer.unobserve(currentLoader);
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      handleScroll(e);
     };
-  }, [fetchMorePhotos]);
 
-  // モーダルを開くたびに画像ラッパーのscrollTop=0を徹底
-  useEffect(() => {
-    if (isModalOpen && modalImageWrapperRef.current) {
-      modalImageWrapperRef.current.scrollTop = 0;
+    const handleTouchStart = () => {
+      scrollAccumulator.current = 0;
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchstart', handleTouchStart);
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current);
+      }
+    };
+  }, [handleScroll]);
+
+  // サムネイルのスクロール位置を更新する関数
+  const scrollToCurrentThumbnail = useCallback(() => {
+    if (thumbnailContainerRef.current) {
+      const container = thumbnailContainerRef.current;
+      const thumbnails = container.children;
+      if (thumbnails[currentIndex]) {
+        const thumbnail = thumbnails[currentIndex] as HTMLElement;
+        const containerWidth = container.offsetWidth;
+        const thumbnailLeft = thumbnail.offsetLeft;
+        const thumbnailWidth = thumbnail.offsetWidth;
+        
+        // サムネイルが中央に来るようにスクロール
+        const scrollPosition = thumbnailLeft - (containerWidth / 2) + (thumbnailWidth / 2);
+        container.scrollTo({
+          left: scrollPosition,
+          behavior: 'smooth'
+        });
+      }
     }
-  }, [isModalOpen, currentModalIndex, modalKey]);
+  }, [currentIndex]);
+
+  // currentIndexが変更されたときにサムネイルをスクロール
+  useEffect(() => {
+    scrollToCurrentThumbnail();
+  }, [currentIndex, scrollToCurrentThumbnail]);
 
   return (
-    <GalleryContainer>
+    <>
       <Header />
-      <FilterContainer>
-        <FilterGroup>
+      <GalleryContainer>
+        <Title>Gallery</Title>
+        <CategoryContainer>
           <CustomSelect
-            options={categories}
+            options={CATEGORIES.map(category => ({
+              value: category,
+              label: category.charAt(0).toUpperCase() + category.slice(1)
+            }))}
             value={selectedCategory}
-            onChange={v => setSelectedCategory(v as Category)}
-            label="Category:"
+            onChange={(value) => setSelectedCategory(value as Category)}
+            style={{ minWidth: '140px' }}
           />
-        </FilterGroup>
-        <FilterGroup>
-          <CustomSelect
-            options={dates}
-            value={selectedDate}
-            onChange={v => setSelectedDate(v)}
-            label="Date:"
-          />
-        </FilterGroup>
-      </FilterContainer>
-      <FilmContainer>
-        {isLoading ? (
-          <div>Loading...</div>
-        ) : (
-          <div style={{ position: 'relative', width: '100%' }}>
-            <FilmStripBandTop />
-            <FilmStripBandBottom />
-            <FilmStripHolesTop>
-              {Array.from({ length: filteredPhotos.length * 2 + 1 }).map((_, i) => <FilmHole key={i} />)}
-            </FilmStripHolesTop>
-            <FilmStripHolesBottom>
-              {Array.from({ length: filteredPhotos.length * 2 + 1 }).map((_, i) => <FilmHole key={i} />)}
-            </FilmStripHolesBottom>
-            <FilmStripRow>
-              {filteredPhotos.map((photo, idx) => {
-                // PCのみ仕切り線を出力
-                if (typeof window !== 'undefined' && window.innerWidth > 1024 && idx !== 0) {
-                  return [
-                    <FilmDivider key={`divider-${photo.id}-divider`} />,
-                    <div
-                      key={`frame-${photo.id}`}
-                      onClick={() => handlePhotoClick(photo, idx)}
-                      tabIndex={0}
-                      role="button"
-                      aria-label={`拡大表示: ${photo.title}`}
-                      style={{
-                        cursor: 'pointer',
-                        position: 'relative',
-                        boxSizing: 'border-box',
-                        margin: 0,
-                        padding: 0,
-                        borderRadius: 0,
-                        boxShadow: 'none',
-                        width: '100%',
-                        height: '100%',
-                      }}
-                    >
-                      <GalleryImageWrapper>
-                        <Image
-                          src={photo.url + '?w=400&fm=webp'}
-                          alt={photo.title}
-                          width={400}
-                          height={400}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            borderRadius: 0,
-                            filter: 'sepia(12%) contrast(1.08) brightness(1.08) saturate(1.1)',
-                            opacity: isLoadedArr[idx] ? 1 : 0,
-                            transition: 'opacity 0.2s cubic-bezier(0.4,0,0.2,1)',
-                            boxShadow: 'none',
-                            margin: 0,
-                            padding: 0,
-                          }}
-                          onLoad={() => {
-                            setIsLoadedArr(prev => {
-                              const next = [...prev];
-                              next[idx] = true;
-                              return next;
-                            });
-                          }}
-                          priority={idx < 6}
-                          placeholder="blur"
-                          blurDataURL={photo.url + '?w=10&blur=20&fm=webp'}
-                          unoptimized={false}
-                          loading={idx < 6 ? 'eager' : 'lazy'}
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        />
-                      </GalleryImageWrapper>
-                      <Caption style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 4 }}>{photo.title}</Caption>
-                    </div>
-                  ];
-                }
-                // タブレット・SPは画像だけ
-                return (
-                  <div
-                    key={`frame-${photo.id}`}
-                    onClick={() => handlePhotoClick(photo, idx)}
-                    tabIndex={0}
-                    role="button"
-                    aria-label={`拡大表示: ${photo.title}`}
+        </CategoryContainer>
+        {filteredPhotos.length > 0 ? (
+          <>
+            <MainImageContainer>
+              <ImageWrapper $isTransitioning={isTransitioning}>
+                <Image
+                  src={filteredPhotos[currentIndex].url}
+                  alt={filteredPhotos[currentIndex].title}
+                  fill
+                  sizes="100vw"
+                  priority={currentIndex === 0}
+                  style={{
+                    objectFit: 'contain',
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transform: isTransitioning ? 'scale(0.98)' : 'scale(1)'
+                  }}
+                />
+              </ImageWrapper>
+            </MainImageContainer>
+            <ThumbnailContainer ref={thumbnailContainerRef}>
+              {filteredPhotos.map((photo, index) => (
+                <ThumbnailWrapper
+                  key={photo.id}
+                  $isActive={index === currentIndex}
+                  onClick={() => handleThumbnailClick(index)}
+                >
+                  <Image
+                    src={photo.url}
+                    alt={photo.title}
+                    fill
+                    sizes="(max-width: 768px) 140px, 140px"
+                    priority={index < 4}
                     style={{
-                      cursor: 'pointer',
-                      position: 'relative',
-                      boxSizing: 'border-box',
-                      margin: 0,
-                      padding: 0,
-                      borderRadius: 0,
-                      boxShadow: 'none',
-                      width: '100%',
-                      height: '100%',
+                      objectFit: 'cover'
                     }}
-                  >
-                    <GalleryImageWrapper>
-                      <Image
-                        src={photo.url + '?w=400&fm=webp'}
-                        alt={photo.title}
-                        width={400}
-                        height={400}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          borderRadius: 0,
-                          filter: 'sepia(12%) contrast(1.08) brightness(1.08) saturate(1.1)',
-                          opacity: isLoadedArr[idx] ? 1 : 0,
-                          transition: 'opacity 0.2s cubic-bezier(0.4,0,0.2,1)',
-                          boxShadow: 'none',
-                          margin: 0,
-                          padding: 0,
-                        }}
-                        onLoad={() => {
-                          setIsLoadedArr(prev => {
-                            const next = [...prev];
-                            next[idx] = true;
-                            return next;
-                          });
-                        }}
-                        priority={idx < 6}
-                        placeholder="blur"
-                        blurDataURL={photo.url + '?w=10&blur=20&fm=webp'}
-                        unoptimized={false}
-                        loading={idx < 6 ? 'eager' : 'lazy'}
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      />
-                    </GalleryImageWrapper>
-                    <Caption style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 4 }}>{photo.title}</Caption>
-                  </div>
-                );
-              })}
-            </FilmStripRow>
-            {/* 無限スクロール用ローダー */}
-            <div ref={loaderRef} style={{ height: 32 }} />
-            {isFetchingMore && <div style={{ textAlign: 'center', color: '#d4af37', margin: 8 }}>Loading...</div>}
-            {photos.length >= (totalCount || 0) && (
-              <div style={{ textAlign: 'center', color: '#888', margin: 8, fontSize: '0.95rem' }}>すべての写真を表示しました</div>
-            )}
-          </div>
+                  />
+                </ThumbnailWrapper>
+              ))}
+            </ThumbnailContainer>
+          </>
+        ) : (
+          <MainImageContainer>
+            <div style={{ color: '#fff', textAlign: 'center' }}>
+              {photos.length === 0 ? '画像を読み込み中...' : 'このカテゴリーには画像がありません'}
+            </div>
+          </MainImageContainer>
         )}
-      </FilmContainer>
-      <GalleryModal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        photos={filteredPhotos}
-        currentIndex={currentModalIndex || 0}
-        onIndexChange={setCurrentModalIndex}
-      />
-    </GalleryContainer>
+      </GalleryContainer>
+    </>
   );
 } 

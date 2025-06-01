@@ -22,15 +22,6 @@ const fadeIn = keyframes`
   }
 `;
 
-const slideIn = keyframes`
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-`;
-
 const filmGrain = keyframes`
   0%, 100% { transform: translate(0, 0); }
   10% { transform: translate(-5%, -5%); }
@@ -42,24 +33,6 @@ const filmGrain = keyframes`
   70% { transform: translate(0, 10%); }
   80% { transform: translate(3%, 15%); }
   90% { transform: translate(-10%, 10%); }
-`;
-
-const slideTransition = keyframes`
-  0% {
-    transform: translateX(100%);
-  }
-  100% {
-    transform: translateX(0);
-  }
-`;
-
-const slideTransitionReverse = keyframes`
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(0);
-  }
 `;
 
 const pulseAnimation = keyframes`
@@ -259,17 +232,19 @@ const CircleHint = styled.div<{ $direction: 'left' | 'right' }>`
   }
 `;
 
-const ImageWrapper = styled.div`
+const ImageWrapper = styled.div<{ $direction: 'left' | 'right' | null }>`
   position: relative;
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  will-change: transform;
-  backface-visibility: hidden;
-  transform: translateZ(0);
-  -webkit-font-smoothing: antialiased;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: ${props => {
+    if (props.$direction === 'left') return 'translateX(-100%)';
+    if (props.$direction === 'right') return 'translateX(100%)';
+    return 'translateX(0)';
+  }};
 `;
 
 const CloseButton = styled.button`
