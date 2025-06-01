@@ -39,7 +39,20 @@ const FilmContainer = styled.div`
 `;
 
 export default function HomeClient() {
-  const [photos, setPhotos] = useState<Photo[]>(getDummyPhotos());
+  // 初期状態でlocalStorageキャッシュ or ダミー画像
+  const getInitialPhotos = () => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('gallery_photos');
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch {}
+      }
+    }
+    return getDummyPhotos();
+  };
+  const [photos, setPhotos] = useState<Photo[]>(getInitialPhotos());
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalImage, setModalImage] = useState('');
@@ -52,12 +65,26 @@ export default function HomeClient() {
     getPhotos().then(({ photos }) => {
       if (photos && photos.length > 0) {
         setPhotos(photos);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('gallery_photos', JSON.stringify(photos));
+        }
+      } else {
+        setPhotos(getDummyPhotos());
       }
       setIsLoading(false);
     }).catch(() => {
+      // 失敗時はキャッシュ or ダミー画像
+      setPhotos(getInitialPhotos());
       setIsLoading(false);
     });
   }, []);
+
+  // 空配列ガード
+  useEffect(() => {
+    if (!photos || photos.length === 0) {
+      setPhotos(getDummyPhotos());
+    }
+  }, [photos]);
 
   const handlePhotoClick = (photo: { url: string; title: string; caption: string; position: { x: number; y: number } }) => {
     setModalImage(photo.url);
