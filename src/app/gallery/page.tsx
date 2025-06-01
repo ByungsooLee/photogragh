@@ -131,17 +131,29 @@ export default function Gallery() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [touchEndX, setTouchEndX] = useState(0);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
   const scrollAccumulator = useRef(0);
   const lastScrollTime = useRef(Date.now());
   const thumbnailContainerRef = useRef<HTMLDivElement>(null);
   const SCROLL_THRESHOLD = 10;
   const SCROLL_COOLDOWN = 20;
+  const SWIPE_THRESHOLD = 50;
 
   useEffect(() => {
     const fetchPhotos = async () => {
       try {
+        setIsLoading(true);
+        setError(null);
         const { photos: fetched } = await getPhotos({ limit: 50, offset: 0 });
+        if (!fetched || fetched.length === 0) {
+          setError('写真が見つかりませんでした');
+          setPhotos([]);
+          return;
+        }
         const categories: Category[] = ['portrait', 'bath', 'person'];
         const withMeta = fetched.map((p, i) => ({
           ...p,
@@ -149,8 +161,12 @@ export default function Gallery() {
           date: '2024-03-01'
         }));
         setPhotos(withMeta);
-      } catch {
+      } catch (err) {
+        console.error('写真の取得に失敗しました:', err);
+        setError('写真の読み込みに失敗しました');
         setPhotos([]);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchPhotos();
@@ -256,6 +272,40 @@ export default function Gallery() {
     scrollToCurrentThumbnail();
   }, [currentIndex, scrollToCurrentThumbnail]);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+    scrollAccumulator.current = 0;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    const swipeDistance = touchEndX - touchStartX;
+    const absSwipeDistance = Math.abs(swipeDistance);
+
+    if (absSwipeDistance > SWIPE_THRESHOLD) {
+      setIsTransitioning(true);
+      if (swipeDistance > 0 && currentIndex > 0) {
+        // 右スワイプ：前の画像へ
+        setCurrentIndex(prev => prev - 1);
+      } else if (swipeDistance < 0 && currentIndex < filteredPhotos.length - 1) {
+        // 左スワイプ：次の画像へ
+        setCurrentIndex(prev => prev + 1);
+      }
+    }
+
+    // スワイプ終了後に状態をリセット
+    setTouchStartX(0);
+    setTouchEndX(0);
+
+    // トランジション終了後に状態をリセット
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, 150);
+  };
+
   return (
     <>
       <Header />
@@ -272,9 +322,21 @@ export default function Gallery() {
             style={{ minWidth: '140px' }}
           />
         </CategoryContainer>
-        {filteredPhotos.length > 0 ? (
+        {isLoading ? (
+          <MainImageContainer>
+            <div style={{ color: '#fff', textAlign: 'center' }}>読み込み中...</div>
+          </MainImageContainer>
+        ) : error ? (
+          <MainImageContainer>
+            <div style={{ color: '#fff', textAlign: 'center' }}>{error}</div>
+          </MainImageContainer>
+        ) : filteredPhotos.length > 0 ? (
           <>
-            <MainImageContainer>
+            <MainImageContainer
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
               <ImageWrapper $isTransitioning={isTransitioning}>
                 <Image
                   src={filteredPhotos[currentIndex].url}
@@ -316,7 +378,7 @@ export default function Gallery() {
         ) : (
           <MainImageContainer>
             <div style={{ color: '#fff', textAlign: 'center' }}>
-              {photos.length === 0 ? '画像を読み込み中...' : 'このカテゴリーには画像がありません'}
+              このカテゴリーには画像がありません
             </div>
           </MainImageContainer>
         )}

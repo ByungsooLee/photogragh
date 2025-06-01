@@ -186,20 +186,6 @@ const InfoPanel = styled.div`
   }
 `;
 
-const Title = styled.h2`
-  font-family: 'Playfair Display', serif;
-  font-size: 2rem;
-  margin: 0 0 10px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  color: #fff;
-
-  @media (max-width: 768px) {
-    font-size: 1.5rem;
-    margin: 0 0 8px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
-  }
-`;
-
 const Caption = styled.p`
   font-family: 'Cormorant Garamond', serif;
   font-size: 1.2rem;
