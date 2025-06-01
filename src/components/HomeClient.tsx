@@ -5,8 +5,7 @@ import styled from 'styled-components';
 import Header from './Header';
 import Modal from './Modal';
 import FilmStrip from './FilmStrip';
-import { getPhotos, type Photo } from '../lib/microcms';
-import { getDummyPhotos } from '../lib/microcms';
+import { getPhotos, type Photo, getDummyPhotos } from '../lib/microcms';
 
 const FilmGallery = styled.div`
   position: relative;
@@ -40,7 +39,7 @@ const FilmContainer = styled.div`
 `;
 
 export default function HomeClient() {
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [photos, setPhotos] = useState<Photo[]>(getDummyPhotos());
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalImage, setModalImage] = useState('');
@@ -51,10 +50,11 @@ export default function HomeClient() {
   useEffect(() => {
     setIsLoading(true);
     getPhotos().then(({ photos }) => {
-      setPhotos(photos && photos.length > 0 ? photos : getDummyPhotos());
+      if (photos && photos.length > 0) {
+        setPhotos(photos);
+      }
       setIsLoading(false);
     }).catch(() => {
-      setPhotos(getDummyPhotos());
       setIsLoading(false);
     });
   }, []);
