@@ -123,8 +123,9 @@ const ImageContainer = styled.div`
   width: 100%;
   height: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   overflow: hidden;
   padding: 20px;
   background: rgba(0, 0, 0, 0.3);
@@ -147,6 +148,23 @@ const ModalImage = styled.img`
     filter: sepia(0%) contrast(1.1) brightness(1.15);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
   }
+`;
+
+const ModalCloseButton = styled.button`
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  margin-bottom: 8px;
+  align-self: flex-end;
 `;
 
 const InfoPanel = styled.div`
@@ -198,11 +216,7 @@ const Caption = styled.p`
 `;
 
 const BottomSwipeHint = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 20;
+  margin-top: 8px;
   color: #ffe9a7;
   font-size: 1.08rem;
   background: rgba(10,10,10,0.7);
@@ -292,28 +306,7 @@ const Modal: React.FC<ModalProps> = ({
       >
         <FilmFrame />
         <ImageContainer>
-          <button
-            onClick={onClose}
-            aria-label="閉じる"
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              zIndex: 30,
-              background: 'rgba(0,0,0,0.7)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '50%',
-              width: 40,
-              height: 40,
-              fontSize: '2rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              pointerEvents: 'auto'
-            }}
-          >×</button>
+          <ModalCloseButton onClick={onClose} aria-label="閉じる">×</ModalCloseButton>
           <ModalImage src={imageUrl} alt={title} />
           <BottomSwipeHint>Swipe up or sideways to close</BottomSwipeHint>
         </ImageContainer>
