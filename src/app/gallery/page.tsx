@@ -231,9 +231,11 @@ const FilmModalFrame = styled.div<{ $isPortrait?: boolean }>`
     border-radius: 0;
     box-shadow: none;
     margin: 0;
-    padding: 0;
+    padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0) 0;
     align-items: center;
     justify-content: center;
+    overflow-y: auto;
+    max-height: 100dvh;
   }
 `;
 const FilmModalBand = styled.div`
@@ -681,7 +683,7 @@ export default function Gallery() {
             {currentModalIndex < filteredPhotos.length - 1 && (
               <ModalArrowRight onClick={() => setCurrentModalIndex(currentModalIndex + 1)} aria-label="次の写真へ">&#8594;</ModalArrowRight>
             )}
-            <div style={{ position: 'relative', width: '100%', height: 'calc(100% - 64px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}>
+            <div style={{ position: 'relative', width: '100%', height: 'calc(100% - 64px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5, overflowY: 'auto', paddingTop: 'env(safe-area-inset-top, 0)', paddingBottom: 'env(safe-area-inset-bottom, 0)' }}>
               <Image
                 src={filteredPhotos[currentModalIndex].url + '?w=1200&fm=webp'}
                 alt={filteredPhotos[currentModalIndex].title}
@@ -691,7 +693,7 @@ export default function Gallery() {
                   width: '100%',
                   height: '100%',
                   maxWidth: '100vw',
-                  maxHeight: '100dvh',
+                  maxHeight: 'calc(100dvh - 48px - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0))',
                   borderRadius: '6px',
                   boxShadow: '0 2px 16px rgba(0,0,0,0.18)',
                   background: '#222',
