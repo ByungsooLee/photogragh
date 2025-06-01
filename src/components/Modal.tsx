@@ -239,6 +239,7 @@ const Modal: React.FC<ModalProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [startY, setStartY] = useState(0);
+  const [startX, setStartX] = useState(0);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -261,23 +262,30 @@ const Modal: React.FC<ModalProps> = ({
   const handleTouchStart = (e: React.TouchEvent) => {
     setIsDragging(true);
     setStartY(e.touches[0].clientY);
+    setStartX(e.touches[0].clientX);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
     
     const currentY = e.touches[0].clientY;
+    const currentX = e.touches[0].clientX;
     const deltaY = currentY - startY;
+    const deltaX = currentX - startX;
     
-    if (deltaY > 0) { // 下方向へのスワイプのみ許可
-      setDragOffset({ x: 0, y: deltaY });
-    }
+    // 上下左右のスワイプを許可
+    setDragOffset({ x: deltaX, y: deltaY });
   };
 
   const handleTouchEnd = () => {
     if (!isDragging) return;
 
-    if (dragOffset.y > 100) { // 100px以上スワイプされたら閉じる
+    // スワイプのしきい値を調整（より小さく）
+    const threshold = 50;
+    if (
+      Math.abs(dragOffset.y) > threshold || 
+      Math.abs(dragOffset.x) > threshold
+    ) {
       onClose();
     } else {
       setDragOffset({ x: 0, y: 0 });

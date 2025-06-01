@@ -7,6 +7,7 @@ import { getPhotos, type Photo as MicroCMSPhoto } from '@/lib/microcms';
 import React from 'react';
 import { CustomSelect } from '@/components/CustomSelect';
 import Header from '@/components/Header';
+import GalleryModal from '../../components/GalleryModal';
 
 // カテゴリーの型定義
 type Category = 'all' | 'camp' | 'outdoor' | 'still-life' | 'cooking' | 'portrait' | 'landscape' | 'overseas' | 'bath' | 'person';
@@ -198,58 +199,6 @@ const Caption = styled.div`
   text-shadow: 0 2px 8px #000, 0 0 2px #b8941f;
   background: linear-gradient(0deg, rgba(10,10,10,0.85) 60%, transparent 100%);
   border-radius: 0 0 12px 12px;
-`;
-
-// フィルム風モーダル
-const FilmModalFrame = styled.div<{ $isPortrait?: boolean }>`
-  position: relative;
-  background: #111;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 4px #000;
-  overflow: visible;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: ${props => props.$isPortrait ? '400px' : '600px'};
-  min-height: ${props => props.$isPortrait ? '600px' : '400px'};
-  width: ${props => props.$isPortrait ? '40vw' : '60vw'};
-  height: auto;
-  aspect-ratio: ${props => props.$isPortrait ? '2/3' : '4/3'};
-  margin: 0 auto;
-  @media (max-width: 1024px) {
-    min-width: 220px;
-    width: 90vw;
-    min-height: 220px;
-    aspect-ratio: ${props => props.$isPortrait ? '2/3' : '4/3'};
-  }
-  @media (max-width: 600px) {
-    min-width: 0;
-    width: 100vw;
-    min-height: 0;
-    height: 100svh;
-    min-height: 100svh;
-    max-height: 100svh;
-    height: 100dvh;
-    min-height: 100dvh;
-    max-height: 100dvh;
-    height: 100vh;
-    min-height: 100vh;
-    max-height: 100vh;
-    box-sizing: border-box;
-    aspect-ratio: unset;
-    border-radius: 0;
-    box-shadow: none;
-    margin: 0;
-    padding-top: env(safe-area-inset-top, 0);
-    padding-bottom: env(safe-area-inset-bottom, 0);
-    align-items: stretch;
-    justify-content: flex-start;
-    overflow-y: auto;
-    position: fixed;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-  }
 `;
 
 export default function Gallery() {
@@ -555,115 +504,13 @@ export default function Gallery() {
           </div>
         )}
       </FilmContainer>
-      {isModalOpen && currentModalIndex !== null && (
-        <div
-          key={modalKey}
-          style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          onClick={closeModal}
-        >
-          <FilmModalFrame
-            $isPortrait={(() => {
-              const img = filteredPhotos[currentModalIndex];
-              const match = img.url.match(/[?&]h=(\d+)/);
-              const h = match ? parseInt(match[1], 10) : undefined;
-              const wMatch = img.url.match(/[?&]w=(\d+)/);
-              const w = wMatch ? parseInt(wMatch[1], 10) : undefined;
-              if (w && h) return h > w;
-              return false;
-            })()}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* バツ印（閉じるボタン）を画像のすぐ上に */}
-            <div style={{ 
-              width: '100%', 
-              display: 'flex', 
-              justifyContent: 'center', 
-              alignItems: 'center', 
-              padding: '8px 12px 0 12px', 
-              boxSizing: 'border-box',
-              position: 'absolute',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              zIndex: 20
-            }}>
-              <button
-                onClick={closeModal}
-                style={{ 
-                  background: 'rgba(0,0,0,0.7)', 
-                  color: '#fff', 
-                  border: 'none', 
-                  borderRadius: '50%', 
-                  width: 36, 
-                  height: 36, 
-                  fontSize: 24, 
-                  cursor: 'pointer',
-                  position: 'absolute',
-                  right: 12
-                }}
-                aria-label="閉じる"
-              >×</button>
-            </div>
-            {/* 画像本体 */}
-            <div
-              ref={modalImageWrapperRef}
-              style={{ width: '100%', flex: '1 1 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 0, margin: 0 }}
-            >
-              <Image
-                src={filteredPhotos[currentModalIndex].url + '?w=1200&fm=webp'}
-                alt={filteredPhotos[currentModalIndex].title}
-                fill
-                style={{
-                  objectFit: 'contain',
-                  width: '100%',
-                  height: '100%',
-                  maxWidth: '100vw',
-                  maxHeight: '100%',
-                  borderRadius: '6px',
-                  boxShadow: '0 2px 16px rgba(0,0,0,0.18)',
-                  background: '#222',
-                  zIndex: 5,
-                  margin: 0,
-                  padding: 0,
-                  display: 'block'
-                }}
-                loading="eager"
-                priority
-              />
-            </div>
-            {/* タイトル（キャプション）を画像のすぐ下に */}
-            <Caption style={{ 
-              position: 'absolute', 
-              left: 0, 
-              right: 0, 
-              bottom: '50%', 
-              transform: 'translateY(50%)',
-              zIndex: 6, 
-              width: '100%', 
-              borderRadius: 0, 
-              background: 'rgba(10,10,10,0.85)',
-              padding: '12px 0'
-            }}>
-              {filteredPhotos[currentModalIndex].title}
-            </Caption>
-            {/* スワイプ文言をさらに下に */}
-            <div style={{ 
-              width: '100%', 
-              textAlign: 'center', 
-              color: '#d4af37', 
-              fontSize: '1.1rem', 
-              padding: '8px 0 12px 0', 
-              background: 'rgba(10,10,10,0.7)', 
-              letterSpacing: '0.05em',
-              position: 'absolute',
-              bottom: '50%',
-              transform: 'translateY(50%)',
-              zIndex: 6
-            }}>
-              Swipe up or sideways to close
-            </div>
-          </FilmModalFrame>
-        </div>
-      )}
+      <GalleryModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        photos={filteredPhotos}
+        currentIndex={currentModalIndex || 0}
+        onIndexChange={setCurrentModalIndex}
+      />
     </GalleryContainer>
   );
 } 
