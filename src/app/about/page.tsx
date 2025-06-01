@@ -2,7 +2,7 @@
 
 import styled from 'styled-components';
 import Header from '@/components/Header';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 const AboutContainer = styled.div`
   min-height: 100vh;
@@ -54,55 +54,123 @@ const AboutContainer = styled.div`
 
 const TicketWrapper = styled.div`
   width: 100vw;
+  min-height: calc(100vh - 80px);
+  padding-top: 80px;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 80vh;
-  @media (max-width: 768px) {
-    min-height: 100vh;
-    align-items: center;
+  position: relative;
+  @media (max-width: 600px) {
+    position: absolute;
+    top: 80px;
+    left: 0;
+    width: 100vw;
+    height: calc(100vh - 80px);
+    min-height: unset;
+    padding: 16px 0 16px 0;
     justify-content: center;
-    padding: 0;
-    margin-top: 0;
+    align-items: center;
+    overflow: hidden;
   }
 `;
 
-const Ticket = styled.div<{ $isReverse: boolean; $isClicked: boolean }>`
+const Ticket = styled.div<{ $isClicked: boolean }>`
   display: flex;
-  flex-direction: ${props => props.$isReverse ? 'row-reverse' : 'row'};
-  width: 420px;
-  height: 170px;
+  flex-direction: row;
+  width: 500px;
+  height: 210px;
   background: transparent;
-  border-radius: 18px;
+  border-radius: 28px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-  position: relative;
   overflow: visible;
   transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: ${props => props.$isClicked ? 'translateZ(100px) scale(0.8) rotate(15deg)' : 'none'};
   opacity: ${props => props.$isClicked ? '0' : '1'};
   perspective: 1000px;
+  position: relative;
   @media (max-width: 1024px) {
-    width: 92vw;
-    height: 38vw;
-    min-height: 140px;
-    max-width: 420px;
-    max-height: 200px;
+    width: 98vw;
+    height: 48vw;
+    min-height: 180px;
+    max-width: 500px;
+    max-height: 240px;
   }
   @media (max-width: 600px) {
-    flex-direction: row !important;
-    width: 94vw;
-    height: 44vw;
-    min-height: 140px;
-    max-width: 340px;
-    max-height: 180px;
-    transform: ${props => props.$isClicked ? 'translate(-50%, -50%) rotate(105deg) translateZ(100px) scale(0.8)' : 'translate(-50%, -50%) rotate(90deg)'};
+    width: 100vh;
+    height: 100vw;
+    min-width: 100vh;
+    min-height: 100vw;
+    max-width: 100vh;
+    max-height: 100vw;
+    transform: rotate(90deg) translateY(-100vw);
+    transform-origin: top left;
+    margin: 0;
     position: absolute;
-    left: 50%;
-    top: 50%;
+    top: 0;
+    left: 0;
   }
 `;
 
-const FilmPart = styled.div`
+const CutLineWrapper = styled.div`
+  position: absolute;
+  left: 0;
+  margin-left: 90px;
+  top: 0;
+  bottom: 0;
+  width: 48px;
+  min-height: 120px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  cursor: pointer;
+`;
+
+const CutLine = styled.div`
+  width: 2px;
+  height: 100%;
+  border-left: 2px dashed #fff;
+  position: absolute;
+  left: 16px;
+  top: 0;
+  bottom: 0;
+  z-index: 41;
+`;
+
+const ScissorsIcon = styled.div`
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 42;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+`;
+
+const CutHint = styled.div`
+  position: absolute;
+  left: 50%;
+  top: -22px;
+  transform: translateX(-50%);
+  color: #222;
+  font-size: 1.05rem;
+  font-weight: 600;
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  z-index: 50;
+  cursor: pointer;
+  user-select: none;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+`;
+
+const FilmPart = styled.div<{ $isCutting?: boolean }>`
   background: #222;
   width: 90px;
   height: 100%;
@@ -114,6 +182,11 @@ const FilmPart = styled.div`
   position: relative;
   box-shadow: 2px 0 8px rgba(0,0,0,0.18);
   z-index: 2;
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  ${({ $isCutting }) => $isCutting && `
+    transform: translateX(-120px) rotate(-8deg);
+    opacity: 0.7;
+  `}
   @media (max-width: 600px) {
     width: 90px;
     border-radius: 16px 0 0 16px;
@@ -164,30 +237,39 @@ const BarcodeImg2 = styled.div`
   );
   border-radius: 4px;
 `;
-const MainPart = styled.div`
+const MainPart = styled.div<{ $isCutting?: boolean }>`
   flex: 1;
   background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%);
-  border-radius: 0 16px 16px 0;
+  border-radius: 0 20px 20px 0;
   color: #fff;
-  padding: 22px 24px 18px 24px;
+  padding: 32px 32px 36px 32px;
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: space-between;
   min-width: 0;
-  overflow: hidden;
+  min-height: 200px;
+  overflow: visible;
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  ${({ $isCutting }) => $isCutting && `
+    transform: translateX(120px) rotate(8deg);
+    opacity: 0.7;
+  `}
   @media (max-width: 600px) {
-    border-radius: 0 12px 12px 0;
-    padding: 14px 10px 10px 10px;
+    border-radius: 0 14px 14px 0;
+    padding: 18px 12px 22px 12px;
     writing-mode: initial;
     text-orientation: initial;
     align-items: flex-start;
+    min-height: 140px;
     > * {
       transform: none;
       margin: initial;
       text-align: initial;
       width: initial;
       max-width: initial;
+      white-space: normal;
+      overflow: visible;
     }
   }
 `;
@@ -221,34 +303,8 @@ const MainStars = styled.div`
 `;
 const MainInfo = styled.div`
   font-size: 1rem;
-  margin-top: auto;
   font-weight: bold;
   letter-spacing: 1px;
-`;
-
-const FilmReel = styled.div`
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  opacity: 0;
-  animation: filmReel 2s ease-in-out;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(255, 255, 255, 0.1) 2px,
-    rgba(255, 255, 255, 0.1) 4px
-  );
-
-  @keyframes filmReel {
-    0% { opacity: 0; transform: translateY(100%); }
-    20% { opacity: 1; transform: translateY(0); }
-    80% { opacity: 1; transform: translateY(0); }
-    100% { opacity: 0; transform: translateY(-100%); }
-  }
 `;
 
 const PosterImg = styled.img`
@@ -286,30 +342,19 @@ const PosterImg = styled.img`
 `;
 
 export default function About() {
-  const [isMobile, setIsMobile] = useState(false);
-  const [isTablet, setIsTablet] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
   const [showPoster, setShowPoster] = useState(false);
+  const [isCutting, setIsCutting] = useState(false);
 
-  useEffect(() => {
-    const checkDevice = () => {
-      setIsMobile(window.innerWidth <= 600);
-      setIsTablet(window.innerWidth > 600 && window.innerWidth <= 1024);
-    };
-    checkDevice();
-    window.addEventListener('resize', checkDevice);
-    return () => window.removeEventListener('resize', checkDevice);
-  }, []);
-
-  // レスポンシブで左右反転
-  const isReverse = isMobile || isTablet;
-
-  const handleTicketClick = () => {
-    if (isClicked || showPoster) return;
-    setIsClicked(true);
+  const handleCut = (e: React.MouseEvent) => {
+    if (isClicked || showPoster || isCutting) return;
+    setIsCutting(true);
     setTimeout(() => {
-      setShowPoster(true);
-    }, 800);
+      setIsClicked(true);
+      setTimeout(() => {
+        setShowPoster(true);
+      }, 400);
+    }, 350); // アニメーション後に切り替え
   };
 
   return (
@@ -317,41 +362,52 @@ export default function About() {
       <Header />
       <TicketWrapper>
         {!showPoster && (
-          <div style={{position:'relative', width:'100%', height:'100%'}}>
-            <Ticket 
-              $isReverse={isReverse} 
-              $isClicked={isClicked}
-              onClick={handleTicketClick} 
-              style={{
-                cursor: isClicked ? 'default' : 'pointer',
-                transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
-              }}
-            >
-              {/* 黒いフィルム部分 */}
-              <FilmPart>
-                <FilmHoles>
-                  {[...Array(7)].map((_, i) => (
-                    <FilmHole key={i} />
-                  ))}
-                </FilmHoles>
-                <BarcodeArea>
-                  <BarcodeImg2 />
-                </BarcodeArea>
-              </FilmPart>
-              {/* 赤いメイン部分 */}
-              <MainPart>
-                <MainTitle>cinema <span>ticket</span></MainTitle>
-                <MainSub>Lorem ipsum</MainSub>
-                <MainTime>
-                  <PlayIcon>▶</PlayIcon> 21.00
-                </MainTime>
-                <MainStars>★ ★ ★ ★ ★</MainStars>
-                <MainInfo>THEATER 1 / SEAT 16</MainInfo>
-                <MainStars style={{opacity:0.2, fontSize:'2.5rem', position:'absolute', right:10, bottom:10}}>★</MainStars>
-              </MainPart>
-            </Ticket>
-            {isClicked && <FilmReel />}
-          </div>
+          <Ticket 
+            $isClicked={isClicked}
+            onClick={handleCut}
+            style={{
+              cursor: isClicked ? 'default' : 'pointer',
+              transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+          >
+            {!isCutting && (
+              <CutLineWrapper>
+                <CutHint>Tap to cut</CutHint>
+                <CutLine />
+                <ScissorsIcon>
+                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="6" cy="6" r="2.2" stroke="#222" strokeWidth="1.5" fill="#fff"/>
+                    <circle cx="16" cy="16" r="2.2" stroke="#222" strokeWidth="1.5" fill="#fff"/>
+                    <path d="M7.5 7.5L14.5 14.5" stroke="#222" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M14.5 7.5L7.5 14.5" stroke="#222" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M2 11H20" stroke="#222" strokeWidth="1.2" strokeDasharray="2 2"/>
+                  </svg>
+                </ScissorsIcon>
+              </CutLineWrapper>
+            )}
+            {/* 黒いフィルム部分 */}
+            <FilmPart $isCutting={isCutting}>
+              <FilmHoles>
+                {[...Array(7)].map((_, i) => (
+                  <FilmHole key={i} />
+                ))}
+              </FilmHoles>
+              <BarcodeArea>
+                <BarcodeImg2 />
+              </BarcodeArea>
+            </FilmPart>
+            {/* 赤いメイン部分 */}
+            <MainPart $isCutting={isCutting}>
+              <MainTitle>cinema <span>ticket</span></MainTitle>
+              <MainSub>Lorem ipsum</MainSub>
+              <MainTime>
+                <PlayIcon>▶</PlayIcon> 21.00
+              </MainTime>
+              <MainStars>★ ★ ★ ★ ★</MainStars>
+              <MainInfo>THEATER 1 / SEAT 16</MainInfo>
+              <MainStars style={{opacity:0.2, fontSize:'2.5rem', position:'absolute', right:10, bottom:10}}>★</MainStars>
+            </MainPart>
+          </Ticket>
         )}
         {showPoster && (
           <PosterImg 

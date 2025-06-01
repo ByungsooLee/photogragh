@@ -36,17 +36,40 @@ const CloseButton = styled.button`
   right: 1rem;
   background: none;
   border: none;
-  color: white;
-  font-size: 2rem;
+  color: #ff3b3b;
+  font-size: 1.2rem;
   cursor: pointer;
   z-index: 1001;
-  padding: 0.5rem;
+  padding: 0.8rem;
   line-height: 1;
   opacity: 0.8;
-  transition: opacity 0.3s ease;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+
+  &::before {
+    content: '';
+    display: block;
+    width: 12px;
+    height: 12px;
+    background: #ff3b3b;
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% { opacity: 0.8; }
+    50% { opacity: 1; }
+    100% { opacity: 0.8; }
+  }
 
   &:hover {
     opacity: 1;
+    transform: scale(1.05);
   }
 `;
 
@@ -143,6 +166,7 @@ const PhotoModal: React.FC<PhotoModalProps> = ({ photo, onClose }) => {
     touchStart.current = null;
     touchEnd.current = null;
     // ランダムでセリフを選択
+    
     const randomIndex = Math.floor(Math.random() * movieQuotes.length);
     setSelectedQuote(movieQuotes[randomIndex]);
   }, [photo]);
@@ -185,7 +209,7 @@ const PhotoModal: React.FC<PhotoModalProps> = ({ photo, onClose }) => {
   return (
     <ModalOverlay ref={overlayRef} onClick={onClose}>
       <ModalContent onClick={() => {}}>
-        <CloseButton onClick={onClose}>×</CloseButton>
+        <CloseButton onClick={onClose}>Exit</CloseButton>
         <PhotoContainer>
           <Photo
             src={photo.url}
