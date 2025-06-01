@@ -243,118 +243,12 @@ const FilmModalFrame = styled.div<{ $isPortrait?: boolean }>`
     padding-top: env(safe-area-inset-top, 0);
     padding-bottom: env(safe-area-inset-bottom, 0);
     align-items: stretch;
-    justify-content: stretch;
-    overflow: hidden;
+    justify-content: flex-start;
+    overflow-y: auto;
     position: fixed;
     inset: 0;
-  }
-`;
-const FilmModalBand = styled.div`
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 32px;
-  background: #000;
-  z-index: 2;
-`;
-const FilmModalBandTop = styled(FilmModalBand)`
-  top: 0;
-  border-radius: 16px 16px 0 0;
-`;
-const FilmModalBandBottom = styled(FilmModalBand)`
-  bottom: 0;
-  border-radius: 0 0 16px 16px;
-`;
-const FilmModalHoles = styled.div`
-  position: absolute;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: space-between;
-  z-index: 3;
-  pointer-events: none;
-`;
-const FilmModalHolesTop = styled(FilmModalHoles)`
-  top: 6px;
-`;
-const FilmModalHolesBottom = styled(FilmModalHoles)`
-  bottom: 6px;
-`;
-const FilmModalHole = styled.div`
-  width: 24px;
-  height: 14px;
-  background: #fff;
-  border-radius: 3px;
-  box-shadow: 0 1px 2px #0004;
-`;
-const ModalArrow = styled.button`
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0,0,0,0.6);
-  border: none;
-  color: #fff;
-  font-size: 2.5rem;
-  z-index: 10;
-  cursor: pointer;
-  border-radius: 50%;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-  &:hover { background: #d4af37; color: #111; }
-  @media (max-width: 600px) {
-    width: 40px;
-    height: 40px;
-    font-size: 2rem;
-  }
-`;
-const ModalArrowLeft = styled(ModalArrow)`
-  left: -60px;
-  @media (max-width: 600px) {
-    left: 10px;
-  }
-`;
-const ModalArrowRight = styled(ModalArrow)`
-  right: -60px;
-  @media (max-width: 600px) {
-    right: 10px;
-  }
-`;
-
-// モーダル用: 前後画像のサムネイル
-const ModalSideThumb = styled.img<{
-  $side: 'left' | 'right';
-}>`
-  position: absolute;
-  top: 50%;
-  ${props => props.$side === 'left' ? 'left: 12px;' : 'right: 12px;'}
-  transform: translateY(-50%) scale(0.7);
-  width: 30%;
-  height: 70%;
-  object-fit: cover;
-  opacity: 0.5;
-  filter: blur(1.5px) grayscale(30%);
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
-  cursor: pointer;
-  z-index: 7;
-  transition: opacity 0.2s, filter 0.2s;
-  &:hover {
-    opacity: 0.8;
-    filter: blur(0.5px) grayscale(10%);
-  }
-  @media (max-width: 1024px) {
-    width: 28%;
-    height: 60%;
-    ${props => props.$side === 'left' ? 'left: 4px;' : 'right: 4px;'}
-  }
-  @media (max-width: 600px) {
-    width: 32%;
-    height: 50%;
-    ${props => props.$side === 'left' ? 'left: 2px;' : 'right: 2px;'}
+    display: flex;
+    flex-direction: column;
   }
 `;
 
@@ -373,6 +267,14 @@ export default function Gallery() {
   const PHOTOS_PER_PAGE = 12;
   const modalImageWrapperRef = useRef<HTMLDivElement | null>(null);
   const [modalKey, setModalKey] = useState('');
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setTimeout(() => {
+      setCurrentModalIndex(null);
+      setModalKey('');
+    }, 100); // 100ms後に完全リセット
+  };
 
   // microCMSから画像を取得
   useEffect(() => {
@@ -440,6 +342,7 @@ export default function Gallery() {
 
   const handlePhotoClick = (photo: Photo, idx: number) => {
     setCurrentModalIndex(idx);
+    setModalKey(photo.url + '-' + Date.now());
     setIsModalOpen(true);
   };
 
@@ -483,35 +386,12 @@ export default function Gallery() {
     };
   }, [fetchMorePhotos]);
 
-  // モーダルを開くたびにズレを最大限防ぐ
+  // モーダルを開くたびに画像ラッパーのscrollTop=0を徹底
   useEffect(() => {
     if (isModalOpen && modalImageWrapperRef.current) {
-      // 1回目即時リセット
       modalImageWrapperRef.current.scrollTop = 0;
-      modalImageWrapperRef.current.scrollIntoView({ block: 'center' });
-      // 2回目遅延リセット
-      setTimeout(() => {
-        if (modalImageWrapperRef.current) {
-          modalImageWrapperRef.current.scrollTop = 0;
-          modalImageWrapperRef.current.scrollIntoView({ block: 'center' });
-        }
-      }, 50);
-      // 3回目さらに遅延リセット
-      setTimeout(() => {
-        if (modalImageWrapperRef.current) {
-          modalImageWrapperRef.current.scrollTop = 0;
-          modalImageWrapperRef.current.scrollIntoView({ block: 'center' });
-        }
-      }, 150);
     }
   }, [isModalOpen, currentModalIndex, modalKey]);
-
-  // モーダルを開くたびにkeyを画像URL+タイムスタンプで更新
-  useEffect(() => {
-    if (isModalOpen && currentModalIndex !== null) {
-      setModalKey(filteredPhotos[currentModalIndex].url + '-' + Date.now());
-    }
-  }, [isModalOpen, currentModalIndex]);
 
   return (
     <GalleryContainer>
@@ -679,7 +559,7 @@ export default function Gallery() {
         <div
           key={modalKey}
           style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          onClick={() => setIsModalOpen(false)}
+          onClick={closeModal}
         >
           <FilmModalFrame
             $isPortrait={(() => {
@@ -693,40 +573,18 @@ export default function Gallery() {
             })()}
             onClick={e => e.stopPropagation()}
           >
-            <FilmModalBandTop />
-            <FilmModalBandBottom />
-            <FilmModalHolesTop>
-              {Array.from({ length: 9 }).map((_, i) => <FilmModalHole key={i} />)}
-            </FilmModalHolesTop>
-            <FilmModalHolesBottom>
-              {Array.from({ length: 9 }).map((_, i) => <FilmModalHole key={i} />)}
-            </FilmModalHolesBottom>
-            {/* 左右サムネイル（前後画像） */}
-            {currentModalIndex > 0 && (
-              <ModalSideThumb
-                src={filteredPhotos[currentModalIndex - 1].url}
-                alt={filteredPhotos[currentModalIndex - 1].title}
-                $side="left"
-                onClick={() => setCurrentModalIndex(currentModalIndex - 1)}
-              />
-            )}
-            {currentModalIndex < filteredPhotos.length - 1 && (
-              <ModalSideThumb
-                src={filteredPhotos[currentModalIndex + 1].url}
-                alt={filteredPhotos[currentModalIndex + 1].title}
-                $side="right"
-                onClick={() => setCurrentModalIndex(currentModalIndex + 1)}
-              />
-            )}
-            {currentModalIndex > 0 && (
-              <ModalArrowLeft onClick={() => setCurrentModalIndex(currentModalIndex - 1)} aria-label="前の写真へ">&#8592;</ModalArrowLeft>
-            )}
-            {currentModalIndex < filteredPhotos.length - 1 && (
-              <ModalArrowRight onClick={() => setCurrentModalIndex(currentModalIndex + 1)} aria-label="次の写真へ">&#8594;</ModalArrowRight>
-            )}
+            {/* バツ印（閉じるボタン）を画像のすぐ上に */}
+            <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '8px 12px 0 12px', boxSizing: 'border-box' }}>
+              <button
+                onClick={closeModal}
+                style={{ background: 'rgba(0,0,0,0.7)', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 24, cursor: 'pointer', zIndex: 20 }}
+                aria-label="閉じる"
+              >×</button>
+            </div>
+            {/* 画像本体 */}
             <div
               ref={modalImageWrapperRef}
-              style={{ position: 'absolute', inset: 0, width: '100vw', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5, overflow: 'hidden', padding: 0, margin: 0 }}
+              style={{ width: '100%', flex: '1 1 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 0, margin: 0 }}
             >
               <Image
                 src={filteredPhotos[currentModalIndex].url + '?w=1200&fm=webp'}
@@ -734,10 +592,10 @@ export default function Gallery() {
                 fill
                 style={{
                   objectFit: 'contain',
-                  width: '100vw',
+                  width: '100%',
                   height: '100%',
                   maxWidth: '100vw',
-                  maxHeight: 'calc(100% - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0))',
+                  maxHeight: '100%',
                   borderRadius: '6px',
                   boxShadow: '0 2px 16px rgba(0,0,0,0.18)',
                   background: '#222',
@@ -750,12 +608,14 @@ export default function Gallery() {
                 priority
               />
             </div>
-            <Caption style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 6 }}>{filteredPhotos[currentModalIndex].title}</Caption>
-            <button
-              onClick={() => setIsModalOpen(false)}
-              style={{ position: 'absolute', top: 16, right: 16, zIndex: 20, background: 'rgba(0,0,0,0.7)', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 24, cursor: 'pointer' }}
-              aria-label="閉じる"
-            >×</button>
+            {/* タイトル（キャプション）を画像のすぐ下に */}
+            <Caption style={{ position: 'static', left: 'auto', right: 'auto', bottom: 'auto', zIndex: 6, width: '100%', borderRadius: 0, background: 'rgba(10,10,10,0.85)' }}>
+              {filteredPhotos[currentModalIndex].title}
+            </Caption>
+            {/* スワイプ文言をさらに下に */}
+            <div style={{ width: '100%', textAlign: 'center', color: '#d4af37', fontSize: '1.1rem', padding: '8px 0 12px 0', background: 'rgba(10,10,10,0.7)', letterSpacing: '0.05em' }}>
+              Swipe up or sideways to close
+            </div>
           </FilmModalFrame>
         </div>
       )}

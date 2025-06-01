@@ -47,7 +47,11 @@ export default function HomeClient() {
         try {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        } catch {}
+          // 空配列や不正値は即クリア
+          localStorage.removeItem('gallery_photos');
+        } catch {
+          localStorage.removeItem('gallery_photos');
+        }
       }
     }
     return getDummyPhotos();
@@ -59,6 +63,11 @@ export default function HomeClient() {
   const [modalTitle, setModalTitle] = useState('');
   const [modalCaption, setModalCaption] = useState('');
   const [modalSourcePosition, setModalSourcePosition] = useState<{ x: number; y: number } | undefined>();
+
+  // SPA遷移時にも必ず画像配列を再セット
+  useEffect(() => {
+    setPhotos(getInitialPhotos());
+  }, []);
 
   useEffect(() => {
     setIsLoading(true);
@@ -73,7 +82,6 @@ export default function HomeClient() {
       }
       setIsLoading(false);
     }).catch(() => {
-      // 失敗時はキャッシュ or ダミー画像
       setPhotos(getInitialPhotos());
       setIsLoading(false);
     });
