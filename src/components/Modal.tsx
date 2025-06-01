@@ -149,38 +149,6 @@ const ModalImage = styled.img`
   }
 `;
 
-const CloseButton = styled.button`
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: rgba(0, 0, 0, 0.7);
-  border: 1px solid var(--dark-gold);
-  color: var(--gold);
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 3;
-  transition: all 0.3s ease;
-
-  @media (max-width: 768px) {
-    top: 10px;
-    right: 10px;
-    width: 36px;
-    height: 36px;
-    font-size: 1.2rem;
-  }
-
-  &:hover {
-    background: var(--dark-gold);
-    color: #000;
-    transform: scale(1.1);
-  }
-`;
-
 const InfoPanel = styled.div`
   position: absolute;
   bottom: 0;
@@ -229,24 +197,20 @@ const Caption = styled.p`
   }
 `;
 
-const CloseHint = styled.div`
+const BottomSwipeHint = styled.div`
   position: absolute;
-  bottom: 20px;
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.9rem;
-  text-align: center;
-  padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.5);
+  z-index: 20;
+  color: #ffe9a7;
+  font-size: 1.08rem;
+  background: rgba(10,10,10,0.7);
+  padding: 8px 20px;
   border-radius: 20px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-
-  @media (max-width: 768px) {
-    opacity: 1;
-  }
+  text-align: center;
+  letter-spacing: 0.05em;
+  font-family: 'Bebas Neue', 'Noto Serif JP', serif;
 `;
 
 const Modal: React.FC<ModalProps> = ({
@@ -328,14 +292,35 @@ const Modal: React.FC<ModalProps> = ({
       >
         <FilmFrame />
         <ImageContainer>
+          <button
+            onClick={onClose}
+            aria-label="閉じる"
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              zIndex: 30,
+              background: 'rgba(0,0,0,0.7)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '50%',
+              width: 40,
+              height: 40,
+              fontSize: '2rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'auto'
+            }}
+          >×</button>
           <ModalImage src={imageUrl} alt={title} />
+          <BottomSwipeHint>Swipe up or sideways to close</BottomSwipeHint>
         </ImageContainer>
-        <CloseButton onClick={onClose}>×</CloseButton>
         <InfoPanel>
           <Title>{title}</Title>
           <Caption>{caption}</Caption>
         </InfoPanel>
-        <CloseHint>Swipe up or sideways to close</CloseHint>
       </ModalContent>
     </ModalOverlay>
   );

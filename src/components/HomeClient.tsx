@@ -12,10 +12,13 @@ const FilmGallery = styled.div`
   width: 100%;
   min-width: 0;
   height: 100vh;
-  overflow-x: hidden;
+  overflow: hidden !important;
   background: radial-gradient(ellipse at center, var(--bg-medium) 0%, var(--bg-dark) 100%);
   padding-top: 80px;
   padding-bottom: 80px;
+  touch-action: none;
+  -webkit-overflow-scrolling: none;
+  overscroll-behavior: none;
   @media (max-width: 600px) {
     padding-top: 24px;
     padding-bottom: 24px;
@@ -32,10 +35,30 @@ const FilmContainer = styled.div`
   justify-content: space-evenly;
   align-items: center;
   gap: 2vw;
+  overflow: hidden !important;
+  touch-action: none;
+  -webkit-overflow-scrolling: none;
+  overscroll-behavior: none;
   @media (max-width: 600px) {
     gap: 4vw;
     padding: 0 2vw;
   }
+`;
+
+const ScrollPreventOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 9999;
+  background: transparent;
+  touch-action: none;
+  -webkit-overflow-scrolling: none;
+  overscroll-behavior: none;
+  pointer-events: none;
 `;
 
 export default function HomeClient() {
@@ -103,24 +126,27 @@ export default function HomeClient() {
   };
 
   return (
-    <FilmGallery>
-      <Header />
-      <FilmContainer>
-        {isLoading ? (
-          <div style={{ color: '#d4af37', textAlign: 'center', margin: '2rem auto' }}>Loading...</div>
-        ) : (
-          <>
-            <FilmStrip stripId="strip1" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
-            <FilmStrip stripId="strip2" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
-            <FilmStrip stripId="strip3" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
-            <FilmStrip stripId="strip4" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
-            <FilmStrip stripId="strip5" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
-            <FilmStrip stripId="vstripL" isVertical position="left" onPhotoClick={handlePhotoClick} photos={photos} className="hidden md:block" />
-            <FilmStrip stripId="vstripC" isVertical position="center" onPhotoClick={handlePhotoClick} photos={photos} />
-            <FilmStrip stripId="vstripR" isVertical position="right" onPhotoClick={handlePhotoClick} photos={photos} className="hidden md:block" />
-          </>
-        )}
-      </FilmContainer>
+    <>
+      <ScrollPreventOverlay />
+      <FilmGallery>
+        <Header />
+        <FilmContainer>
+          {isLoading ? (
+            <div style={{ color: '#d4af37', textAlign: 'center', margin: '2rem auto' }}>Loading...</div>
+          ) : (
+            <>
+              <FilmStrip stripId="strip1" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
+              <FilmStrip stripId="strip2" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
+              <FilmStrip stripId="strip3" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
+              <FilmStrip stripId="strip4" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
+              <FilmStrip stripId="strip5" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
+              <FilmStrip stripId="vstripL" isVertical position="left" onPhotoClick={handlePhotoClick} photos={photos} className="hidden md:block" />
+              <FilmStrip stripId="vstripC" isVertical position="center" onPhotoClick={handlePhotoClick} photos={photos} />
+              <FilmStrip stripId="vstripR" isVertical position="right" onPhotoClick={handlePhotoClick} photos={photos} className="hidden md:block" />
+            </>
+          )}
+        </FilmContainer>
+      </FilmGallery>
       <Modal
         key={modalImage}
         isOpen={isModalOpen}
@@ -130,6 +156,6 @@ export default function HomeClient() {
         caption={modalCaption}
         sourcePosition={modalSourcePosition}
       />
-    </FilmGallery>
+    </>
   );
 } 

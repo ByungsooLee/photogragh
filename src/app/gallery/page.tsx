@@ -574,10 +574,32 @@ export default function Gallery() {
             onClick={e => e.stopPropagation()}
           >
             {/* バツ印（閉じるボタン）を画像のすぐ上に */}
-            <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '8px 12px 0 12px', boxSizing: 'border-box' }}>
+            <div style={{ 
+              width: '100%', 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              padding: '8px 12px 0 12px', 
+              boxSizing: 'border-box',
+              position: 'absolute',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 20
+            }}>
               <button
                 onClick={closeModal}
-                style={{ background: 'rgba(0,0,0,0.7)', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 24, cursor: 'pointer', zIndex: 20 }}
+                style={{ 
+                  background: 'rgba(0,0,0,0.7)', 
+                  color: '#fff', 
+                  border: 'none', 
+                  borderRadius: '50%', 
+                  width: 36, 
+                  height: 36, 
+                  fontSize: 24, 
+                  cursor: 'pointer',
+                  position: 'absolute',
+                  right: 12
+                }}
                 aria-label="閉じる"
               >×</button>
             </div>
@@ -609,11 +631,34 @@ export default function Gallery() {
               />
             </div>
             {/* タイトル（キャプション）を画像のすぐ下に */}
-            <Caption style={{ position: 'static', left: 'auto', right: 'auto', bottom: 'auto', zIndex: 6, width: '100%', borderRadius: 0, background: 'rgba(10,10,10,0.85)' }}>
+            <Caption style={{ 
+              position: 'absolute', 
+              left: 0, 
+              right: 0, 
+              bottom: '50%', 
+              transform: 'translateY(50%)',
+              zIndex: 6, 
+              width: '100%', 
+              borderRadius: 0, 
+              background: 'rgba(10,10,10,0.85)',
+              padding: '12px 0'
+            }}>
               {filteredPhotos[currentModalIndex].title}
             </Caption>
             {/* スワイプ文言をさらに下に */}
-            <div style={{ width: '100%', textAlign: 'center', color: '#d4af37', fontSize: '1.1rem', padding: '8px 0 12px 0', background: 'rgba(10,10,10,0.7)', letterSpacing: '0.05em' }}>
+            <div style={{ 
+              width: '100%', 
+              textAlign: 'center', 
+              color: '#d4af37', 
+              fontSize: '1.1rem', 
+              padding: '8px 0 12px 0', 
+              background: 'rgba(10,10,10,0.7)', 
+              letterSpacing: '0.05em',
+              position: 'absolute',
+              bottom: '50%',
+              transform: 'translateY(50%)',
+              zIndex: 6
+            }}>
               Swipe up or sideways to close
             </div>
           </FilmModalFrame>
