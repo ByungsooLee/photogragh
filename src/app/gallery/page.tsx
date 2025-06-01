@@ -133,15 +133,16 @@ export default function Gallery() {
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [touchStartX, setTouchStartX] = useState(0);
-  const [touchEndX, setTouchEndX] = useState(0);
+  const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
+  const [touchEnd, setTouchEnd] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
   const scrollAccumulator = useRef(0);
   const lastScrollTime = useRef(Date.now());
   const thumbnailContainerRef = useRef<HTMLDivElement>(null);
   const SCROLL_THRESHOLD = 10;
   const SCROLL_COOLDOWN = 20;
-  const SWIPE_THRESHOLD = 50;
+  const SWIPE_THRESHOLD = 30;
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -230,16 +231,29 @@ export default function Gallery() {
       handleScroll(e);
     };
 
-    const handleTouchStart = () => {
+    const handleTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
       scrollAccumulator.current = 0;
     };
 
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+
     window.addEventListener('wheel', handleWheel, { passive: false });
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: false });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd, { passive: false });
     
     return () => {
       window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
       if (scrollTimeout.current) {
         clearTimeout(scrollTimeout.current);
       }
@@ -273,32 +287,62 @@ export default function Gallery() {
   }, [currentIndex, scrollToCurrentThumbnail]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStartX(e.touches[0].clientX);
+    setIsDragging(true);
+    setTouchStart({
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    });
+    setTouchEnd({
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    });
     scrollAccumulator.current = 0;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEndX(e.touches[0].clientX);
+    if (!isDragging) return;
+    
+    setTouchEnd({
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    });
   };
 
-  const handleTouchEnd = () => {
-    const swipeDistance = touchEndX - touchStartX;
-    const absSwipeDistance = Math.abs(swipeDistance);
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!isDragging) return;
 
-    if (absSwipeDistance > SWIPE_THRESHOLD) {
+    const deltaX = touchEnd.x - touchStart.x;
+    const deltaY = touchEnd.y - touchStart.y;
+    const absDeltaX = Math.abs(deltaX);
+    const absDeltaY = Math.abs(deltaY);
+
+    // より大きな移動量を持つ方向に応じて処理
+    if (absDeltaX > absDeltaY && absDeltaX > SWIPE_THRESHOLD) {
+      // 水平スワイプ
       setIsTransitioning(true);
-      if (swipeDistance > 0 && currentIndex > 0) {
+      if (deltaX > 0 && currentIndex > 0) {
         // 右スワイプ：前の画像へ
         setCurrentIndex(prev => prev - 1);
-      } else if (swipeDistance < 0 && currentIndex < filteredPhotos.length - 1) {
+      } else if (deltaX < 0 && currentIndex < filteredPhotos.length - 1) {
         // 左スワイプ：次の画像へ
+        setCurrentIndex(prev => prev + 1);
+      }
+    } else if (absDeltaY > absDeltaX && absDeltaY > SWIPE_THRESHOLD) {
+      // 垂直スワイプ
+      setIsTransitioning(true);
+      if (deltaY > 0 && currentIndex > 0) {
+        // 下スワイプ：前の画像へ
+        setCurrentIndex(prev => prev - 1);
+      } else if (deltaY < 0 && currentIndex < filteredPhotos.length - 1) {
+        // 上スワイプ：次の画像へ
         setCurrentIndex(prev => prev + 1);
       }
     }
 
-    // スワイプ終了後に状態をリセット
-    setTouchStartX(0);
-    setTouchEndX(0);
+    // 状態をリセット
+    setIsDragging(false);
+    setTouchStart({ x: 0, y: 0 });
+    setTouchEnd({ x: 0, y: 0 });
 
     // トランジション終了後に状態をリセット
     setTimeout(() => {
@@ -336,6 +380,13 @@ export default function Gallery() {
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
+              style={{
+                touchAction: 'none',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none',
+                userSelect: 'none',
+                overscrollBehavior: 'none'
+              }}
             >
               <ImageWrapper $isTransitioning={isTransitioning}>
                 <Image
@@ -349,7 +400,12 @@ export default function Gallery() {
                     maxWidth: '100%',
                     maxHeight: '100%',
                     transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    transform: isTransitioning ? 'scale(0.98)' : 'scale(1)'
+                    transform: isTransitioning ? 'scale(0.98)' : 'scale(1)',
+                    touchAction: 'none',
+                    WebkitTouchCallout: 'none',
+                    WebkitUserSelect: 'none',
+                    userSelect: 'none',
+                    overscrollBehavior: 'none'
                   }}
                 />
               </ImageWrapper>
