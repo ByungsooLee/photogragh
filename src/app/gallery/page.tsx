@@ -27,6 +27,7 @@ const GalleryContainer = styled.div`
   width: 100%;
   min-width: 0;
   overflow-x: hidden;
+  overflow-y: auto;
 
   @media (max-width: 768px) {
     padding-top: 160px; // SPではカテゴリーとフィルター分の余白を追加
