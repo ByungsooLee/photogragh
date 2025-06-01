@@ -94,6 +94,7 @@ const ImageContainer = styled.div`
   backface-visibility: hidden;
   transform: translateZ(0);
   -webkit-font-smoothing: antialiased;
+  padding: 20px;
 
   &:active {
     cursor: grabbing;
@@ -245,31 +246,9 @@ const ImageWrapper = styled.div<{ $direction: 'left' | 'right' | null }>`
     if (props.$direction === 'right') return 'translateX(100%)';
     return 'translateX(0)';
   }};
-`;
-
-const CloseButton = styled.button`
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 24px;
-  cursor: pointer;
-  z-index: 10;
-  padding: 10px;
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
-
-  &:hover {
-    opacity: 1;
-  }
-
-  @media (max-width: 768px) {
-    top: 10px;
-    right: 10px;
-    font-size: 20px;
-  }
+  max-width: 90vw;
+  max-height: 90vh;
+  margin: auto;
 `;
 
 const InfoPanel = styled.div`
@@ -382,6 +361,40 @@ const ScrollHint = styled.div<{ $aspectRatio: number }>`
   }
 `;
 
+const TopLeftTitle = styled.div`
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: #fff;
+  font-size: 1.08rem;
+  font-family: 'Bebas Neue', 'Noto Serif JP', serif;
+  background: red;
+  padding: 8px 20px;
+  border-radius: 20px;
+  z-index: 100;
+  pointer-events: none;
+`;
+
+const ZoomModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+`;
+
+const ZoomImage = styled.img`
+  max-width: 95vw;
+  max-height: 95vh;
+  object-fit: contain;
+  box-shadow: 0 0 40px rgba(0,0,0,0.7);
+`;
+
 const GalleryModal: React.FC<GalleryModalProps> = ({
   isOpen,
   onClose,
@@ -401,6 +414,7 @@ const GalleryModal: React.FC<GalleryModalProps> = ({
   const touchStartTime = useRef<number>(0);
   const touchStartX = useRef<number>(0);
   const touchStartY = useRef<number>(0);
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -450,6 +464,7 @@ const GalleryModal: React.FC<GalleryModalProps> = ({
   }, [showScrollHint]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
     touchStartTime.current = Date.now();
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
@@ -460,6 +475,7 @@ const GalleryModal: React.FC<GalleryModalProps> = ({
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
     if (!isDragging) return;
     
     const currentX = e.touches[0].clientX;
@@ -468,8 +484,10 @@ const GalleryModal: React.FC<GalleryModalProps> = ({
     const deltaY = currentY - touchStartY.current;
     
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      const sensitivity = 1.2;
+      const maxOffset = window.innerWidth * 0.8;
       setDragOffset({ 
-        x: Math.max(Math.min(deltaX, window.innerWidth), -window.innerWidth), 
+        x: Math.max(Math.min(deltaX * sensitivity, maxOffset), -maxOffset), 
         y: 0 
       });
     } else {
@@ -480,7 +498,7 @@ const GalleryModal: React.FC<GalleryModalProps> = ({
   const handleTouchEnd = () => {
     if (!isDragging) return;
 
-    const threshold = 50;
+    const threshold = 30;
     const deltaX = touchStartX.current - startX;
     const deltaY = touchStartY.current - startY;
     const isVerticalSwipe = Math.abs(deltaY) > Math.abs(deltaX);
@@ -494,13 +512,13 @@ const GalleryModal: React.FC<GalleryModalProps> = ({
         setTimeout(() => {
           onIndexChange(currentIndex - 1);
           setSlideDirection(null);
-        }, 300);
+        }, 200);
       } else if (deltaX < 0 && currentIndex < photos.length - 1) {
         setSlideDirection('left');
         setTimeout(() => {
           onIndexChange(currentIndex + 1);
           setSlideDirection(null);
-        }, 300);
+        }, 200);
       }
     }
     
@@ -522,77 +540,95 @@ const GalleryModal: React.FC<GalleryModalProps> = ({
 
   if (!isOpen) return null;
 
+  // デバッグ用ログ（JSX外で実行）
+  console.log('current photo:', photos[currentIndex]);
+
   return (
-    <ModalOverlay 
-      $isOpen={isOpen}
-      onClick={onClose}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onWheel={handleWheel}
-    >
-      <ModalContent
-        ref={modalRef}
-        onClick={e => e.stopPropagation()}
-        style={{
-          transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
-          transition: isDragging ? 'none' : 'transform 0.3s ease-out'
-        }}
+    <>
+      {isZoomOpen && (
+        <ZoomModalOverlay onClick={() => setIsZoomOpen(false)}>
+          <ZoomImage
+            src={photos[currentIndex].url}
+            alt={photos[currentIndex].title}
+            onClick={e => e.stopPropagation()}
+          />
+        </ZoomModalOverlay>
+      )}
+      <ModalOverlay 
+        $isOpen={isOpen}
+        onClick={onClose}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onWheel={handleWheel}
       >
-        <ImageContainer>
-          <FilmFrame />
-          <FilmStrip />
-          <FilmStripVertical />
-          <FilmPerforationsTop>
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Perforation key={`top-${i}`} />
-            ))}
-          </FilmPerforationsTop>
-          <FilmPerforationsBottom>
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Perforation key={`bottom-${i}`} />
-            ))}
-          </FilmPerforationsBottom>
-          <ImageWrapper $direction={slideDirection}>
-            <Image
-              ref={imageRef}
-              src={photos[currentIndex].url}
-              alt={photos[currentIndex].title}
-              fill
-              style={{
-                objectFit: 'contain',
-                maxWidth: '100%',
-                maxHeight: '100%',
-                filter: 'sepia(5%) contrast(1.05) brightness(1.1)'
+        <ModalContent
+          ref={modalRef}
+          onClick={e => e.stopPropagation()}
+          style={{
+            transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
+            transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+          }}
+        >
+          <TopLeftTitle>{photos[currentIndex]?.title ?? 'タイトルなし'}</TopLeftTitle>
+          <ImageContainer>
+            <FilmFrame />
+            <FilmStrip />
+            <FilmStripVertical />
+            <FilmPerforationsTop>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Perforation key={`top-${i}`} />
+              ))}
+            </FilmPerforationsTop>
+            <FilmPerforationsBottom>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Perforation key={`bottom-${i}`} />
+              ))}
+            </FilmPerforationsBottom>
+            <ImageWrapper
+              $direction={slideDirection}
+              style={{ zIndex: 9999, position: 'relative', pointerEvents: 'auto' }}
+              onClick={() => {
+                alert('test');
+                setIsZoomOpen(true);
               }}
-              priority
-            />
-          </ImageWrapper>
-          {currentIndex > 0 && <CircleHint $direction="left" />}
-          {currentIndex < photos.length - 1 && <CircleHint $direction="right" />}
-          <CloseButton 
-            onClick={onClose} 
-            aria-label="閉じる"
-          >
-            ×
-          </CloseButton>
-          {showScrollHint && (
-            <ScrollHint $aspectRatio={imageAspectRatio}>
-              横スクロールで画像を切り替え
-            </ScrollHint>
-          )}
-          <SwipeHint $aspectRatio={imageAspectRatio}>
-            {imageAspectRatio > 1 ? '左右にスワイプで画像を切り替え' : '上下にスワイプで閉じる'}
-          </SwipeHint>
-        </ImageContainer>
-        <InfoPanel>
-          <Title>{photos[currentIndex].title}</Title>
-          {photos[currentIndex].caption && (
-            <Caption>{photos[currentIndex].caption}</Caption>
-          )}
-        </InfoPanel>
-      </ModalContent>
-    </ModalOverlay>
+            >
+              <Image
+                ref={imageRef}
+                src={photos[currentIndex].url}
+                alt={photos[currentIndex].title}
+                fill
+                style={{
+                  objectFit: 'contain',
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  filter: 'sepia(5%) contrast(1.05) brightness(1.1)',
+                  margin: 'auto',
+                  cursor: 'zoom-in'
+                }}
+                priority
+              />
+            </ImageWrapper>
+            {currentIndex > 0 && <CircleHint $direction="left" />}
+            {currentIndex < photos.length - 1 && <CircleHint $direction="right" />}
+            {showScrollHint && (
+              <ScrollHint $aspectRatio={imageAspectRatio}>
+                横スクロールで画像を切り替え
+              </ScrollHint>
+            )}
+            <SwipeHint $aspectRatio={imageAspectRatio}>
+              {imageAspectRatio > 1 ? '左右にスワイプで画像を切り替え' : '上下にスワイプで閉じる'}
+            </SwipeHint>
+          </ImageContainer>
+          <InfoPanel>
+            <Title>{photos[currentIndex].title}</Title>
+            {photos[currentIndex].caption && (
+              <Caption>{photos[currentIndex].caption}</Caption>
+            )}
+          </InfoPanel>
+        </ModalContent>
+      </ModalOverlay>
+    </>
   );
 };
 

@@ -115,6 +115,9 @@ const BottomRightSwipe = styled.span`
   letter-spacing: 0.05em;
   font-family: 'Bebas Neue', 'Noto Serif JP', serif;
   z-index: 20;
+  @media (min-width: 769px) {
+    display: none;
+  }
 `;
 const InfoPanel = styled.div`
   position: absolute;
