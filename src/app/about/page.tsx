@@ -2,7 +2,7 @@
 
 import styled from 'styled-components';
 import Header from '@/components/Header';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const AboutContainer = styled.div`
   min-height: 100vh;
@@ -330,6 +330,16 @@ export default function About() {
   const [isClicked, setIsClicked] = useState(false);
   const [showPoster, setShowPoster] = useState(false);
   const [isCutting, setIsCutting] = useState(false);
+
+  // グローバル副作用リセット
+  useEffect(() => {
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
+  }, []);
 
   const handleCut = () => {
     if (isClicked || showPoster || isCutting) return;
