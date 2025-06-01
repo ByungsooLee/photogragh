@@ -232,6 +232,8 @@ const FilmModalFrame = styled.div<{ $isPortrait?: boolean }>`
     box-shadow: none;
     margin: 0;
     padding: 0;
+    align-items: center;
+    justify-content: center;
   }
 `;
 const FilmModalBand = styled.div`
@@ -549,10 +551,12 @@ export default function Gallery() {
                               return next;
                             });
                           }}
-                          priority={idx < 12}
+                          priority={idx < 6}
                           placeholder="blur"
                           blurDataURL={photo.url + '?w=10&blur=20&fm=webp'}
                           unoptimized={false}
+                          loading={idx < 6 ? 'eager' : 'lazy'}
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         />
                       </GalleryImageWrapper>
                       <Caption style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 4 }}>{photo.title}</Caption>
@@ -604,10 +608,12 @@ export default function Gallery() {
                             return next;
                           });
                         }}
-                        priority={idx < 12}
+                        priority={idx < 6}
                         placeholder="blur"
                         blurDataURL={photo.url + '?w=10&blur=20&fm=webp'}
                         unoptimized={false}
+                        loading={idx < 6 ? 'eager' : 'lazy'}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                     </GalleryImageWrapper>
                     <Caption style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 4 }}>{photo.title}</Caption>
@@ -684,6 +690,8 @@ export default function Gallery() {
                   objectFit: 'contain',
                   width: '100%',
                   height: '100%',
+                  maxWidth: '100vw',
+                  maxHeight: '100dvh',
                   borderRadius: '6px',
                   boxShadow: '0 2px 16px rgba(0,0,0,0.18)',
                   background: '#222',
