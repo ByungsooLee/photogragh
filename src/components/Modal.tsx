@@ -227,6 +227,20 @@ const BottomSwipeHint = styled.div`
   font-family: 'Bebas Neue', 'Noto Serif JP', serif;
 `;
 
+const TopLeftTitle = styled.div`
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: #fff;
+  font-size: 1.08rem;
+  font-family: 'Bebas Neue', 'Noto Serif JP', serif;
+  background: rgba(10, 10, 10, 0.7);
+  padding: 8px 20px;
+  border-radius: 20px;
+  z-index: 100;
+  pointer-events: none;
+`;
+
 const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
@@ -314,12 +328,12 @@ const Modal: React.FC<ModalProps> = ({
       >
         <FilmFrame />
         <ImageContainer>
+          <TopLeftTitle>{title}</TopLeftTitle>
           <ModalCloseButton onClick={onClose} aria-label="閉じる">×</ModalCloseButton>
           <ModalImage src={imageUrl} alt={title} />
           <BottomSwipeHint>Swipe up or sideways to close</BottomSwipeHint>
         </ImageContainer>
         <InfoPanel>
-          <Title>{title}</Title>
           <Caption>{caption}</Caption>
         </InfoPanel>
       </ModalContent>
