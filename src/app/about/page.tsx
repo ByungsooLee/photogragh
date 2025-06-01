@@ -335,9 +335,25 @@ export default function About() {
   useEffect(() => {
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
+    document.body.style.display = '';
+    document.documentElement.style.display = '';
+    document.body.style.opacity = '';
+    document.documentElement.style.opacity = '';
+    document.body.style.visibility = '';
+    document.documentElement.style.visibility = '';
+    if (window.localStorage) localStorage.clear();
+    if (window.sessionStorage) sessionStorage.clear();
     return () => {
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
+      document.body.style.display = '';
+      document.documentElement.style.display = '';
+      document.body.style.opacity = '';
+      document.documentElement.style.opacity = '';
+      document.body.style.visibility = '';
+      document.documentElement.style.visibility = '';
+      if (window.localStorage) localStorage.clear();
+      if (window.sessionStorage) sessionStorage.clear();
     };
   }, []);
 

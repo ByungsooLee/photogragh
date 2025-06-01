@@ -69,7 +69,7 @@ export const getPhotos = async (params?: { limit?: number; offset?: number }): P
   }
 };
 
-const getDummyPhotos = (): Photo[] => {
+export const getDummyPhotos = (): Photo[] => {
   console.log('Generating dummy photos');
   return Array.from({ length: 40 }, (_, i) => ({
     id: `dummy-${i}`,

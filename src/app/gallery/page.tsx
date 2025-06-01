@@ -226,16 +226,16 @@ const FilmModalFrame = styled.div<{ $isPortrait?: boolean }>`
     min-width: 0;
     width: 100vw;
     min-height: 0;
-    height: 100dvh;
+    height: 100svh;
     aspect-ratio: unset;
     border-radius: 0;
     box-shadow: none;
     margin: 0;
     padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0) 0;
-    align-items: center;
-    justify-content: center;
+    align-items: stretch;
+    justify-content: stretch;
     overflow-y: auto;
-    max-height: 100dvh;
+    max-height: 100svh;
   }
 `;
 const FilmModalBand = styled.div`
@@ -360,6 +360,7 @@ export default function Gallery() {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const loaderRef = useRef<HTMLDivElement | null>(null);
   const PHOTOS_PER_PAGE = 12;
+  const modalImageWrapperRef = useRef<HTMLDivElement | null>(null);
 
   // microCMSから画像を取得
   useEffect(() => {
@@ -469,6 +470,13 @@ export default function Gallery() {
       if (currentLoader) observer.unobserve(currentLoader);
     };
   }, [fetchMorePhotos]);
+
+  // モーダルを開くたびにスクロール位置をリセット
+  useEffect(() => {
+    if (isModalOpen && modalImageWrapperRef.current) {
+      modalImageWrapperRef.current.scrollTop = 0;
+    }
+  }, [isModalOpen, currentModalIndex]);
 
   return (
     <GalleryContainer>
@@ -683,7 +691,10 @@ export default function Gallery() {
             {currentModalIndex < filteredPhotos.length - 1 && (
               <ModalArrowRight onClick={() => setCurrentModalIndex(currentModalIndex + 1)} aria-label="次の写真へ">&#8594;</ModalArrowRight>
             )}
-            <div style={{ position: 'relative', width: '100%', height: 'calc(100% - 64px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5, overflowY: 'auto', paddingTop: 'env(safe-area-inset-top, 0)', paddingBottom: 'env(safe-area-inset-bottom, 0)' }}>
+            <div
+              ref={modalImageWrapperRef}
+              style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'stretch', justifyContent: 'stretch', zIndex: 5, overflowY: 'auto', padding: 0, margin: 0 }}
+            >
               <Image
                 src={filteredPhotos[currentModalIndex].url + '?w=1200&fm=webp'}
                 alt={filteredPhotos[currentModalIndex].title}
@@ -692,12 +703,14 @@ export default function Gallery() {
                   objectFit: 'contain',
                   width: '100%',
                   height: '100%',
-                  maxWidth: '100vw',
-                  maxHeight: 'calc(100dvh - 48px - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0))',
+                  maxWidth: '100%',
+                  maxHeight: '100%',
                   borderRadius: '6px',
                   boxShadow: '0 2px 16px rgba(0,0,0,0.18)',
                   background: '#222',
-                  zIndex: 5
+                  zIndex: 5,
+                  margin: 0,
+                  padding: 0
                 }}
                 loading="eager"
                 priority

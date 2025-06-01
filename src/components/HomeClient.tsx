@@ -6,6 +6,7 @@ import Header from './Header';
 import Modal from './Modal';
 import FilmStrip from './FilmStrip';
 import { getPhotos, type Photo } from '../lib/microcms';
+import { getDummyPhotos } from '../lib/microcms';
 
 const FilmGallery = styled.div`
   position: relative;
@@ -50,7 +51,10 @@ export default function HomeClient() {
   useEffect(() => {
     setIsLoading(true);
     getPhotos().then(({ photos }) => {
-      setPhotos(photos);
+      setPhotos(photos && photos.length > 0 ? photos : getDummyPhotos());
+      setIsLoading(false);
+    }).catch(() => {
+      setPhotos(getDummyPhotos());
       setIsLoading(false);
     });
   }, []);
