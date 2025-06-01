@@ -227,15 +227,26 @@ const FilmModalFrame = styled.div<{ $isPortrait?: boolean }>`
     width: 100vw;
     min-height: 0;
     height: 100svh;
+    min-height: 100svh;
+    max-height: 100svh;
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    height: 100vh;
+    min-height: 100vh;
+    max-height: 100vh;
+    box-sizing: border-box;
     aspect-ratio: unset;
     border-radius: 0;
     box-shadow: none;
     margin: 0;
-    padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0) 0;
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
     align-items: stretch;
     justify-content: stretch;
-    overflow-y: auto;
-    max-height: 100svh;
+    overflow: hidden;
+    position: fixed;
+    inset: 0;
   }
 `;
 const FilmModalBand = styled.div`
@@ -361,6 +372,7 @@ export default function Gallery() {
   const loaderRef = useRef<HTMLDivElement | null>(null);
   const PHOTOS_PER_PAGE = 12;
   const modalImageWrapperRef = useRef<HTMLDivElement | null>(null);
+  const [modalKey, setModalKey] = useState('');
 
   // microCMSから画像を取得
   useEffect(() => {
@@ -471,10 +483,33 @@ export default function Gallery() {
     };
   }, [fetchMorePhotos]);
 
-  // モーダルを開くたびにスクロール位置をリセット
+  // モーダルを開くたびにズレを最大限防ぐ
   useEffect(() => {
     if (isModalOpen && modalImageWrapperRef.current) {
+      // 1回目即時リセット
       modalImageWrapperRef.current.scrollTop = 0;
+      modalImageWrapperRef.current.scrollIntoView({ block: 'center' });
+      // 2回目遅延リセット
+      setTimeout(() => {
+        if (modalImageWrapperRef.current) {
+          modalImageWrapperRef.current.scrollTop = 0;
+          modalImageWrapperRef.current.scrollIntoView({ block: 'center' });
+        }
+      }, 50);
+      // 3回目さらに遅延リセット
+      setTimeout(() => {
+        if (modalImageWrapperRef.current) {
+          modalImageWrapperRef.current.scrollTop = 0;
+          modalImageWrapperRef.current.scrollIntoView({ block: 'center' });
+        }
+      }, 150);
+    }
+  }, [isModalOpen, currentModalIndex, modalKey]);
+
+  // モーダルを開くたびにkeyを画像URL+タイムスタンプで更新
+  useEffect(() => {
+    if (isModalOpen && currentModalIndex !== null) {
+      setModalKey(filteredPhotos[currentModalIndex].url + '-' + Date.now());
     }
   }, [isModalOpen, currentModalIndex]);
 
@@ -642,15 +677,13 @@ export default function Gallery() {
       </FilmContainer>
       {isModalOpen && currentModalIndex !== null && (
         <div
+          key={modalKey}
           style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={() => setIsModalOpen(false)}
         >
           <FilmModalFrame
             $isPortrait={(() => {
               const img = filteredPhotos[currentModalIndex];
-              // 仮に画像URLにw/h情報がなければ、縦横比で判定（例: サムネイルのwidth/heightを使う）
-              // ここでは画像の幅・高さが分からない場合はURLの末尾やtitle等から判定するか、デフォルト横長
-              // 例: "?w=1200&h=1800" などがURLに含まれていれば判定
               const match = img.url.match(/[?&]h=(\d+)/);
               const h = match ? parseInt(match[1], 10) : undefined;
               const wMatch = img.url.match(/[?&]w=(\d+)/);
@@ -693,7 +726,7 @@ export default function Gallery() {
             )}
             <div
               ref={modalImageWrapperRef}
-              style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'stretch', justifyContent: 'stretch', zIndex: 5, overflowY: 'auto', padding: 0, margin: 0 }}
+              style={{ position: 'absolute', inset: 0, width: '100vw', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5, overflow: 'hidden', padding: 0, margin: 0 }}
             >
               <Image
                 src={filteredPhotos[currentModalIndex].url + '?w=1200&fm=webp'}
@@ -701,16 +734,17 @@ export default function Gallery() {
                 fill
                 style={{
                   objectFit: 'contain',
-                  width: '100%',
+                  width: '100vw',
                   height: '100%',
-                  maxWidth: '100%',
-                  maxHeight: '100%',
+                  maxWidth: '100vw',
+                  maxHeight: 'calc(100% - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0))',
                   borderRadius: '6px',
                   boxShadow: '0 2px 16px rgba(0,0,0,0.18)',
                   background: '#222',
                   zIndex: 5,
                   margin: 0,
-                  padding: 0
+                  padding: 0,
+                  display: 'block'
                 }}
                 loading="eager"
                 priority
