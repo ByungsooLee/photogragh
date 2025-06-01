@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Header from './Header';
 import Modal from './Modal';
 import FilmStrip from './FilmStrip';
-import type { Photo } from '../lib/microcms';
+import { getPhotos, type Photo } from '../lib/microcms';
 
 const FilmGallery = styled.div`
   position: relative;
@@ -38,12 +38,22 @@ const FilmContainer = styled.div`
   }
 `;
 
-export default function HomeClient({ photos }: { photos: Photo[] }) {
+export default function HomeClient() {
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalImage, setModalImage] = useState('');
   const [modalTitle, setModalTitle] = useState('');
   const [modalCaption, setModalCaption] = useState('');
   const [modalSourcePosition, setModalSourcePosition] = useState<{ x: number; y: number } | undefined>();
+
+  useEffect(() => {
+    setIsLoading(true);
+    getPhotos().then(({ photos }) => {
+      setPhotos(photos);
+      setIsLoading(false);
+    });
+  }, []);
 
   const handlePhotoClick = (photo: { url: string; title: string; caption: string; position: { x: number; y: number } }) => {
     setModalImage(photo.url);
@@ -57,59 +67,20 @@ export default function HomeClient({ photos }: { photos: Photo[] }) {
     <FilmGallery>
       <Header />
       <FilmContainer>
-        <FilmStrip
-          stripId="strip1"
-          isVertical={false}
-          onPhotoClick={handlePhotoClick}
-          photos={photos}
-        />
-        <FilmStrip
-          stripId="strip2"
-          isVertical={false}
-          onPhotoClick={handlePhotoClick}
-          photos={photos}
-        />
-        <FilmStrip
-          stripId="strip3"
-          isVertical={false}
-          onPhotoClick={handlePhotoClick}
-          photos={photos}
-        />
-        <FilmStrip
-          stripId="strip4"
-          isVertical={false}
-          onPhotoClick={handlePhotoClick}
-          photos={photos}
-        />
-        <FilmStrip
-          stripId="strip5"
-          isVertical={false}
-          onPhotoClick={handlePhotoClick}
-          photos={photos}
-        />
-        <FilmStrip
-          stripId="vstripL"
-          isVertical
-          position="left"
-          onPhotoClick={handlePhotoClick}
-          photos={photos}
-          className="hidden md:block"
-        />
-        <FilmStrip
-          stripId="vstripC"
-          isVertical
-          position="center"
-          onPhotoClick={handlePhotoClick}
-          photos={photos}
-        />
-        <FilmStrip
-          stripId="vstripR"
-          isVertical
-          position="right"
-          onPhotoClick={handlePhotoClick}
-          photos={photos}
-          className="hidden md:block"
-        />
+        {isLoading ? (
+          <div style={{ color: '#d4af37', textAlign: 'center', margin: '2rem auto' }}>Loading...</div>
+        ) : (
+          <>
+            <FilmStrip stripId="strip1" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
+            <FilmStrip stripId="strip2" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
+            <FilmStrip stripId="strip3" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
+            <FilmStrip stripId="strip4" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
+            <FilmStrip stripId="strip5" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
+            <FilmStrip stripId="vstripL" isVertical position="left" onPhotoClick={handlePhotoClick} photos={photos} className="hidden md:block" />
+            <FilmStrip stripId="vstripC" isVertical position="center" onPhotoClick={handlePhotoClick} photos={photos} />
+            <FilmStrip stripId="vstripR" isVertical position="right" onPhotoClick={handlePhotoClick} photos={photos} className="hidden md:block" />
+          </>
+        )}
       </FilmContainer>
       <Modal
         key={modalImage}
