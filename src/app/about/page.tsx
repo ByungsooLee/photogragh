@@ -61,16 +61,11 @@ const TicketWrapper = styled.div`
   align-items: center;
   position: relative;
   @media (max-width: 600px) {
-    position: absolute;
-    top: 80px;
-    left: 0;
-    width: 100vw;
-    height: calc(100vh - 80px);
+    padding: 24px 0 24px 0;
     min-height: unset;
-    padding: 16px 0 16px 0;
+    height: auto;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
   }
 `;
 
@@ -87,26 +82,12 @@ const Ticket = styled.div<{ $isClicked: boolean }>`
   opacity: ${props => props.$isClicked ? '0' : '1'};
   perspective: 1000px;
   position: relative;
-  @media (max-width: 1024px) {
-    width: 98vw;
-    height: 48vw;
-    min-height: 180px;
-    max-width: 500px;
-    max-height: 240px;
-  }
   @media (max-width: 600px) {
-    width: 100vh;
-    height: 100vw;
-    min-width: 100vh;
-    min-height: 100vw;
-    max-width: 100vh;
-    max-height: 100vw;
-    transform: rotate(90deg) translateY(-100vw);
-    transform-origin: top left;
-    margin: 0;
-    position: absolute;
-    top: 0;
-    left: 0;
+    width: 98vw;
+    max-width: 99vw;
+    min-height: 140px;
+    border-radius: 18px;
+    padding: 8vw 0;
   }
 `;
 

@@ -220,9 +220,12 @@ const FilmModalFrame = styled.div<{ $isPortrait?: boolean }>`
   }
   @media (max-width: 600px) {
     min-width: 0;
-    width: 98vw;
-    min-height: 160px;
-    aspect-ratio: ${props => props.$isPortrait ? '2/3' : '4/3'};
+    width: 100vw;
+    min-height: 0;
+    height: 100dvh;
+    aspect-ratio: unset;
+    border-radius: 0;
+    box-shadow: none;
   }
 `;
 const FilmModalBand = styled.div`
