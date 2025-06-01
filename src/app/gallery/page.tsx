@@ -152,6 +152,7 @@ export default function Gallery() {
   const SCROLL_COOLDOWN = 20;
   const SWIPE_THRESHOLD = 20;
   const SWIPE_VELOCITY_THRESHOLD = 0.1;
+  const SWIPE_DISTANCE_MULTIPLIER = 0.5;
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -280,12 +281,22 @@ export default function Gallery() {
       if (Math.abs(deltaX) > Math.abs(deltaY) && 
           (Math.abs(deltaX) > SWIPE_THRESHOLD || velocityX > SWIPE_VELOCITY_THRESHOLD)) {
         setIsTransitioning(true);
+        
+        // スワイプの強度に基づいて切り替える枚数を計算
+        const swipeDistance = Math.abs(deltaX);
+        const swipeVelocity = Math.abs(velocityX);
+        const swipeIntensity = (swipeDistance * SWIPE_DISTANCE_MULTIPLIER) + (swipeVelocity * 100);
+        const imageCount = Math.min(
+          Math.max(Math.floor(swipeIntensity / 100), 1), // 最低1枚、最大は計算値
+          filteredPhotos.length - 1 // 最大でも残りの画像数まで
+        );
+
         if (deltaX > 0 && currentIndex > 0) {
           // 右スワイプ：前の画像へ
-          setCurrentIndex(prev => prev - 1);
+          setCurrentIndex(prev => Math.max(0, prev - imageCount));
         } else if (deltaX < 0 && currentIndex < filteredPhotos.length - 1) {
           // 左スワイプ：次の画像へ
-          setCurrentIndex(prev => prev + 1);
+          setCurrentIndex(prev => Math.min(filteredPhotos.length - 1, prev + imageCount));
         }
       }
 
@@ -389,12 +400,22 @@ export default function Gallery() {
     if (Math.abs(deltaX) > Math.abs(deltaY) && 
         (Math.abs(deltaX) > SWIPE_THRESHOLD || velocityX > SWIPE_VELOCITY_THRESHOLD)) {
       setIsTransitioning(true);
+      
+      // スワイプの強度に基づいて切り替える枚数を計算
+      const swipeDistance = Math.abs(deltaX);
+      const swipeVelocity = Math.abs(velocityX);
+      const swipeIntensity = (swipeDistance * SWIPE_DISTANCE_MULTIPLIER) + (swipeVelocity * 100);
+      const imageCount = Math.min(
+        Math.max(Math.floor(swipeIntensity / 100), 1), // 最低1枚、最大は計算値
+        filteredPhotos.length - 1 // 最大でも残りの画像数まで
+      );
+
       if (deltaX > 0 && currentIndex > 0) {
         // 右スワイプ：前の画像へ
-        setCurrentIndex(prev => prev - 1);
+        setCurrentIndex(prev => Math.max(0, prev - imageCount));
       } else if (deltaX < 0 && currentIndex < filteredPhotos.length - 1) {
         // 左スワイプ：次の画像へ
-        setCurrentIndex(prev => prev + 1);
+        setCurrentIndex(prev => Math.min(filteredPhotos.length - 1, prev + imageCount));
       }
     }
 
