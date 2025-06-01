@@ -36,7 +36,7 @@ const MainImageContainer = styled.div`
   justify-content: center;
   background: rgba(0, 0, 0, 0.3);
   overflow: hidden;
-  touch-action: pan-y pinch-zoom;
+  touch-action: none;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
@@ -53,11 +53,12 @@ const ImageWrapper = styled.div<{ $isTransitioning: boolean; $translateX: number
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   transform: ${props => props.$isTransitioning ? 'scale(0.98)' : 'scale(1)'} translateX(${props => props.$translateX}px);
   will-change: transform;
   backface-visibility: hidden;
   -webkit-font-smoothing: antialiased;
+  touch-action: none;
 `;
 
 const ThumbnailContainer = styled.div`
@@ -149,8 +150,8 @@ export default function Gallery() {
   const lastTouchY = useRef<number>(0);
   const SCROLL_THRESHOLD = 10;
   const SCROLL_COOLDOWN = 20;
-  const SWIPE_THRESHOLD = 50;
-  const SWIPE_VELOCITY_THRESHOLD = 0.3;
+  const SWIPE_THRESHOLD = 20;
+  const SWIPE_VELOCITY_THRESHOLD = 0.1;
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -300,7 +301,7 @@ export default function Gallery() {
       // トランジション終了後に状態をリセット
       setTimeout(() => {
         setIsTransitioning(false);
-      }, 300);
+      }, 200);
     };
 
     window.addEventListener('wheel', handleWheel, { passive: false });
@@ -346,6 +347,7 @@ export default function Gallery() {
   }, [currentIndex, scrollToCurrentThumbnail]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
     const touch = e.touches[0];
     touchStartTime.current = Date.now();
     touchStartX.current = touch.clientX;
@@ -359,54 +361,39 @@ export default function Gallery() {
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
     
+    e.preventDefault();
     const touch = e.touches[0];
     const deltaX = touch.clientX - touchStartX.current;
     const deltaY = touch.clientY - touchStartY.current;
     
-    // 水平方向と垂直方向の移動を許可
+    // 水平方向の移動が垂直方向より大きい場合のみ、水平方向の移動を許可
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
-      // 水平方向の移動が大きい場合
       setTranslateX(deltaX);
-    } else {
-      // 垂直方向の移動が大きい場合
-      setTranslateX(deltaY);
     }
     
     lastTouchX.current = touch.clientX;
     lastTouchY.current = touch.clientY;
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
     if (!isDragging) return;
 
+    e.preventDefault();
     const touchEndTime = Date.now();
     const deltaX = lastTouchX.current - touchStartX.current;
     const deltaY = lastTouchY.current - touchStartY.current;
     const deltaTime = touchEndTime - touchStartTime.current;
     const velocityX = Math.abs(deltaX) / deltaTime;
-    const velocityY = Math.abs(deltaY) / deltaTime;
 
-    // 水平方向と垂直方向のスワイプ判定
+    // 水平方向のスワイプ判定
     if (Math.abs(deltaX) > Math.abs(deltaY) && 
         (Math.abs(deltaX) > SWIPE_THRESHOLD || velocityX > SWIPE_VELOCITY_THRESHOLD)) {
-      // 水平方向のスワイプ
       setIsTransitioning(true);
       if (deltaX > 0 && currentIndex > 0) {
         // 右スワイプ：前の画像へ
         setCurrentIndex(prev => prev - 1);
       } else if (deltaX < 0 && currentIndex < filteredPhotos.length - 1) {
         // 左スワイプ：次の画像へ
-        setCurrentIndex(prev => prev + 1);
-      }
-    } else if (Math.abs(deltaY) > Math.abs(deltaX) && 
-               (Math.abs(deltaY) > SWIPE_THRESHOLD || velocityY > SWIPE_VELOCITY_THRESHOLD)) {
-      // 垂直方向のスワイプ
-      setIsTransitioning(true);
-      if (deltaY > 0 && currentIndex > 0) {
-        // 下スワイプ：前の画像へ
-        setCurrentIndex(prev => prev - 1);
-      } else if (deltaY < 0 && currentIndex < filteredPhotos.length - 1) {
-        // 上スワイプ：次の画像へ
         setCurrentIndex(prev => prev + 1);
       }
     }
@@ -423,7 +410,7 @@ export default function Gallery() {
     // トランジション終了後に状態をリセット
     setTimeout(() => {
       setIsTransitioning(false);
-    }, 300);
+    }, 200);
   };
 
   return (
@@ -457,8 +444,12 @@ export default function Gallery() {
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
               style={{
-                WebkitOverflowScrolling: 'touch',
-                touchAction: 'none'
+                touchAction: 'none',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none',
+                userSelect: 'none',
+                overscrollBehavior: 'none',
+                WebkitOverflowScrolling: 'touch'
               }}
             >
               <ImageWrapper 
@@ -475,8 +466,12 @@ export default function Gallery() {
                     objectFit: 'contain',
                     maxWidth: '100%',
                     maxHeight: '100%',
-                    WebkitOverflowScrolling: 'touch',
-                    touchAction: 'none'
+                    touchAction: 'none',
+                    WebkitTouchCallout: 'none',
+                    WebkitUserSelect: 'none',
+                    userSelect: 'none',
+                    overscrollBehavior: 'none',
+                    WebkitOverflowScrolling: 'touch'
                   }}
                 />
               </ImageWrapper>
