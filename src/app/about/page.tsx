@@ -61,7 +61,7 @@ const TicketWrapper = styled.div`
   align-items: center;
   position: relative;
   @media (max-width: 600px) {
-    padding: 24px 0 24px 0;
+    padding: 24px 10px;
     min-height: unset;
     height: auto;
     justify-content: center;
@@ -83,11 +83,15 @@ const Ticket = styled.div<{ $isClicked: boolean }>`
   perspective: 1000px;
   position: relative;
   @media (max-width: 600px) {
-    width: 98vw;
-    max-width: 99vw;
-    min-height: 140px;
+    width: calc(100vw - 20px);
+    height: 180px;
+    transform: rotate(90deg);
+    margin: 8vw 0;
     border-radius: 18px;
-    padding: 8vw 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 `;
 

@@ -9,9 +9,10 @@ import type { Photo } from '../lib/microcms';
 
 const FilmGallery = styled.div`
   position: relative;
-  width: 100vw;
+  width: 100%;
+  min-width: 0;
   height: 100vh;
-  overflow: auto;
+  overflow-x: hidden;
   background: radial-gradient(ellipse at center, var(--bg-medium) 0%, var(--bg-dark) 100%);
   padding-top: 80px;
   padding-bottom: 80px;

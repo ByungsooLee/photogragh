@@ -24,6 +24,9 @@ const GalleryContainer = styled.div`
   min-height: 100vh;
   background: var(--bg-dark);
   padding-top: 80px; // ヘッダーの高さ分のパディング
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
 
   @media (max-width: 768px) {
     padding-top: 160px; // SPではカテゴリーとフィルター分の余白を追加
@@ -226,6 +229,8 @@ const FilmModalFrame = styled.div<{ $isPortrait?: boolean }>`
     aspect-ratio: unset;
     border-radius: 0;
     box-shadow: none;
+    margin: 0;
+    padding: 0;
   }
 `;
 const FilmModalBand = styled.div`
@@ -284,12 +289,23 @@ const ModalArrow = styled.button`
   justify-content: center;
   transition: background 0.2s;
   &:hover { background: #d4af37; color: #111; }
+  @media (max-width: 600px) {
+    width: 40px;
+    height: 40px;
+    font-size: 2rem;
+  }
 `;
 const ModalArrowLeft = styled(ModalArrow)`
   left: -60px;
+  @media (max-width: 600px) {
+    left: 10px;
+  }
 `;
 const ModalArrowRight = styled(ModalArrow)`
   right: -60px;
+  @media (max-width: 600px) {
+    right: 10px;
+  }
 `;
 
 // モーダル用: 前後画像のサムネイル
