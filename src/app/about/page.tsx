@@ -346,7 +346,7 @@ export default function About() {
   const [showPoster, setShowPoster] = useState(false);
   const [isCutting, setIsCutting] = useState(false);
 
-  const handleCut = (e: React.MouseEvent) => {
+  const handleCut = () => {
     if (isClicked || showPoster || isCutting) return;
     setIsCutting(true);
     setTimeout(() => {
