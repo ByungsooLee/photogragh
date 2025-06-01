@@ -69,6 +69,20 @@ export const getPhotos = async (params?: { limit?: number; offset?: number }): P
   }
 };
 
+export const getAllPhotos = async (): Promise<Photo[]> => {
+  const limit = 100;
+  let offset = 0;
+  let allPhotos: Photo[] = [];
+  let totalCount = 0;
+  do {
+    const { photos, totalCount: count } = await getPhotos({ limit, offset });
+    allPhotos = allPhotos.concat(photos);
+    totalCount = count ?? 0;
+    offset += limit;
+  } while (offset < totalCount);
+  return allPhotos;
+};
+
 export const getDummyPhotos = (): Photo[] => {
   console.log('Generating dummy photos');
   return Array.from({ length: 40 }, (_, i) => ({

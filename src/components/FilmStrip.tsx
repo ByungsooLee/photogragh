@@ -1,7 +1,7 @@
 'use client';
 
 import styled, { keyframes } from 'styled-components';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { Photo } from '../lib/microcms';
 
 interface FilmStripProps {
@@ -263,7 +263,7 @@ const Strip = styled.div<{ $isVertical?: boolean }>`
   position: relative;
   align-items: center;
   overflow: hidden;
-  animation: ${props => props.$isVertical ? verticalScroll : horizontalScroll} 30s linear infinite;
+  animation: ${props => props.$isVertical ? verticalScroll : horizontalScroll} 180s linear infinite;
   will-change: transform;
   cursor: grab;
   white-space: nowrap;
@@ -467,6 +467,32 @@ const Spotlight = styled.div<{ x: number; y: number }>`
   transition: opacity 0.3s ease;
 `;
 
+// シード値でシャッフルする関数
+function seededShuffle<T>(array: T[], seed: number): T[] {
+  const arr = [...array];
+  const random = (() => {
+    let s = seed;
+    return () => {
+      s = Math.sin(s) * 10000;
+      return s - Math.floor(s);
+    };
+  })();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function getRandomSample<T>(array: T[], n: number): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled.slice(0, n);
+}
+
 const FilmStrip: React.FC<FilmStripProps> = ({
   stripId,
   isVertical,
@@ -476,65 +502,44 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   className
 }) => {
   const [spotlightPosition, setSpotlightPosition] = useState({ x: 0, y: 0 });
-  const [displayedPhotos, setDisplayedPhotos] = useState<Photo[]>(() => {
-    if (!photos || photos.length === 0) return [];
-    const shuffled = shuffleArray(photos);
-    return [...shuffled, ...shuffled];
-  });
-  const frameRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const shuffledPhotosRef = useRef<Photo[]>([]);
-  const preloadedImagesRef = useRef<Set<string>>(new Set());
 
-  // 画像をプリロードする関数
-  const preloadImage = (url: string) => {
-    if (preloadedImagesRef.current.has(url)) {
-      return;
-    }
-    const img = new Image();
-    img.src = url;
-    preloadedImagesRef.current.add(url);
-  };
-
-  // 配列をシャッフルする関数（Fisher-Yatesアルゴリズム）
-  function shuffleArray(array: Photo[]) {
-    const newArray = [...array];
-    for (let i = newArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-    }
-    return newArray;
+  // stripIdごとに異なるseedを割り当てる
+  function getSeedFromId(id: string) {
+    return id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
   }
 
-  // 写真の表示を初期化（初回のみシャッフル）
-  useEffect(() => {
-    if (!photos || photos.length === 0) {
-      return;
+  // フィルムを長くし、かつ同時に同じ画像が出ないようにする
+  function generateLongUniqueFilm(photos: Photo[], repeat: number, stripId: string): Photo[] {
+    const seed = getSeedFromId(stripId);
+    let result: Photo[] = [];
+    for (let i = 0; i < repeat; i++) {
+      const shuffled = seededShuffle(photos, seed + i * 100);
+      result = result.concat(shuffled);
     }
-    shuffledPhotosRef.current = shuffleArray(photos);
-    const doubledPhotos = [...shuffledPhotosRef.current, ...shuffledPhotosRef.current];
-    setDisplayedPhotos(doubledPhotos);
-    doubledPhotos.forEach(photo => {
-      preloadImage(photo.url);
-    });
-  }, [photos]);
+    // ランダムな開始位置からスタート
+    const offset = Math.floor(Math.random() * photos.length);
+    return result.slice(offset).concat(result.slice(0, offset));
+  }
 
-  // 定期的に写真をシャッフルして更新（メモリ効率を考慮）
+  const [displayedPhotos, setDisplayedPhotos] = useState<Photo[]>(() => {
+    if (!photos || photos.length === 0) return [];
+    const sample = getRandomSample(photos, Math.min(100, photos.length));
+    return generateLongUniqueFilm(sample, 6, stripId);
+  });
+
   useEffect(() => {
-    if (photos.length === 0) return;
-    const updateInterval = setInterval(() => {
-      shuffledPhotosRef.current = shuffleArray(photos);
-      setDisplayedPhotos(() => {
-        const newPhotos = [...shuffledPhotosRef.current, ...shuffledPhotosRef.current];
-        newPhotos.forEach(photo => {
-          preloadImage(photo.url);
-        });
-        return newPhotos;
-      });
-    }, 60000);
-    return () => {
-      clearInterval(updateInterval);
-    };
-  }, [photos]);
+    if (!photos || photos.length === 0) return;
+    const sample = getRandomSample(photos, Math.min(100, photos.length));
+    const seed = getSeedFromId(stripId);
+    let result: Photo[] = [];
+    for (let i = 0; i < 6; i++) {
+      const shuffled = seededShuffle(sample, seed + i * 100);
+      result = result.concat(shuffled);
+    }
+    const offset = Math.floor(Math.random() * sample.length);
+    const finalPhotos = result.slice(offset).concat(result.slice(0, offset));
+    setDisplayedPhotos(finalPhotos);
+  }, [photos, stripId]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     setSpotlightPosition({ x: e.clientX, y: e.clientY });
@@ -551,10 +556,6 @@ const FilmStrip: React.FC<FilmStripProps> = ({
         y: rect.top + rect.height / 2
       }
     });
-  };
-
-  const setFrameRef = (index: number) => (el: HTMLDivElement | null) => {
-    frameRefs.current[index] = el;
   };
 
   return (
@@ -576,7 +577,6 @@ const FilmStrip: React.FC<FilmStripProps> = ({
           {displayedPhotos.map((photo, index) => (
             <Frame
               key={`${stripId}-${index}-${photo.id}-${photo.url}`}
-              ref={setFrameRef(index)}
               $isVertical={isVertical}
               className={''}
               onClick={(e) => handlePhotoClick(photo, e)}

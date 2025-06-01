@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import Header from './Header';
 import Modal from './Modal';
 import FilmStrip from './FilmStrip';
-import { getPhotos, type Photo, getDummyPhotos } from '../lib/microcms';
+import { type Photo, getDummyPhotos, getAllPhotos } from '../lib/microcms';
 
 const FilmGallery = styled.div`
   position: relative;
@@ -95,18 +95,14 @@ export default function HomeClient() {
 
   useEffect(() => {
     setIsLoading(true);
-    getPhotos().then(({ photos }) => {
-      if (photos && photos.length > 0) {
-        setPhotos(photos);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('gallery_photos', JSON.stringify(photos));
-        }
-      } else {
-        setPhotos(getDummyPhotos());
+    getAllPhotos().then((photos) => {
+      setPhotos(photos);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('gallery_photos', JSON.stringify(photos));
       }
       setIsLoading(false);
     }).catch(() => {
-      setPhotos(getInitialPhotos());
+      setPhotos(getDummyPhotos());
       setIsLoading(false);
     });
   }, []);
