@@ -36,22 +36,25 @@ const MainImageContainer = styled.div`
   justify-content: center;
   background: rgba(0, 0, 0, 0.3);
   overflow: hidden;
-  touch-action: none;
+  touch-action: pan-y pinch-zoom;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
   cursor: grab;
   &:active {
     cursor: grabbing;
   }
 `;
 
-const ImageWrapper = styled.div<{ $isTransitioning: boolean }>`
+const ImageWrapper = styled.div<{ $isTransitioning: boolean; $translateX: number }>`
   position: relative;
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: ${props => props.$isTransitioning ? 'scale(0.98)' : 'scale(1)'};
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: ${props => props.$isTransitioning ? 'scale(0.98)' : 'scale(1)'} translateX(${props => props.$translateX}px);
   will-change: transform;
   backface-visibility: hidden;
   -webkit-font-smoothing: antialiased;
@@ -133,16 +136,21 @@ export default function Gallery() {
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
-  const [touchEnd, setTouchEnd] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [translateX, setTranslateX] = useState(0);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
   const scrollAccumulator = useRef(0);
   const lastScrollTime = useRef(Date.now());
   const thumbnailContainerRef = useRef<HTMLDivElement>(null);
+  const touchStartTime = useRef<number>(0);
+  const touchStartX = useRef<number>(0);
+  const touchStartY = useRef<number>(0);
+  const lastTouchX = useRef<number>(0);
+  const lastTouchY = useRef<number>(0);
   const SCROLL_THRESHOLD = 10;
   const SCROLL_COOLDOWN = 20;
-  const SWIPE_THRESHOLD = 30;
+  const SWIPE_THRESHOLD = 50;
+  const SWIPE_VELOCITY_THRESHOLD = 0.3;
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -232,22 +240,73 @@ export default function Gallery() {
     };
 
     const handleTouchStart = (e: TouchEvent) => {
-      e.preventDefault();
-      scrollAccumulator.current = 0;
+      const touch = e.touches[0];
+      touchStartTime.current = Date.now();
+      touchStartX.current = touch.clientX;
+      touchStartY.current = touch.clientY;
+      lastTouchX.current = touch.clientX;
+      lastTouchY.current = touch.clientY;
+      setIsDragging(true);
+      setTranslateX(0);
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
+      if (!isDragging) return;
+      
+      const touch = e.touches[0];
+      const deltaX = touch.clientX - touchStartX.current;
+      const deltaY = touch.clientY - touchStartY.current;
+      
+      // 水平方向の移動が垂直方向より大きい場合のみ、水平方向の移動を許可
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        setTranslateX(deltaX);
+      }
+      
+      lastTouchX.current = touch.clientX;
+      lastTouchY.current = touch.clientY;
     };
 
-    const handleTouchEnd = (e: TouchEvent) => {
-      e.preventDefault();
+    const handleTouchEnd = () => {
+      if (!isDragging) return;
+
+      const touchEndTime = Date.now();
+      const deltaX = lastTouchX.current - touchStartX.current;
+      const deltaY = lastTouchY.current - touchStartY.current;
+      const deltaTime = touchEndTime - touchStartTime.current;
+      const velocityX = Math.abs(deltaX) / deltaTime;
+
+      // 水平方向のスワイプ判定
+      if (Math.abs(deltaX) > Math.abs(deltaY) && 
+          (Math.abs(deltaX) > SWIPE_THRESHOLD || velocityX > SWIPE_VELOCITY_THRESHOLD)) {
+        setIsTransitioning(true);
+        if (deltaX > 0 && currentIndex > 0) {
+          // 右スワイプ：前の画像へ
+          setCurrentIndex(prev => prev - 1);
+        } else if (deltaX < 0 && currentIndex < filteredPhotos.length - 1) {
+          // 左スワイプ：次の画像へ
+          setCurrentIndex(prev => prev + 1);
+        }
+      }
+
+      // 状態をリセット
+      setIsDragging(false);
+      setTranslateX(0);
+      touchStartTime.current = 0;
+      touchStartX.current = 0;
+      touchStartY.current = 0;
+      lastTouchX.current = 0;
+      lastTouchY.current = 0;
+
+      // トランジション終了後に状態をリセット
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 300);
     };
 
     window.addEventListener('wheel', handleWheel, { passive: false });
-    window.addEventListener('touchstart', handleTouchStart, { passive: false });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
-    window.addEventListener('touchend', handleTouchEnd, { passive: false });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
     
     return () => {
       window.removeEventListener('wheel', handleWheel);
@@ -258,7 +317,7 @@ export default function Gallery() {
         clearTimeout(scrollTimeout.current);
       }
     };
-  }, [handleScroll]);
+  }, [handleScroll, currentIndex, filteredPhotos.length]);
 
   // サムネイルのスクロール位置を更新する関数
   const scrollToCurrentThumbnail = useCallback(() => {
@@ -287,38 +346,50 @@ export default function Gallery() {
   }, [currentIndex, scrollToCurrentThumbnail]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartTime.current = Date.now();
+    touchStartX.current = touch.clientX;
+    touchStartY.current = touch.clientY;
+    lastTouchX.current = touch.clientX;
+    lastTouchY.current = touch.clientY;
     setIsDragging(true);
-    setTouchStart({
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY
-    });
-    setTouchEnd({
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY
-    });
-    scrollAccumulator.current = 0;
+    setTranslateX(0);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
     
-    setTouchEnd({
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY
-    });
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStartX.current;
+    const deltaY = touch.clientY - touchStartY.current;
+    
+    // 水平方向と垂直方向の移動を許可
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      // 水平方向の移動が大きい場合
+      setTranslateX(deltaX);
+    } else {
+      // 垂直方向の移動が大きい場合
+      setTranslateX(deltaY);
+    }
+    
+    lastTouchX.current = touch.clientX;
+    lastTouchY.current = touch.clientY;
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleTouchEnd = () => {
     if (!isDragging) return;
 
-    const deltaX = touchEnd.x - touchStart.x;
-    const deltaY = touchEnd.y - touchStart.y;
-    const absDeltaX = Math.abs(deltaX);
-    const absDeltaY = Math.abs(deltaY);
+    const touchEndTime = Date.now();
+    const deltaX = lastTouchX.current - touchStartX.current;
+    const deltaY = lastTouchY.current - touchStartY.current;
+    const deltaTime = touchEndTime - touchStartTime.current;
+    const velocityX = Math.abs(deltaX) / deltaTime;
+    const velocityY = Math.abs(deltaY) / deltaTime;
 
-    // より大きな移動量を持つ方向に応じて処理
-    if (absDeltaX > absDeltaY && absDeltaX > SWIPE_THRESHOLD) {
-      // 水平スワイプ
+    // 水平方向と垂直方向のスワイプ判定
+    if (Math.abs(deltaX) > Math.abs(deltaY) && 
+        (Math.abs(deltaX) > SWIPE_THRESHOLD || velocityX > SWIPE_VELOCITY_THRESHOLD)) {
+      // 水平方向のスワイプ
       setIsTransitioning(true);
       if (deltaX > 0 && currentIndex > 0) {
         // 右スワイプ：前の画像へ
@@ -327,8 +398,9 @@ export default function Gallery() {
         // 左スワイプ：次の画像へ
         setCurrentIndex(prev => prev + 1);
       }
-    } else if (absDeltaY > absDeltaX && absDeltaY > SWIPE_THRESHOLD) {
-      // 垂直スワイプ
+    } else if (Math.abs(deltaY) > Math.abs(deltaX) && 
+               (Math.abs(deltaY) > SWIPE_THRESHOLD || velocityY > SWIPE_VELOCITY_THRESHOLD)) {
+      // 垂直方向のスワイプ
       setIsTransitioning(true);
       if (deltaY > 0 && currentIndex > 0) {
         // 下スワイプ：前の画像へ
@@ -341,13 +413,17 @@ export default function Gallery() {
 
     // 状態をリセット
     setIsDragging(false);
-    setTouchStart({ x: 0, y: 0 });
-    setTouchEnd({ x: 0, y: 0 });
+    setTranslateX(0);
+    touchStartTime.current = 0;
+    touchStartX.current = 0;
+    touchStartY.current = 0;
+    lastTouchX.current = 0;
+    lastTouchY.current = 0;
 
     // トランジション終了後に状態をリセット
     setTimeout(() => {
       setIsTransitioning(false);
-    }, 150);
+    }, 300);
   };
 
   return (
@@ -381,14 +457,14 @@ export default function Gallery() {
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
               style={{
-                touchAction: 'none',
-                WebkitTouchCallout: 'none',
-                WebkitUserSelect: 'none',
-                userSelect: 'none',
-                overscrollBehavior: 'none'
+                WebkitOverflowScrolling: 'touch',
+                touchAction: 'none'
               }}
             >
-              <ImageWrapper $isTransitioning={isTransitioning}>
+              <ImageWrapper 
+                $isTransitioning={isTransitioning}
+                $translateX={translateX}
+              >
                 <Image
                   src={filteredPhotos[currentIndex].url}
                   alt={filteredPhotos[currentIndex].title}
@@ -399,13 +475,8 @@ export default function Gallery() {
                     objectFit: 'contain',
                     maxWidth: '100%',
                     maxHeight: '100%',
-                    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    transform: isTransitioning ? 'scale(0.98)' : 'scale(1)',
-                    touchAction: 'none',
-                    WebkitTouchCallout: 'none',
-                    WebkitUserSelect: 'none',
-                    userSelect: 'none',
-                    overscrollBehavior: 'none'
+                    WebkitOverflowScrolling: 'touch',
+                    touchAction: 'none'
                   }}
                 />
               </ImageWrapper>
