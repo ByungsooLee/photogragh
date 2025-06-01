@@ -304,6 +304,8 @@ const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
     if (props.$isVertical) return '200px';
     return props.isPortrait ? '200px' : '140px';
   }};
+  min-width: 100px;
+  min-height: 100px;
   margin: ${props => props.isPortrait || props.$isVertical ? '0 auto' : '0'};
   background: var(--film-bg);
   border: 2px solid #222;
@@ -424,16 +426,18 @@ const Content = styled.div`
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, rgba(34,34,34,0.8) 0%, rgba(17,17,17,0.8) 100%);
+  min-width: 100px;
+  min-height: 100px;
 `;
 
-const Photo = styled.img<{ $isPicked?: boolean; $isLoaded?: boolean }>`
+const Photo = styled.img<{ $isPicked?: boolean }>`
   width: 100%;
   height: 100%;
   object-fit: cover;
   border-radius: 5px;
   filter: sepia(20%) contrast(1.1);
   transition: all 0.3s ease, opacity 0.7s cubic-bezier(0.4,0,0.2,1);
-  opacity: ${props => props.$isLoaded ? 1 : 0};
+  opacity: 1;
 
   ${Frame}:hover & {
     filter: sepia(0%) contrast(1.2) brightness(1.1);
@@ -472,49 +476,43 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   className
 }) => {
   const [spotlightPosition, setSpotlightPosition] = useState({ x: 0, y: 0 });
-  const [displayedPhotos, setDisplayedPhotos] = useState<Photo[]>([]);
-  const [isLoadedArr, setIsLoadedArr] = useState<boolean[]>([]);
+  const [displayedPhotos, setDisplayedPhotos] = useState<Photo[]>(() => {
+    if (!photos || photos.length === 0) return [];
+    const shuffled = shuffleArray(photos);
+    return [...shuffled, ...shuffled];
+  });
   const frameRefs = useRef<(HTMLDivElement | null)[]>([]);
   const shuffledPhotosRef = useRef<Photo[]>([]);
   const preloadedImagesRef = useRef<Set<string>>(new Set());
 
   // 画像をプリロードする関数
   const preloadImage = (url: string) => {
-    if (preloadedImagesRef.current.has(url)) return;
-    
+    if (preloadedImagesRef.current.has(url)) {
+      return;
+    }
     const img = new Image();
     img.src = url;
     preloadedImagesRef.current.add(url);
   };
 
   // 配列をシャッフルする関数（Fisher-Yatesアルゴリズム）
-  const shuffleArray = (array: Photo[]) => {
+  function shuffleArray(array: Photo[]) {
     const newArray = [...array];
     for (let i = newArray.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
     }
     return newArray;
-  };
+  }
 
   // 写真の表示を初期化（初回のみシャッフル）
   useEffect(() => {
-    if (photos.length === 0) return;
-
-    // ★ ここでrefを初期化
-    shuffledPhotosRef.current = [];
-    preloadedImagesRef.current = new Set();
-    
-    // 初回のみシャッフルを実行
-    if (shuffledPhotosRef.current.length === 0) {
-      shuffledPhotosRef.current = shuffleArray(photos);
+    if (!photos || photos.length === 0) {
+      return;
     }
-    
-    // シャッフル済みの写真を2セット用意
+    shuffledPhotosRef.current = shuffleArray(photos);
     const doubledPhotos = [...shuffledPhotosRef.current, ...shuffledPhotosRef.current];
     setDisplayedPhotos(doubledPhotos);
-
-    // 画像をプリロード
     doubledPhotos.forEach(photo => {
       preloadImage(photo.url);
     });
@@ -523,23 +521,19 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   // 定期的に写真をシャッフルして更新（メモリ効率を考慮）
   useEffect(() => {
     if (photos.length === 0) return;
-
     const updateInterval = setInterval(() => {
-      // 新しいシャッフル結果を保存
       shuffledPhotosRef.current = shuffleArray(photos);
-      
-      // 表示中の写真を更新（トランジションを考慮）
       setDisplayedPhotos(() => {
         const newPhotos = [...shuffledPhotosRef.current, ...shuffledPhotosRef.current];
-        // 新しい画像をプリロード
         newPhotos.forEach(photo => {
           preloadImage(photo.url);
         });
         return newPhotos;
       });
-    }, 60000); // 1分ごとに更新
-
-    return () => clearInterval(updateInterval);
+    }, 60000);
+    return () => {
+      clearInterval(updateInterval);
+    };
   }, [photos]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -559,15 +553,9 @@ const FilmStrip: React.FC<FilmStripProps> = ({
     });
   };
 
-  // フレームのrefを設定する関数
   const setFrameRef = (index: number) => (el: HTMLDivElement | null) => {
     frameRefs.current[index] = el;
   };
-
-  // displayedPhotosが変わるたびにisLoadedArrを初期化
-  useEffect(() => {
-    setIsLoadedArr(Array(displayedPhotos.length).fill(false));
-  }, [displayedPhotos.length]);
 
   return (
     <>
@@ -587,7 +575,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
         >
           {displayedPhotos.map((photo, index) => (
             <Frame
-              key={`${stripId}-${index}-${photo.id}`}
+              key={`${stripId}-${index}-${photo.id}-${photo.url}`}
               ref={setFrameRef(index)}
               $isVertical={isVertical}
               className={''}
@@ -601,15 +589,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                   src={photo.url}
                   alt={photo.title}
                   $isPicked={false}
-                  $isLoaded={isLoadedArr[index]}
                   loading="eager"
-                  onLoad={() => {
-                    setIsLoadedArr(prev => {
-                      const next = [...prev];
-                      next[index] = true;
-                      return next;
-                    });
-                  }}
                 />
               </Content>
             </Frame>
