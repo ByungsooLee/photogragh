@@ -16,7 +16,7 @@ const fadeOut = keyframes`
   }
 `;
 
-const LoadingScreenWrapper = styled.div<{ isReady: boolean }>`
+const LoadingScreenWrapper = styled.div<{ $isReady: boolean }>`
   position: fixed;
   top: 0;
   left: 0;
@@ -27,7 +27,7 @@ const LoadingScreenWrapper = styled.div<{ isReady: boolean }>`
   justify-content: center;
   align-items: center;
   z-index: 9999;
-  animation: ${props => props.isReady ? fadeOut : 'none'} 0.5s ease-out forwards;
+  animation: ${props => props.$isReady ? fadeOut : 'none'} 0.5s ease-out forwards;
 `;
 
 const LoadingContent = styled.div`
@@ -95,7 +95,7 @@ const LoadingScreen = () => {
   }, []);
 
   return (
-    <LoadingScreenWrapper isReady={isReady}>
+    <LoadingScreenWrapper $isReady={isReady}>
       <LoadingContent>
         <LogoAnimation viewBox="0 0 200 100">
           <text x="50%" y="50%" textAnchor="middle" dy=".3em">

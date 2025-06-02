@@ -6,6 +6,7 @@ import Header from './Header';
 import Modal from './Modal';
 import FilmStrip from './FilmStrip';
 import LoadingScreen from './LoadingScreen';
+import Navigation from './Navigation';
 import { type Photo, getDummyPhotos, getAllPhotos } from '../lib/microcms';
 
 const FilmGallery = styled.div`
@@ -132,6 +133,7 @@ export default function HomeClient() {
   return (
     <>
       {isLoading && <LoadingScreen />}
+      <Navigation />
       <ScrollPreventOverlay />
       <FilmGallery>
         <Header />
