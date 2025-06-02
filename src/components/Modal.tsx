@@ -136,6 +136,15 @@ const ImageContainer = styled.div`
   }
 `;
 
+const ModalImageWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  height: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+`;
+
 const ModalImage = styled.img`
   max-width: 100%;
   max-height: 100%;
@@ -227,6 +236,74 @@ const TopLeftTitle = styled.div`
   pointer-events: none;
 `;
 
+const ModalImageWithHeader = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+`;
+
+const ImageOverlayHeader = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  position: absolute;
+  top: -40px;
+  left: 0;
+  z-index: 10;
+  pointer-events: none;
+  padding: 0 8px;
+
+  @media (max-width: 768px) {
+    position: static;
+    margin-bottom: 8px;
+    top: unset;
+    left: unset;
+    padding: 0 4px;
+  }
+`;
+
+const OverlayTitle = styled.div`
+  color: #fff;
+  font-size: 0.9rem;
+  font-family: 'Bebas Neue', 'Noto Serif JP', serif;
+  background: rgba(10, 10, 10, 0.7);
+  padding: 4px 14px;
+  border-radius: 20px;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+`;
+
+const OverlayCloseButton = styled.button`
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1.6rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  z-index: 20;
+  transition: all 0.3s ease;
+  will-change: transform, opacity;
+  &:hover {
+    transform: scale(1.1);
+    background: rgba(0,0,0,0.9);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+  }
+  &:active {
+    transform: scale(0.95);
+  }
+`;
+
 const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
@@ -240,6 +317,7 @@ const Modal: React.FC<ModalProps> = ({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [startY, setStartY] = useState(0);
   const [startX, setStartX] = useState(0);
+  const [isLandscape, setIsLandscape] = useState(false);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -258,6 +336,14 @@ const Modal: React.FC<ModalProps> = ({
       document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
+
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      setIsLandscape(img.width > img.height);
+    };
+    img.src = imageUrl;
+  }, [imageUrl]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setIsDragging(true);
@@ -314,9 +400,21 @@ const Modal: React.FC<ModalProps> = ({
       >
         <FilmFrame />
         <ImageContainer>
-          <TopLeftTitle>{title}</TopLeftTitle>
-          <ModalCloseButton onClick={onClose} aria-label="閉じる">×</ModalCloseButton>
-          <ModalImage src={imageUrl} alt={title} />
+          {isLandscape ? (
+            <ModalImageWithHeader>
+              <ImageOverlayHeader>
+                <OverlayTitle>{title}</OverlayTitle>
+                <OverlayCloseButton onClick={onClose} aria-label="閉じる">×</OverlayCloseButton>
+              </ImageOverlayHeader>
+              <ModalImage src={imageUrl} alt={title} />
+            </ModalImageWithHeader>
+          ) : (
+            <>
+              <TopLeftTitle style={{position:'absolute',top:20,left:20,fontSize:'1.08rem',padding:'8px 20px',zIndex:100,pointerEvents:'none'}}>{title}</TopLeftTitle>
+              <ModalCloseButton style={{position:'absolute',top:16,right:16,width:40,height:40,fontSize:'2rem',zIndex:20}} onClick={onClose} aria-label="閉じる">×</ModalCloseButton>
+              <ModalImage src={imageUrl} alt={title} />
+            </>
+          )}
           <BottomSwipeHint>Swipe up or sideways to close</BottomSwipeHint>
         </ImageContainer>
         <InfoPanel>

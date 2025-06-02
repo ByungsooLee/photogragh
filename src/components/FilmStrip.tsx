@@ -315,8 +315,12 @@ const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
   box-shadow: 
     0 5px 20px rgba(0,0,0,0.5),
     inset 0 0 15px rgba(0,0,0,0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  will-change: transform, box-shadow;
+  transform-origin: center center;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
 
   &::after {
     content: '';
@@ -327,16 +331,16 @@ const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
     height: 100%;
     background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.3) 100%);
     opacity: 0;
-    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     pointer-events: none;
   }
 
   &:hover {
-    transform: scale(1.05);
+    transform: scale(1.08);
     box-shadow: 
-      0 10px 30px rgba(212, 175, 55, 0.3),
-      0 5px 20px rgba(0,0,0,0.7),
-      inset 0 0 20px rgba(212, 175, 55, 0.1);
+      0 15px 40px rgba(212, 175, 55, 0.4),
+      0 8px 25px rgba(0,0,0,0.8),
+      inset 0 0 25px rgba(212, 175, 55, 0.15);
     z-index: 10;
     border-color: var(--dark-gold);
 
@@ -351,6 +355,11 @@ const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
     }
   }
 
+  &:active {
+    transform: scale(0.98);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
   &.picked {
     animation: pickUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     z-index: 1000;
@@ -358,7 +367,7 @@ const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
 
   @keyframes pickUp {
     0% {
-      transform: scale(1.05);
+      transform: scale(1.08);
     }
     50% {
       transform: scale(1.2);
@@ -436,15 +445,19 @@ const Photo = styled.img<{ $isPicked?: boolean }>`
   object-fit: cover;
   border-radius: 5px;
   filter: sepia(20%) contrast(1.1);
-  transition: all 0.3s ease, opacity 0.7s cubic-bezier(0.4,0,0.2,1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 1;
+  will-change: filter, transform;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
 
   ${Frame}:hover & {
-    filter: sepia(0%) contrast(1.2) brightness(1.1);
+    filter: sepia(0%) contrast(1.2) brightness(1.15);
+    transform: scale(1.02);
   }
 
   ${props => props.$isPicked && `
-    filter: sepia(0%) contrast(1.2) brightness(1.1);
+    filter: sepia(0%) contrast(1.2) brightness(1.15);
     box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
   `}
 `;
