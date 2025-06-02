@@ -1,10 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    optimizeCss: true,
+  },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
   images: {
-    minimumCacheTTL: 60 * 60 * 24 * 30, // 30日間キャッシュ
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256],
-    formats: ['image/webp'],
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60 * 60 * 24 * 365, // 1年
     remotePatterns: [
       {
         protocol: 'https',
@@ -15,20 +21,16 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/images/:all*',
+        source: '/:all*(svg|jpg|jpeg|png|gif|ico|webp|avif)',
         headers: [
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
           },
-          {
-            key: 'Vary',
-            value: 'Accept-Encoding',
-          },
         ],
       },
       {
-        source: '/_next/image/:all*',
+        source: '/:all*(js|css)',
         headers: [
           {
             key: 'Cache-Control',

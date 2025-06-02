@@ -17,13 +17,11 @@ const FilmGallery = styled.div`
   overflow: hidden !important;
   background: radial-gradient(ellipse at center, var(--bg-medium) 0%, var(--bg-dark) 100%);
   padding-top: 80px;
-  padding-bottom: 80px;
   touch-action: none;
   -webkit-overflow-scrolling: none;
   overscroll-behavior: none;
   @media (max-width: 600px) {
     padding-top: 24px;
-    padding-bottom: 24px;
     min-height: 100dvh;
   }
 `;
