@@ -2,7 +2,7 @@
 
 import styled from 'styled-components';
 import Header from '@/components/Header';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 
 const AboutContainer = styled.div`
   min-height: 100vh;
@@ -53,20 +53,13 @@ const AboutContainer = styled.div`
 `;
 
 const TicketWrapper = styled.div`
-  width: 100vw;
-  min-height: calc(100vh - 80px);
-  padding-top: 80px;
+  position: fixed;
+  inset: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  position: relative;
-  @media (max-width: 600px) {
-    padding: 24px 10px;
-    min-height: unset;
-    height: auto;
-    justify-content: center;
-    align-items: center;
-  }
+  overflow: hidden;
+  z-index: 10;
 `;
 
 const Ticket = styled.div<{ $isClicked: boolean }>`
@@ -83,10 +76,14 @@ const Ticket = styled.div<{ $isClicked: boolean }>`
   perspective: 1000px;
   position: relative;
   @media (max-width: 600px) {
-    width: calc(100vw - 20px);
-    height: 180px;
-    transform: rotate(90deg);
-    margin: 8vw 0;
+    position: absolute;
+    left: 50vw;
+    top: 50vh;
+    transform: translate(-50%, -50%) rotate(90deg) translateY(-145px);
+    transform-origin: center center;
+    width: 500px;
+    height: 210px;
+    margin: 0;
     border-radius: 18px;
     padding: 0;
     display: flex;
@@ -330,6 +327,36 @@ export default function About() {
   const [isClicked, setIsClicked] = useState(false);
   const [showPoster, setShowPoster] = useState(false);
   const [isCutting, setIsCutting] = useState(false);
+  const ticketRef = useRef<HTMLDivElement>(null);
+  const [ticketStyle, setTicketStyle] = useState<React.CSSProperties>({});
+
+  useLayoutEffect(() => {
+    function updatePosition() {
+      if (window.innerWidth <= 600 && ticketRef.current) {
+        // ヘッダーの高さ（必要に応じて調整）
+        const headerHeight = 80;
+        const marginTop = 16; // ヘッダー下の余白
+        const ticketWidth = ticketRef.current.offsetWidth;
+        // 回転後の中心をウィンドウ中央に合わせる
+        const centerX = window.innerWidth / 2;
+        // ヘッダー下からチケットの中心までの距離
+        const centerY = headerHeight + marginTop + ticketWidth / 2;
+
+        setTicketStyle({
+          position: 'absolute',
+          left: `${centerX}px`,
+          top: `${centerY}px`,
+          transform: `translate(-50%, -50%) rotate(90deg)` ,
+          transformOrigin: 'center center',
+        });
+      } else {
+        setTicketStyle({});
+      }
+    }
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    return () => window.removeEventListener('resize', updatePosition);
+  }, []);
 
   // グローバル副作用リセット
   useEffect(() => {
@@ -373,13 +400,15 @@ export default function About() {
       <Header />
       <TicketWrapper>
         {!showPoster && (
-          <Ticket 
-            $isClicked={isClicked}
-            onClick={handleCut}
+          <Ticket
+            ref={ticketRef}
             style={{
+              ...ticketStyle,
               cursor: isClicked ? 'default' : 'pointer',
               transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
+            $isClicked={isClicked}
+            onClick={handleCut}
           >
             {!isCutting && (
               <CutLineWrapper>
