@@ -86,6 +86,7 @@ export default function HomeClient() {
   const [modalTitle, setModalTitle] = useState('');
   const [modalCaption, setModalCaption] = useState('');
   const [modalSourcePosition, setModalSourcePosition] = useState<{ x: number; y: number } | undefined>();
+  const [modalKey, setModalKey] = useState('');
 
   // キャッシュがなければAPI取得、あれば即表示
   useEffect(() => {
@@ -114,6 +115,7 @@ export default function HomeClient() {
     setModalTitle(photo.title);
     setModalCaption(photo.caption);
     setModalSourcePosition(photo.position);
+    setModalKey(photo.url + '_' + Date.now());
     setIsModalOpen(true);
   };
 
@@ -140,7 +142,7 @@ export default function HomeClient() {
         </FilmContainer>
       </FilmGallery>
       <Modal
-        key={modalImage}
+        key={modalKey}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         imageUrl={modalImage}

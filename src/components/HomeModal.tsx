@@ -157,6 +157,7 @@ const HomeModal: React.FC<HomeModalProps> = ({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [startY, setStartY] = useState(0);
   const [startX, setStartX] = useState(0);
+  const [isFadingOut, setIsFadingOut] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -187,7 +188,11 @@ const HomeModal: React.FC<HomeModalProps> = ({
       dragOffset.y > 100 || dragOffset.y < -100 ||
       dragOffset.x > 100 || dragOffset.x < -100
     ) {
-      onClose();
+      setIsFadingOut(true);
+      setTimeout(() => {
+        setIsFadingOut(false);
+        onClose();
+      }, 250);
     } else {
       setDragOffset({ x: 0, y: 0 });
     }
@@ -196,12 +201,21 @@ const HomeModal: React.FC<HomeModalProps> = ({
 
   if (!isOpen) return null;
 
+  const dragDistance = Math.sqrt(dragOffset.x ** 2 + dragOffset.y ** 2);
+  const maxDistance = 200;
+  const opacity = isFadingOut
+    ? 0
+    : Math.max(0.5, 1 - dragDistance / maxDistance);
+  const rotate = (dragOffset.x / maxDistance) * 10;
+
   return (
     <ModalOverlay $isOpen={isOpen} onClick={onClose}>
       <ModalContent
         onClick={e => e.stopPropagation()}
         style={{
-          transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`
+          transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) rotate(${rotate}deg)`,
+          opacity,
+          transition: isFadingOut ? 'opacity 0.25s, transform 0.25s' : 'opacity 0.15s, transform 0.15s',
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
