@@ -85,7 +85,6 @@ const LoadingText = styled.p`
 
 const LoadingScreen = () => {
   const [isVisible, setIsVisible] = useState(true);
-  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -93,20 +92,6 @@ const LoadingScreen = () => {
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return prev + 1;
-      });
-    }, 20);
-
-    return () => clearInterval(interval);
   }, []);
 
   if (!isVisible) return null;
