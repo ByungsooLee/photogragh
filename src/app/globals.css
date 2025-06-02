@@ -276,3 +276,52 @@ html, body {
   z-index: 9999;
   background: transparent;
 }
+
+/* モバイルタッチ操作の改善 */
+@media (hover: none) and (pointer: coarse) {
+  /* タッチターゲットを最小44pxに */
+  button, 
+  a,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 12px;
+    touch-action: manipulation;
+  }
+  
+  /* スワイプジェスチャーのためのスムーズスクロール */
+  .gallery-container {
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    overscroll-behavior-x: contain;
+  }
+  
+  .gallery-item {
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+  }
+
+  /* タッチ操作の最適化 */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ダブルタップズームの防止 */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* タッチデバイスでのホバー効果の無効化 */
+@media (hover: none) {
+  .hover-effect:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
