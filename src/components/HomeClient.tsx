@@ -39,6 +39,9 @@ const FilmContainer = styled.div`
   touch-action: none;
   -webkit-overflow-scrolling: none;
   overscroll-behavior: none;
+  @media (min-width: 601px) {
+    gap: 6vw;
+  }
   @media (max-width: 600px) {
     gap: 4vw;
     padding: 0 2vw;
