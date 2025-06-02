@@ -22,21 +22,12 @@
 html, body {
   width: 100%;
   min-width: 0;
-  overflow: hidden !important;
   background-color: var(--bg-dark);
   color: var(--gold);
   font-family: 'Noto Serif JP', serif;
   margin: 0;
   padding: 0;
   height: 100vh;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  touch-action: none;
-  -webkit-overflow-scrolling: none;
-  overscroll-behavior: none;
 }
 
 /* グローバルアニメーション */
@@ -82,36 +73,18 @@ html, body {
 
 /* フィルムギャラリー */
 .film-gallery {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
   padding: 0;
   background: radial-gradient(ellipse at center, var(--bg-medium) 0%, var(--bg-dark) 100%);
-  overflow: hidden !important;
-  touch-action: none;
-  -webkit-overflow-scrolling: none;
-  overscroll-behavior: none;
 }
 
 .film-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
-  overflow: hidden !important;
-  touch-action: none;
-  -webkit-overflow-scrolling: none;
-  overscroll-behavior: none;
 }
 
 /* ヘッダーとフッターのスタイル */
@@ -302,7 +275,4 @@ html, body {
   height: 100vh;
   z-index: 9999;
   background: transparent;
-  touch-action: none;
-  -webkit-overflow-scrolling: none;
-  overscroll-behavior: none;
 }
