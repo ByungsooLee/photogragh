@@ -87,8 +87,15 @@ export default function HomeClient() {
   const [modalCaption, setModalCaption] = useState('');
   const [modalSourcePosition, setModalSourcePosition] = useState<{ x: number; y: number } | undefined>();
 
-  // 画像取得は初回のみ
+  // キャッシュがなければAPI取得、あれば即表示
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('gallery_photos');
+      if (cached) {
+        setIsLoading(false);
+        return;
+      }
+    }
     setIsLoading(true);
     getAllPhotos().then((photos) => {
       setPhotos(photos);
