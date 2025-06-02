@@ -88,11 +88,7 @@ export default function HomeClient() {
   const [modalSourcePosition, setModalSourcePosition] = useState<{ x: number; y: number } | undefined>();
   const [modalKey, setModalKey] = useState('');
 
-  // SPA遷移時にも必ず画像配列を再セット
-  useEffect(() => {
-    setPhotos(getInitialPhotos());
-  }, []);
-
+  // 画像取得は初回のみ
   useEffect(() => {
     setIsLoading(true);
     getAllPhotos().then((photos) => {
@@ -106,13 +102,6 @@ export default function HomeClient() {
       setIsLoading(false);
     });
   }, []);
-
-  // 空配列ガード
-  useEffect(() => {
-    if (!photos || photos.length === 0) {
-      setPhotos(getDummyPhotos());
-    }
-  }, [photos]);
 
   const handlePhotoClick = (photo: { url: string; title: string; caption: string; position: { x: number; y: number } }) => {
     setModalImage(photo.url);
