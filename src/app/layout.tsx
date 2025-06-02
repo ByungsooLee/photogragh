@@ -1,31 +1,25 @@
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import ClientLayout from "./ClientLayout";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import LoadingScreen from '../components/LoadingScreen';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ['latin'] });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+export const metadata: Metadata = {
+  title: 'L.MARK',
+  description: 'Photography by L.MARK',
+};
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
-      <head>
-        <title>L.MARK</title>
-      </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <main>
-          <ClientLayout>{children}</ClientLayout>
-        </main>
+      <body className={inter.className}>
+        <LoadingScreen />
+        {children}
       </body>
     </html>
   );
