@@ -86,7 +86,6 @@ export default function HomeClient() {
   const [modalTitle, setModalTitle] = useState('');
   const [modalCaption, setModalCaption] = useState('');
   const [modalSourcePosition, setModalSourcePosition] = useState<{ x: number; y: number } | undefined>();
-  const [modalKey, setModalKey] = useState('');
 
   // 画像取得は初回のみ
   useEffect(() => {
@@ -108,7 +107,6 @@ export default function HomeClient() {
     setModalTitle(photo.title);
     setModalCaption(photo.caption);
     setModalSourcePosition(photo.position);
-    setModalKey(photo.url + '_' + Date.now());
     setIsModalOpen(true);
   };
 
@@ -135,7 +133,7 @@ export default function HomeClient() {
         </FilmContainer>
       </FilmGallery>
       <Modal
-        key={modalKey}
+        key={modalImage}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         imageUrl={modalImage}
