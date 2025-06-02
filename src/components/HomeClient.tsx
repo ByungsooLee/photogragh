@@ -79,7 +79,7 @@ export default function HomeClient() {
     }
     return getDummyPhotos();
   };
-  const [photos, setPhotos] = useState<Photo[]>(getInitialPhotos());
+  const [photos, setPhotos] = useState<Photo[]>(getInitialPhotos().slice(0, 10));
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalImage, setModalImage] = useState('');
@@ -98,13 +98,13 @@ export default function HomeClient() {
     }
     setIsLoading(true);
     getAllPhotos().then((photos) => {
-      setPhotos(photos);
+      setPhotos(photos.slice(0, 10));
       if (typeof window !== 'undefined') {
-        localStorage.setItem('gallery_photos', JSON.stringify(photos));
+        localStorage.setItem('gallery_photos', JSON.stringify(photos.slice(0, 10)));
       }
       setIsLoading(false);
     }).catch(() => {
-      setPhotos(getDummyPhotos());
+      setPhotos(getDummyPhotos().slice(0, 10));
       setIsLoading(false);
     });
   }, []);
