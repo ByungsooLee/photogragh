@@ -23,7 +23,9 @@ export default function RootLayout({
         <title>L.MARK</title>
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ClientLayout>{children}</ClientLayout>
+        <main>
+          <ClientLayout>{children}</ClientLayout>
+        </main>
       </body>
     </html>
   );

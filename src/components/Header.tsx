@@ -180,7 +180,10 @@ const Header: React.FC = () => {
       <LogoLink href="/" passHref>
         <Logo>L.MARK</Logo>
       </LogoLink>
-      <Nav>
+      <Nav
+        aria-hidden={isMenuOpen}
+        tabIndex={isMenuOpen ? -1 : 0}
+      >
         <NavLink href="/gallery">Gallery</NavLink>
         <NavLink href="/about">About</NavLink>
         <NavLink href="/contact">Contact</NavLink>
@@ -191,7 +194,10 @@ const Header: React.FC = () => {
       <MenuButton onClick={() => setIsMenuOpen(true)}>
         ☰
       </MenuButton>
-      <MobileMenu $isOpen={isMenuOpen}>
+      <MobileMenu $isOpen={isMenuOpen}
+        aria-hidden={!isMenuOpen}
+        tabIndex={!isMenuOpen ? -1 : 0}
+      >
         <CloseButton onClick={() => setIsMenuOpen(false)}>×</CloseButton>
         <NavLink href="/instagram" onClick={() => setIsMenuOpen(false)}>
           <InstagramIcon />
