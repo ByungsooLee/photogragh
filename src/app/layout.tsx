@@ -11,8 +11,16 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'L.MARK',
-  description: 'Photography by L.MARK',
+  title: 'L.MARK - Professional Photography Portfolio',
+  description: 'BML Studio presents L.MARK - A curated collection of professional photography',
+  openGraph: {
+    title: 'L.MARK Photography',
+    description: 'Professional photography portfolio',
+    images: ['/og-image.jpg'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+  }
 };
 
 export default function RootLayout({
@@ -21,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="ja" className={inter.variable}>
       <body className={inter.className}>
         <LoadingScreen />
         {children}
