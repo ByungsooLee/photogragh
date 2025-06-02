@@ -211,6 +211,9 @@ const BottomSwipeHint = styled.div`
   text-align: center;
   letter-spacing: 0.05em;
   font-family: 'Bebas Neue', 'Noto Serif JP', serif;
+  @media (min-width: 769px) {
+    display: none;
+  }
 `;
 
 const TopLeftTitle = styled.div`
