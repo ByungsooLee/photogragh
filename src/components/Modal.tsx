@@ -224,16 +224,19 @@ const BottomSwipeHint = styled.div`
 
 const TopLeftTitle = styled.div`
   position: absolute;
-  top: 20px;
-  left: 20px;
+  top: 0;
+  left: 0;
   color: #fff;
   font-size: 1.08rem;
   font-family: 'Bebas Neue', 'Noto Serif JP', serif;
   background: rgba(10, 10, 10, 0.7);
   padding: 8px 20px;
-  border-radius: 20px;
+  border-radius: 0 0 20px 0;
   z-index: 100;
   pointer-events: none;
+  display: flex;
+  align-items: center;
+  height: 40px;
 `;
 
 const ModalImageWithHeader = styled.div`
@@ -418,19 +421,20 @@ const Modal: React.FC<ModalProps> = ({
               />
             </ModalImageWithHeader>
           ) : (
-            <>
+            <div style={{position: 'relative', width: '100%'}}>
               <TopLeftTitle>{title}</TopLeftTitle>
-              <ModalCloseButton 
-                onClick={onClose} 
+              <ModalCloseButton
+                onClick={onClose}
                 aria-label="モーダルを閉じる"
+                style={{position: 'absolute', top: 0, right: 0, zIndex: 101}}
               >
                 ×
               </ModalCloseButton>
-              <ModalImage 
-                src={imageUrl} 
-                alt={title || "モーダル画像"} 
+              <ModalImage
+                src={imageUrl}
+                alt={title || "モーダル画像"}
               />
-            </>
+            </div>
           )}
           <BottomSwipeHint>Swipe up or sideways to close</BottomSwipeHint>
         </ImageContainer>
