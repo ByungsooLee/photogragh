@@ -48,7 +48,7 @@ const LogoLink = styled(Link)`
   }
 `;
 
-const MenuButton = styled.button`
+const MenuButton = styled.button<{ $isOpen: boolean }>`
   background: none;
   border: none;
   color: var(--dark-gold);
@@ -181,6 +181,8 @@ const Header: React.FC = () => {
         <Logo>L.MARK</Logo>
       </LogoLink>
       <Nav
+        role="navigation"
+        aria-label="メインナビゲーション"
         aria-hidden={isMenuOpen}
         tabIndex={isMenuOpen ? -1 : 0}
       >
@@ -191,14 +193,27 @@ const Header: React.FC = () => {
           Instagram
         </NavLink>
       </Nav>
-      <MenuButton onClick={() => setIsMenuOpen(true)}>
+      <MenuButton 
+        onClick={() => setIsMenuOpen(true)}
+        aria-label="メニューを開く"
+        aria-expanded={isMenuOpen}
+        $isOpen={isMenuOpen}
+      >
         ☰
       </MenuButton>
-      <MobileMenu $isOpen={isMenuOpen}
+      <MobileMenu 
+        $isOpen={isMenuOpen}
         aria-hidden={!isMenuOpen}
         tabIndex={!isMenuOpen ? -1 : 0}
+        role="navigation"
+        aria-label="モバイルメニュー"
       >
-        <CloseButton onClick={() => setIsMenuOpen(false)}>×</CloseButton>
+        <CloseButton 
+          onClick={() => setIsMenuOpen(false)}
+          aria-label="メニューを閉じる"
+        >
+          ×
+        </CloseButton>
         <NavLink href="/instagram" onClick={() => setIsMenuOpen(false)}>
           <InstagramIcon />
         </NavLink>

@@ -321,6 +321,8 @@ const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
   transform-origin: center center;
   backface-visibility: hidden;
   -webkit-font-smoothing: antialiased;
+  role: "button";
+  tabIndex: 0;
 
   &::after {
     content: '';
@@ -480,32 +482,6 @@ const Spotlight = styled.div<{ x: number; y: number }>`
   transition: opacity 0.3s ease;
 `;
 
-// シード値でシャッフルする関数
-function seededShuffle<T>(array: T[], seed: number): T[] {
-  const arr = [...array];
-  const random = (() => {
-    let s = seed;
-    return () => {
-      s = Math.sin(s) * 10000;
-      return s - Math.floor(s);
-    };
-  })();
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-function getRandomSample<T>(array: T[], n: number): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled.slice(0, n);
-}
-
 const FilmStrip: React.FC<FilmStripProps> = ({
   stripId,
   isVertical,
@@ -515,47 +491,18 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   className
 }) => {
   const [spotlightPosition, setSpotlightPosition] = useState({ x: 0, y: 0 });
-
-  // stripIdごとに異なるseedを割り当てる
-  function getSeedFromId(id: string) {
-    return id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  }
-
-  // フィルムを長くし、かつ同時に同じ画像が出ないようにする
-  function generateLongUniqueFilm(photos: Photo[], repeat: number, stripId: string): Photo[] {
-    const seed = getSeedFromId(stripId);
-    let result: Photo[] = [];
-    for (let i = 0; i < repeat; i++) {
-      const shuffled = seededShuffle(photos, seed + i * 100);
-      result = result.concat(shuffled);
-    }
-    // ランダムな開始位置からスタート
-    const offset = Math.floor(Math.random() * photos.length);
-    return result.slice(offset).concat(result.slice(0, offset));
-  }
-
-  const [displayedPhotos, setDisplayedPhotos] = useState<Photo[]>(() => {
-    if (!photos || photos.length === 0) return [];
-    const sample = getRandomSample(photos, Math.min(100, photos.length));
-    return generateLongUniqueFilm(sample, 6, stripId);
-  });
+  const [displayedPhotos, setDisplayedPhotos] = useState<Photo[]>([]);
 
   useEffect(() => {
-    if (!photos || photos.length === 0) return;
-    const sample = getRandomSample(photos, Math.min(100, photos.length));
-    const seed = getSeedFromId(stripId);
-    let result: Photo[] = [];
-    for (let i = 0; i < 6; i++) {
-      const shuffled = seededShuffle(sample, seed + i * 100);
-      result = result.concat(shuffled);
-    }
-    const offset = Math.floor(Math.random() * sample.length);
-    const finalPhotos = result.slice(offset).concat(result.slice(0, offset));
-    setDisplayedPhotos(finalPhotos);
-  }, [photos, stripId]);
+    setDisplayedPhotos(photos);
+  }, [photos]);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    setSpotlightPosition({ x: e.clientX, y: e.clientY });
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setSpotlightPosition({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
   };
 
   const handlePhotoClick = (photo: Photo, event: React.MouseEvent) => {
@@ -569,6 +516,22 @@ const FilmStrip: React.FC<FilmStripProps> = ({
         y: rect.top + rect.height / 2
       }
     });
+  };
+
+  const handleKeyDown = (photo: Photo, event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      const rect = event.currentTarget.getBoundingClientRect();
+      onPhotoClick({
+        url: photo.url,
+        title: photo.title,
+        caption: photo.caption,
+        position: {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2
+        }
+      });
+    }
   };
 
   return (
@@ -593,14 +556,17 @@ const FilmStrip: React.FC<FilmStripProps> = ({
               $isVertical={isVertical}
               className={''}
               onClick={(e) => handlePhotoClick(photo, e)}
-              data-index={index}
+              onKeyDown={(e) => handleKeyDown(photo, e)}
+              role="button"
+              tabIndex={0}
+              aria-label={`${photo.title}を表示`}
             >
               <Perforations side="left" />
               <Perforations side="right" />
               <Content>
                 <Photo
                   src={photo.url}
-                  alt={photo.title}
+                  alt={photo.title || "ギャラリー画像"}
                   $isPicked={false}
                   loading="eager"
                 />

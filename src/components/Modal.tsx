@@ -62,6 +62,9 @@ const ModalOverlay = styled.div<{ $isOpen: boolean; $isDragging: boolean }>`
   user-select: none;
   cursor: ${props => props.$isDragging ? 'grabbing' : 'grab'};
   will-change: transform, opacity;
+  role: "dialog";
+  aria-modal: "true";
+  aria-label: "画像モーダル";
 `;
 
 const ModalContent = styled.div<{ 
@@ -167,6 +170,7 @@ const ModalCloseButton = styled.button`
   pointer-events: auto;
   margin-bottom: 8px;
   align-self: flex-end;
+  aria-label: "モーダルを閉じる";
 `;
 
 const InfoPanel = styled.div`
@@ -355,14 +359,12 @@ const Modal: React.FC<ModalProps> = ({
     const deltaY = currentY - startY;
     const deltaX = currentX - startX;
     
-    // 上下左右のスワイプを許可
     setDragOffset({ x: deltaX, y: deltaY });
   };
 
   const handleTouchEnd = () => {
     if (!isDragging) return;
 
-    // スワイプのしきい値を調整（より小さく）
     const threshold = 50;
     if (
       Math.abs(dragOffset.y) > threshold || 
@@ -386,6 +388,9 @@ const Modal: React.FC<ModalProps> = ({
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      role="dialog"
+      aria-modal="true"
+      aria-label="画像モーダル"
     >
       <ModalContent
         ref={modalRef}
@@ -400,15 +405,31 @@ const Modal: React.FC<ModalProps> = ({
             <ModalImageWithHeader>
               <ImageOverlayHeader>
                 <OverlayTitle>{title}</OverlayTitle>
-                <OverlayCloseButton onClick={onClose} aria-label="閉じる">×</OverlayCloseButton>
+                <OverlayCloseButton 
+                  onClick={onClose} 
+                  aria-label="モーダルを閉じる"
+                >
+                  ×
+                </OverlayCloseButton>
               </ImageOverlayHeader>
-              <ModalImage src={imageUrl} alt={title} />
+              <ModalImage 
+                src={imageUrl} 
+                alt={title || "モーダル画像"} 
+              />
             </ModalImageWithHeader>
           ) : (
             <>
-              <TopLeftTitle style={{position:'absolute',top:20,left:20,fontSize:'1.08rem',padding:'8px 20px',zIndex:100,pointerEvents:'none'}}>{title}</TopLeftTitle>
-              <ModalCloseButton style={{position:'absolute',top:16,right:16,width:40,height:40,fontSize:'2rem',zIndex:20}} onClick={onClose} aria-label="閉じる">×</ModalCloseButton>
-              <ModalImage src={imageUrl} alt={title} />
+              <TopLeftTitle>{title}</TopLeftTitle>
+              <ModalCloseButton 
+                onClick={onClose} 
+                aria-label="モーダルを閉じる"
+              >
+                ×
+              </ModalCloseButton>
+              <ModalImage 
+                src={imageUrl} 
+                alt={title || "モーダル画像"} 
+              />
             </>
           )}
           <BottomSwipeHint>Swipe up or sideways to close</BottomSwipeHint>
