@@ -45,7 +45,7 @@ const SocialLink = styled.a`
 const Footer: React.FC = () => {
   return (
     <FooterContainer>
-      <Copyright>© 2024 Photogragh. All rights reserved.</Copyright>
+      <Copyright>© 2024 L.MARK. All rights reserved.</Copyright>
       <SocialLinks>
         <SocialLink href="https://instagram.com" target="_blank" rel="noopener noreferrer">
           Instagram

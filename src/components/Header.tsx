@@ -178,7 +178,7 @@ const Header: React.FC = () => {
   return (
     <HeaderContainer>
       <LogoLink href="/" passHref>
-        <Logo>Photogragh</Logo>
+        <Logo>L.MARK</Logo>
       </LogoLink>
       <Nav>
         <NavLink href="/gallery">Gallery</NavLink>
