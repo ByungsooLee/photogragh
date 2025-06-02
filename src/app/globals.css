@@ -19,15 +19,24 @@
   --film-bg: #151515;
 }
 
-html, body {
-  width: 100%;
+html, body, #__next, main {
+  width: 100vw;
   min-width: 0;
+  height: 100vh;
+  min-height: 100vh;
   background-color: var(--bg-dark);
   color: var(--gold);
   font-family: 'Noto Serif JP', serif;
   margin: 0;
   padding: 0;
-  height: 100vh;
+  overflow: hidden !important;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+}
+
+body {
+  position: fixed;
+  inset: 0;
 }
 
 /* グローバルアニメーション */
