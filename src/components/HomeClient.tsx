@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import Header from './Header';
 import Modal from './Modal';
 import FilmStrip from './FilmStrip';
+import LoadingScreen from './LoadingScreen';
 import { type Photo, getDummyPhotos, getAllPhotos } from '../lib/microcms';
 
 const FilmGallery = styled.div`
@@ -110,6 +111,15 @@ export default function HomeClient() {
     });
   }, []);
 
+  useEffect(() => {
+    const handleLoad = () => {
+      setIsLoading(false);
+    };
+
+    window.addEventListener('load', handleLoad);
+    return () => window.removeEventListener('load', handleLoad);
+  }, []);
+
   const handlePhotoClick = (photo: { url: string; title: string; caption: string; position: { x: number; y: number } }) => {
     setModalImage(photo.url);
     setModalTitle(photo.title);
@@ -121,6 +131,7 @@ export default function HomeClient() {
 
   return (
     <>
+      {isLoading && <LoadingScreen />}
       <ScrollPreventOverlay />
       <FilmGallery>
         <Header />

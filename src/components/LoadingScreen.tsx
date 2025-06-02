@@ -3,109 +3,111 @@
 import { useEffect, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 
-const fadeIn = keyframes`
-  from {
-    opacity: 0;
-  }
+const drawLogo = keyframes`
   to {
-    opacity: 1;
+    stroke-dashoffset: 0;
   }
 `;
 
 const fadeOut = keyframes`
-  from {
-    opacity: 1;
-  }
   to {
     opacity: 0;
+    pointer-events: none;
   }
 `;
 
-const loadProgress = keyframes`
-  from {
-    width: 0%;
-  }
-  to {
-    width: 100%;
-  }
-`;
-
-const LoadingWrapper = styled.div<{ $isVisible: boolean }>`
+const LoadingScreenWrapper = styled.div<{ isReady: boolean }>`
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: var(--bg-dark);
+  width: 100%;
+  height: 100%;
+  background-color: #000;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
-  animation: ${props => props.$isVisible ? fadeIn : fadeOut} 0.5s ease-in-out forwards;
+  animation: ${props => props.isReady ? fadeOut : 'none'} 0.5s ease-out forwards;
 `;
 
 const LoadingContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
+  text-align: center;
 `;
 
-const LoadingLogo = styled.h1`
-  font-family: 'Bebas Neue', 'Noto Serif JP', serif;
-  font-size: 3rem;
-  color: var(--gold);
-  letter-spacing: 0.2em;
-  margin: 0;
-  text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
-`;
-
-const LoadingProgress = styled.div`
+const LogoAnimation = styled.svg`
   width: 200px;
-  height: 2px;
-  background: rgba(255, 255, 255, 0.1);
+  height: 100px;
+  margin-bottom: 2rem;
+
+  text {
+    font-size: 48px;
+    font-weight: bold;
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2;
+    stroke-dasharray: 300;
+    stroke-dashoffset: 300;
+    animation: ${drawLogo} 2s ease-out forwards;
+  }
+`;
+
+const ProgressContainer = styled.div`
+  width: 200px;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.2);
   border-radius: 2px;
   overflow: hidden;
+  margin: 1rem auto;
 `;
 
-const LoadingBar = styled.div`
+const ProgressBar = styled.div<{ progress: number }>`
   height: 100%;
-  background: var(--gold);
-  animation: ${loadProgress} 2s ease-out forwards;
-  box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+  background-color: #fff;
+  width: ${props => props.progress}%;
+  transition: width 0.3s ease-out;
 `;
 
-const LoadingText = styled.p`
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.8);
-  margin: 0;
-  letter-spacing: 0.1em;
+const LoadingPercentage = styled.p`
+  color: #fff;
+  font-size: 14px;
+  margin-top: 0.5rem;
 `;
 
 const LoadingScreen = () => {
-  const [isVisible, setIsVisible] = useState(true);
+  const [loadProgress, setLoadProgress] = useState(0);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(false);
-    }, 2000);
+    const updateProgress = () => {
+      const images = document.querySelectorAll('img');
+      const loaded = Array.from(images).filter(img => img.complete).length;
+      const total = images.length || 1;
+      const progress = Math.round((loaded / total) * 100);
+      setLoadProgress(progress);
+      
+      if (progress === 100) {
+        setTimeout(() => setIsReady(true), 300);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    const interval = setInterval(updateProgress, 100);
+    return () => clearInterval(interval);
   }, []);
 
-  if (!isVisible) return null;
-
   return (
-    <LoadingWrapper $isVisible={isVisible}>
+    <LoadingScreenWrapper isReady={isReady}>
       <LoadingContent>
-        <LoadingLogo>L.MARK</LoadingLogo>
-        <LoadingProgress>
-          <LoadingBar />
-        </LoadingProgress>
-        <LoadingText>Preparing your experience...</LoadingText>
+        <LogoAnimation viewBox="0 0 200 100">
+          <text x="50%" y="50%" textAnchor="middle" dy=".3em">
+            L.MARK
+          </text>
+        </LogoAnimation>
+        <ProgressContainer>
+          <ProgressBar progress={loadProgress} />
+        </ProgressContainer>
+        <LoadingPercentage>{loadProgress}%</LoadingPercentage>
       </LoadingContent>
-    </LoadingWrapper>
+    </LoadingScreenWrapper>
   );
 };
 
