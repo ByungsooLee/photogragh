@@ -57,10 +57,11 @@ const ModalOverlay = styled.div<{ $isOpen: boolean; $isDragging: boolean }>`
   align-items: center;
   z-index: 1000;
   backdrop-filter: blur(10px);
-  animation: ${fadeIn} 0.5s ease-out;
+  animation: ${fadeIn} 0.25s cubic-bezier(0.4,0,0.2,1);
   touch-action: none;
   user-select: none;
   cursor: ${props => props.$isDragging ? 'grabbing' : 'grab'};
+  will-change: transform, opacity;
 `;
 
 const ModalContent = styled.div<{ 
@@ -78,10 +79,11 @@ const ModalContent = styled.div<{
   box-shadow: 
     0 0 50px rgba(212, 175, 55, 0.3),
     0 0 100px rgba(0, 0, 0, 0.5);
-  animation: ${fadeIn} 0.5s ease-out;
+  animation: ${fadeIn} 0.25s cubic-bezier(0.4,0,0.2,1);
   transform-origin: ${props => props.$sourcePosition ? `${props.$sourcePosition.x}px ${props.$sourcePosition.y}px` : 'center'};
   transform: translate(${props => props.$dragOffset.x}px, ${props => props.$dragOffset.y}px);
-  transition: ${props => props.$isDragging ? 'none' : 'transform 0.3s ease-out'};
+  transition: ${props => props.$isDragging ? 'none' : 'transform 0.18s cubic-bezier(0.4,0,0.2,1), opacity 0.18s cubic-bezier(0.4,0,0.2,1)'};
+  will-change: transform, opacity;
 
   @media (max-width: 768px) {
     width: 100vw;
@@ -176,9 +178,9 @@ const InfoPanel = styled.div`
   padding: 40px 20px 20px;
   color: var(--gold);
   transform: translateY(100%);
-  transition: transform 0.3s ease;
-  animation: ${slideIn} 0.5s ease-out forwards;
-  animation-delay: 0.3s;
+  transition: transform 0.18s cubic-bezier(0.4,0,0.2,1);
+  animation: ${slideIn} 0.25s cubic-bezier(0.4,0,0.2,1) forwards;
+  animation-delay: 0.15s;
 
   @media (max-width: 768px) {
     padding: 30px 15px 15px;
