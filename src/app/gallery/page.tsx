@@ -329,7 +329,7 @@ export default function Gallery() {
         clearTimeout(scrollTimeout.current);
       }
     };
-  }, [handleScroll, currentIndex, filteredPhotos.length]);
+  }, [handleScroll, currentIndex, filteredPhotos.length, isDragging]);
 
   // サムネイルのスクロール位置を更新する関数
   const scrollToCurrentThumbnail = useCallback(() => {

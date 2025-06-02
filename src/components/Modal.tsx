@@ -136,15 +136,6 @@ const ImageContainer = styled.div`
   }
 `;
 
-const ModalImageWrapper = styled.div`
-  position: relative;
-  width: 100%;
-  height: auto;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-`;
-
 const ModalImage = styled.img`
   max-width: 100%;
   max-height: 100%;
