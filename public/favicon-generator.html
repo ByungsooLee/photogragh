@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Favicon Generator</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f0f0f0;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .icon-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .icon {
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 10px;
+      border-radius: 4px;
+    }
+    .icon-16 {
+      width: 16px;
+      height: 16px;
+    }
+    .icon-32 {
+      width: 32px;
+      height: 32px;
+    }
+    .icon-180 {
+      width: 180px;
+      height: 180px;
+    }
+    .icon-192 {
+      width: 192px;
+      height: 192px;
+    }
+    .icon-512 {
+      width: 512px;
+      height: 512px;
+    }
+    .icon img {
+      max-width: 80%;
+      max-height: 80%;
+    }
+    .label {
+      font-size: 14px;
+      color: #666;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon-container">
+      <div class="icon icon-16">
+        <img src="/images/logo-image.jpg" alt="16x16">
+      </div>
+      <div class="label">favicon-16x16.png</div>
+    </div>
+    <div class="icon-container">
+      <div class="icon icon-32">
+        <img src="/images/logo-image.jpg" alt="32x32">
+      </div>
+      <div class="label">favicon-32x32.png</div>
+    </div>
+    <div class="icon-container">
+      <div class="icon icon-180">
+        <img src="/images/logo-image.jpg" alt="180x180">
+      </div>
+      <div class="label">apple-touch-icon.png</div>
+    </div>
+    <div class="icon-container">
+      <div class="icon icon-192">
+        <img src="/images/logo-image.jpg" alt="192x192">
+      </div>
+      <div class="label">android-chrome-192x192.png</div>
+    </div>
+    <div class="icon-container">
+      <div class="icon icon-512">
+        <img src="/images/logo-image.jpg" alt="512x512">
+      </div>
+      <div class="label">android-chrome-512x512.png</div>
+    </div>
+  </div>
+</body>
+</html> 
