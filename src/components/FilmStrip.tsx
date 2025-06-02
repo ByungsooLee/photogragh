@@ -41,17 +41,15 @@ const StripWrapper = styled.div<StripWrapperProps>`
   z-index: ${props => {
     if (props.$isVertical) {
       switch (props.position) {
-        case 'left': return props.$stripId === 'vstripL' ? '6' : '5';
+        case 'left': return '6';
         case 'right': return '7';
         default: return '8';
       }
     }
     const zIndices: Record<string, number> = {
-      'strip1': 5,
-      'strip2': 7,
-      'strip3': 6,
-      'strip4': 8,
-      'strip5': 9
+      'h1': 5,
+      'h2': 7,
+      'h3': 6
     };
     return props.$stripId ? zIndices[props.$stripId] || 6 : 6;
   }};
@@ -64,11 +62,9 @@ const StripWrapper = styled.div<StripWrapperProps>`
              `translateX(-50%) rotate(${rotation})`;
     }
     const rotations: Record<string, string> = {
-      'strip1': '-8deg',
-      'strip2': '6deg',
-      'strip3': '-4deg',
-      'strip4': '7deg',
-      'strip5': '-6deg'
+      'h1': '-8deg',
+      'h2': '6deg',
+      'h3': '-4deg'
     };
     return `rotate(${props.$stripId ? rotations[props.$stripId] || '0deg' : '0deg'})`;
   }};
@@ -133,11 +129,9 @@ const StripWrapper = styled.div<StripWrapperProps>`
                `translateX(-50%) rotate(${rotation})`;
       }
       const rotations: Record<string, string> = {
-        'strip1': '-8deg',
-        'strip2': '6deg',
-        'strip3': '-4deg',
-        'strip4': '7deg',
-        'strip5': '-6deg'
+        'h1': '-8deg',
+        'h2': '6deg',
+        'h3': '-4deg'
       };
       return `rotate(${props.$stripId ? rotations[props.$stripId] || '0deg' : '0deg'})`;
     }};
@@ -170,11 +164,9 @@ const StripWrapper = styled.div<StripWrapperProps>`
                `translateX(-50%) ${translateY} rotate(${rotation})`;
       }
       const rotations: Record<string, string> = {
-        'strip1': '-8deg',
-        'strip2': '6deg',
-        'strip3': '-4deg',
-        'strip4': '7deg',
-        'strip5': '-6deg'
+        'h1': '-8deg',
+        'h2': '6deg',
+        'h3': '-4deg'
       };
       return `rotate(${props.$stripId ? rotations[props.$stripId] || '0deg' : '0deg'})`;
     }};
@@ -187,11 +179,9 @@ const StripWrapper = styled.div<StripWrapperProps>`
         return '5';
       }
       const zIndices: Record<string, number> = {
-        'strip1': 6,
-        'strip2': 8,
-        'strip3': 7,
-        'strip4': 9,
-        'strip5': 10
+        'h1': 6,
+        'h2': 8,
+        'h3': 7
       };
       return props.$stripId ? zIndices[props.$stripId] || 6 : 6;
     }};
@@ -226,11 +216,9 @@ const StripWrapper = styled.div<StripWrapperProps>`
                `translateX(-50%) ${translateY} rotate(${rotation})`;
       }
       const rotations: Record<string, string> = {
-        'strip1': '-8deg',
-        'strip2': '6deg',
-        'strip3': '-4deg',
-        'strip4': '7deg',
-        'strip5': '-6deg'
+        'h1': '-8deg',
+        'h2': '6deg',
+        'h3': '-4deg'
       };
       return `rotate(${props.$stripId ? rotations[props.$stripId] || '0deg' : '0deg'})`;
     }};
@@ -482,6 +470,24 @@ const Spotlight = styled.div<{ x: number; y: number }>`
   transition: opacity 0.3s ease;
 `;
 
+// シードベースのランダム数生成
+const seededRandom = (seed: number) => {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
+// 列IDと写真IDを組み合わせてユニークなシードを生成
+const generateSeed = (stripId: string, photoId: string): number => {
+  const combinedString = `${stripId}-${photoId}`;
+  let hash = 0;
+  for (let i = 0; i < combinedString.length; i++) {
+    const char = combinedString.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return hash;
+};
+
 const FilmStrip: React.FC<FilmStripProps> = ({
   stripId,
   isVertical,
@@ -494,8 +500,14 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   const [displayedPhotos, setDisplayedPhotos] = useState<Photo[]>([]);
 
   useEffect(() => {
-    setDisplayedPhotos(photos);
-  }, [photos]);
+    // 列ごとに独立したランダム化
+    const randomizedPhotos = [...photos].sort((a, b) => {
+      const seedA = generateSeed(stripId, a.id);
+      const seedB = generateSeed(stripId, b.id);
+      return seededRandom(seedA) - seededRandom(seedB);
+    });
+    setDisplayedPhotos(randomizedPhotos);
+  }, [photos, stripId]);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();

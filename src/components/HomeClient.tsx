@@ -129,14 +129,15 @@ export default function HomeClient() {
             <div style={{ color: '#d4af37', textAlign: 'center', margin: '2rem auto' }}>Loading...</div>
           ) : (
             <>
-              <FilmStrip stripId="strip1" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
-              <FilmStrip stripId="strip2" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
-              <FilmStrip stripId="strip3" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
-              <FilmStrip stripId="strip4" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
-              <FilmStrip stripId="strip5" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
-              <FilmStrip stripId="vstripL" isVertical position="left" onPhotoClick={handlePhotoClick} photos={photos} className="hidden md:block" />
-              <FilmStrip stripId="vstripC" isVertical position="center" onPhotoClick={handlePhotoClick} photos={photos} />
-              <FilmStrip stripId="vstripR" isVertical position="right" onPhotoClick={handlePhotoClick} photos={photos} className="hidden md:block" />
+              {/* 横3列 */}
+              <FilmStrip stripId="h1" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
+              <FilmStrip stripId="h2" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
+              <FilmStrip stripId="h3" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
+              
+              {/* 縦3列 */}
+              <FilmStrip stripId="v1" isVertical position="left" onPhotoClick={handlePhotoClick} photos={photos} className="hidden md:block" />
+              <FilmStrip stripId="v2" isVertical position="center" onPhotoClick={handlePhotoClick} photos={photos} />
+              <FilmStrip stripId="v3" isVertical position="right" onPhotoClick={handlePhotoClick} photos={photos} className="hidden md:block" />
             </>
           )}
         </FilmContainer>
