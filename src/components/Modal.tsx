@@ -32,19 +32,6 @@ const slideIn = keyframes`
   }
 `;
 
-const filmGrain = keyframes`
-  0%, 100% { transform: translate(0, 0); }
-  10% { transform: translate(-5%, -5%); }
-  20% { transform: translate(-10%, 5%); }
-  30% { transform: translate(5%, -10%); }
-  40% { transform: translate(-5%, 15%); }
-  50% { transform: translate(-10%, 5%); }
-  60% { transform: translate(15%, 0); }
-  70% { transform: translate(0, 10%); }
-  80% { transform: translate(3%, 15%); }
-  90% { transform: translate(-10%, 10%); }
-`;
-
 const ModalOverlay = styled.div<{ $isOpen: boolean; $isDragging: boolean }>`
   position: fixed;
   top: 0;
@@ -73,109 +60,74 @@ const ModalContent = styled.div<{
   $isDragging: boolean;
 }>`
   position: relative;
-  width: 90vw;
-  height: 90vh;
-  max-width: 1200px;
-  background: #000;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 
-    0 0 50px rgba(212, 175, 55, 0.3),
-    0 0 100px rgba(0, 0, 0, 0.5);
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
   animation: ${fadeIn} 0.25s cubic-bezier(0.4,0,0.2,1);
   transform-origin: ${props => props.$sourcePosition ? `${props.$sourcePosition.x}px ${props.$sourcePosition.y}px` : 'center'};
   transform: translate(${props => props.$dragOffset.x}px, ${props => props.$dragOffset.y}px);
   transition: ${props => props.$isDragging ? 'none' : 'transform 0.18s cubic-bezier(0.4,0,0.2,1), opacity 0.18s cubic-bezier(0.4,0,0.2,1)'};
   will-change: transform, opacity;
-
-  @media (max-width: 1024px) {
-    width: 95vw;
-    height: 85vh;
-  }
-
-  @media (max-width: 768px) {
-    width: 100vw;
-    height: 100vh;
-    border-radius: 0;
-  }
 `;
 
-const FilmFrame = styled.div`
-  position: absolute;
-  inset: 0;
-  border: 2px solid rgba(212, 175, 55, 0.2);
-  pointer-events: none;
-  z-index: 2;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0.05),
-      rgba(0, 0, 0, 0.05) 1px,
-      transparent 1px,
-      transparent 2px
-    );
-    animation: ${filmGrain} 0.5s steps(10) infinite;
-    pointer-events: none;
-    opacity: 0.3;
-
-    @media (max-width: 768px) {
-      opacity: 0.15;
-    }
-  }
-`;
-
-const ImageContainer = styled.div`
-  position: relative;
-  width: 100%;
-  height: 100%;
+const ModalCard = styled.div<{ $isLandscape: boolean }>`
+  background: #232323;
+  border-radius: 18px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.25), 0 1.5px 8px rgba(0,0,0,0.10);
+  padding: 32px 24px 24px 24px;
+  width: 90vw;
+  max-width: ${props => props.$isLandscape ? '420px' : '340px'};
+  max-height: 90vh;
+  min-height: ${props => props.$isLandscape ? '420px' : '520px'};
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.3);
+  justify-content: flex-start;
+  position: relative;
+  margin: 0 auto;
 
-  @media (max-width: 768px) {
-    padding: 10px;
-    background: rgba(0, 0, 0, 0.2);
+  @media (max-width: 1024px) {
+    padding: 18px 8px 16px 8px;
+    max-width: ${props => props.$isLandscape ? '95vw' : '80vw'};
+    min-height: ${props => props.$isLandscape ? '320px' : '400px'};
   }
 `;
 
-const ModalImage = styled.img`
-  max-width: 100%;
-  max-height: 100%;
+const ModalImage = styled.img<{ $isLandscape: boolean }>`
+  max-width: ${props => props.$isLandscape ? '60vw' : '40vw'};
+  max-height: ${props => props.$isLandscape ? '45vh' : '70vh'};
   object-fit: contain;
   filter: sepia(5%) contrast(1.05) brightness(1.1);
   transition: all 0.3s ease;
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+  margin: 0 auto;
+  display: block;
+  box-shadow:
+    0 0 0 8px rgba(255,255,255,0.18),
+    0 8px 32px 0 rgba(0,0,0,0.7),
+    0 1.5px 8px rgba(0,0,0,0.10);
+
+  @media (max-width: 1024px) {
+    max-width: ${props => props.$isLandscape ? '80vw' : '60vw'};
+    max-height: ${props => props.$isLandscape ? '32vh' : '60vh'};
+  }
 
   @media (max-width: 768px) {
-    filter: sepia(0%) contrast(1.1) brightness(1.15);
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    max-width: ${props => props.$isLandscape ? '92vw' : '80vw'};
+    max-height: ${props => props.$isLandscape ? '28vh' : '50vh'};
   }
 `;
 
-const ModalCloseButton = styled.button`
-  background: rgba(0,0,0,0.7);
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  font-size: 2rem;
-  cursor: pointer;
+const ModalHeader = styled.div`
+  width: 100%;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  pointer-events: auto;
-  margin-bottom: 8px;
-  align-self: flex-end;
-  aria-label: "モーダルを閉じる";
+  margin-bottom: 12px;
 `;
 
 const InfoPanel = styled.div`
@@ -224,53 +176,6 @@ const BottomSwipeHint = styled.div`
   font-family: 'Bebas Neue', 'Noto Serif JP', serif;
   @media (min-width: 769px) {
     display: none;
-  }
-`;
-
-const TopLeftTitle = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  color: #fff;
-  font-size: 1.08rem;
-  font-family: 'Bebas Neue', 'Noto Serif JP', serif;
-  background: rgba(10, 10, 10, 0.7);
-  padding: 8px 20px;
-  border-radius: 0 0 20px 0;
-  z-index: 100;
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  height: 40px;
-`;
-
-const ModalImageWithHeader = styled.div`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-`;
-
-const ImageOverlayHeader = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-  position: absolute;
-  top: -40px;
-  left: 0;
-  z-index: 10;
-  pointer-events: none;
-  padding: 0 8px;
-
-  @media (max-width: 768px) {
-    position: static;
-    margin-bottom: 8px;
-    top: unset;
-    left: unset;
-    padding: 0 4px;
   }
 `;
 
@@ -407,45 +312,26 @@ const Modal: React.FC<ModalProps> = ({
         $isDragging={isDragging}
         onClick={e => e.stopPropagation()}
       >
-        <FilmFrame />
-        <ImageContainer>
-          {isLandscape ? (
-            <ModalImageWithHeader>
-              <ImageOverlayHeader>
-                <OverlayTitle>{title}</OverlayTitle>
-                <OverlayCloseButton 
-                  onClick={onClose} 
-                  aria-label="モーダルを閉じる"
-                >
-                  ×
-                </OverlayCloseButton>
-              </ImageOverlayHeader>
-              <ModalImage 
-                src={imageUrl} 
-                alt={title || "モーダル画像"} 
-              />
-            </ModalImageWithHeader>
-          ) : (
-            <div style={{position: 'relative', width: '100%'}}>
-              <TopLeftTitle>{title}</TopLeftTitle>
-              <ModalCloseButton
-                onClick={onClose}
-                aria-label="モーダルを閉じる"
-                style={{position: 'absolute', top: 0, right: 0, zIndex: 101}}
-              >
-                ×
-              </ModalCloseButton>
-              <ModalImage
-                src={imageUrl}
-                alt={title || "モーダル画像"}
-              />
-            </div>
-          )}
+        <ModalCard $isLandscape={isLandscape}>
+          <ModalHeader>
+            <OverlayTitle>{title}</OverlayTitle>
+            <OverlayCloseButton 
+              onClick={onClose} 
+              aria-label="モーダルを閉じる"
+            >
+              ×
+            </OverlayCloseButton>
+          </ModalHeader>
+          <ModalImage 
+            src={imageUrl} 
+            alt={title || "モーダル画像"} 
+            $isLandscape={isLandscape}
+          />
           <BottomSwipeHint>Swipe up or sideways to close</BottomSwipeHint>
-        </ImageContainer>
-        <InfoPanel>
-          <Caption>{caption}</Caption>
-        </InfoPanel>
+          <InfoPanel>
+            <Caption>{caption}</Caption>
+          </InfoPanel>
+        </ModalCard>
       </ModalContent>
     </ModalOverlay>
   );
