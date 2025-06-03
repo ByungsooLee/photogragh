@@ -76,6 +76,16 @@ const ModalContent = styled.div<{
   pointer-events: none;
 `;
 
+const ImageWrapper = styled.div`
+  width: 100%;
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+`;
+
 const ModalCard = styled.div<{ $isLandscape: boolean }>`
   background: #232323;
   border-radius: 18px;
@@ -98,6 +108,23 @@ const ModalCard = styled.div<{ $isLandscape: boolean }>`
     max-width: ${props => props.$isLandscape ? '95vw' : '80vw'};
     min-height: ${props => props.$isLandscape ? '320px' : '400px'};
   }
+
+  /* タブレット専用: 769px〜1024px のみ余裕を持たせる */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    max-width: 70vw;
+    max-height: 70vh;
+    min-width: 0;
+    min-height: 0;
+    height: 70vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 24px 12px;
+    box-sizing: border-box;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.22), 0 2px 12px rgba(0,0,0,0.13);
+  }
 `;
 
 const ModalImage = styled.img<{ $isLandscape: boolean }>`
@@ -118,6 +145,20 @@ const ModalImage = styled.img<{ $isLandscape: boolean }>`
   @media (max-width: 1024px) {
     max-width: 100%;
     max-height: calc(90vh - 32px);
+  }
+  /* タブレット専用: 769px〜1024px */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+    display: block;
+    box-shadow:
+      0 0 0 6px rgba(255,255,255,0.13),
+      0 6px 24px 0 rgba(0,0,0,0.55),
+      0 1.5px 8px rgba(0,0,0,0.10);
   }
 `;
 
@@ -145,6 +186,15 @@ const InfoPanel = styled.div`
   @media (max-width: 768px) {
     padding: 30px 15px 15px;
     background: linear-gradient(to top, rgba(0, 0, 0, 0.98), transparent);
+  }
+  /* タブレット専用: 769px〜1024px */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    position: static;
+    flex-shrink: 0;
+    width: 100%;
+    margin-top: 12px;
+    padding: 18px 8px 18px 8px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.93), transparent);
   }
 `;
 
@@ -320,11 +370,13 @@ const Modal: React.FC<ModalProps> = ({
               ×
             </OverlayCloseButton>
           </ModalHeader>
-          <ModalImage 
-            src={imageUrl} 
-            alt={title || "モーダル画像"} 
-            $isLandscape={isLandscape}
-          />
+          <ImageWrapper>
+            <ModalImage 
+              src={imageUrl} 
+              alt={title || "モーダル画像"} 
+              $isLandscape={isLandscape}
+            />
+          </ImageWrapper>
           <BottomSwipeHint>Swipe up or sideways to close</BottomSwipeHint>
           <InfoPanel>
             <Caption>{caption}</Caption>
