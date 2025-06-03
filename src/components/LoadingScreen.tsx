@@ -81,15 +81,13 @@ const LoadingScreen = () => {
   useEffect(() => {
     const handleImageLoad = (e: Event) => {
       const img = e.target as HTMLImageElement;
-      if (img.dataset.priority === 'true') {
-        setLoadedImages(prev => new Set([...prev, img.src]));
-      }
+      setLoadedImages(prev => new Set([...prev, img.src]));
     };
 
     const updateProgress = () => {
-      const priorityImages = Array.from(document.querySelectorAll('img[data-priority="true"]')) as HTMLImageElement[];
-      const total = priorityImages.length || 1;
-      const loaded = priorityImages.filter(img => img.complete || loadedImages.has(img.src)).length;
+      const images = Array.from(document.querySelectorAll('img')) as HTMLImageElement[];
+      const total = images.length || 1;
+      const loaded = images.filter(img => img.complete || loadedImages.has(img.src)).length;
       const progress = Math.round((loaded / total) * 100);
       setLoadProgress(progress);
       
