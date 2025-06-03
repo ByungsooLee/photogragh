@@ -7,6 +7,7 @@ import { getPhotos, type Photo as MicroCMSPhoto } from '@/lib/microcms';
 import React from 'react';
 import Header from '@/components/Header';
 import { CustomSelect } from '@/components/CustomSelect';
+import GalleryLoadingScreen from '@/components/GalleryLoadingScreen';
 
 // カテゴリーの型定義
 type Category = 'all' | 'portrait' | 'bath' | 'person';
@@ -169,6 +170,65 @@ const CategoryContainer = styled.div`
 `;
 
 const CATEGORIES: Category[] = ['all', 'portrait', 'bath', 'person'];
+
+// --- ギャラリー専用ローディング進捗管理 ---
+const useGalleryLoading = (photoUrls: string[], onAllLoaded: () => void) => {
+  const [progress, setProgress] = useState(0);
+  const loadedSet = useRef<Set<string>>(new Set());
+  const preloadStarted = useRef(false);
+
+  useEffect(() => {
+    if (photoUrls.length === 0) return;
+    setProgress(0);
+    loadedSet.current.clear();
+    preloadStarted.current = false;
+    // デバッグ用: プリロード対象のURLリストを出力
+    console.log('[GalleryLoading] Preload target URLs:', photoUrls);
+  }, [photoUrls]);
+
+  // プリロード専用ロジック
+  useEffect(() => {
+    if (photoUrls.length === 0 || preloadStarted.current) return;
+    preloadStarted.current = true;
+    photoUrls.forEach((url) => {
+      if (!loadedSet.current.has(url)) {
+        const img = new window.Image();
+        img.src = url;
+        img.onload = () => {
+          if (!loadedSet.current.has(url)) {
+            loadedSet.current.add(url);
+            setProgress(Math.round((loadedSet.current.size / photoUrls.length) * 100));
+            if (loadedSet.current.size === photoUrls.length) {
+              onAllLoaded();
+            }
+          }
+        };
+        img.onerror = () => {
+          if (!loadedSet.current.has(url)) {
+            loadedSet.current.add(url);
+            setProgress(Math.round((loadedSet.current.size / photoUrls.length) * 100));
+            if (loadedSet.current.size === photoUrls.length) {
+              onAllLoaded();
+            }
+          }
+        };
+      }
+    });
+  }, [photoUrls, onAllLoaded]);
+
+  // 既存のonLoadハンドラも維持
+  const handleImageLoad = useCallback((url: string) => {
+    if (!loadedSet.current.has(url)) {
+      loadedSet.current.add(url);
+      setProgress(Math.round((loadedSet.current.size / photoUrls.length) * 100));
+      if (loadedSet.current.size === photoUrls.length) {
+        onAllLoaded();
+      }
+    }
+  }, [photoUrls.length, onAllLoaded]);
+
+  return { progress, handleImageLoad };
+};
 
 export default function Gallery() {
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -505,30 +565,53 @@ export default function Gallery() {
     preloadImages();
   }, [currentIndex, filteredPhotos, mounted, imagesLoaded]);
 
-  // 画像の読み込み状態を管理
-  const handleImageLoad = useCallback((url: string) => {
-    setImagesLoaded(prev => new Set([...prev, url]));
+  // ギャラリー用ローディング進捗管理
+  const allImageUrls = useMemo(() => {
+    // メイン画像＋サムネイル画像のURLを重複なしでリスト化
+    const urls = filteredPhotos.map(photo => photo.url);
+    return Array.from(new Set(urls));
+  }, [filteredPhotos]);
+
+  const [galleryLoading, setGalleryLoading] = useState(true);
+  const [galleryReady, setGalleryReady] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { progress, handleImageLoad } = useGalleryLoading(
+    allImageUrls,
+    () => {
+      setGalleryLoading(false);
+      setTimeout(() => setGalleryReady(true), 500); // フェードアウト用
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    }
+  );
+
+  // タイムアウトによるフェイルセーフ（5秒）
+  useEffect(() => {
+    if (!galleryLoading) return;
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      setGalleryLoading(false);
+      setTimeout(() => setGalleryReady(true), 500);
+    }, 5000);
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [galleryLoading]);
+
+  // セッションストレージで一度だけローディングを表示
+  const [showLoading, setShowLoading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !sessionStorage.getItem('gallery_loading_shown')) {
+      setShowLoading(true);
+      sessionStorage.setItem('gallery_loading_shown', '1');
+    }
   }, []);
 
-  // 初期画像のプリロード
   useEffect(() => {
-    if (!mounted || filteredPhotos.length === 0) return;
-
-    const preloadInitialImages = () => {
-      const initialImages = filteredPhotos.slice(0, 3);
-      initialImages.forEach(photo => {
-        if (!imagesLoaded.has(photo.url)) {
-          const img = new window.Image();
-          img.src = photo.url;
-          img.onload = () => {
-            setImagesLoaded(prev => new Set([...prev, photo.url]));
-          };
-        }
-      });
-    };
-
-    preloadInitialImages();
-  }, [filteredPhotos, mounted, imagesLoaded]);
+    if (galleryReady) {
+      setShowLoading(false);
+    }
+  }, [galleryReady]);
 
   if (!mounted) {
     return null;
@@ -537,6 +620,7 @@ export default function Gallery() {
   return (
     <>
       <Header />
+      {showLoading && !galleryReady && <GalleryLoadingScreen progress={progress} isReady={galleryReady} />}
       <GalleryContainer>
         <Title>Gallery</Title>
         <CategoryContainer>
@@ -550,9 +634,11 @@ export default function Gallery() {
             style={{ minWidth: '140px' }}
           />
         </CategoryContainer>
-        {isLoading ? (
+        {(isLoading) ? (
           <MainImageContainer>
-            <div style={{ color: '#fff', textAlign: 'center' }}>読み込み中...</div>
+            <div style={{ color: '#fff', textAlign: 'center' }}>
+              読み込み中...
+            </div>
           </MainImageContainer>
         ) : error ? (
           <MainImageContainer>
@@ -585,7 +671,7 @@ export default function Gallery() {
                   priority={true}
                   loading="eager"
                   data-priority="true"
-                  onLoad={() => handleImageLoad(filteredPhotos[currentIndex].url)}
+                  onLoad={() => { handleImageLoad(filteredPhotos[currentIndex].url); }}
                 />
               </ImageWrapper>
             </MainImageContainer>
@@ -604,7 +690,7 @@ export default function Gallery() {
                     priority={index < 2}
                     loading={index < 2 ? 'eager' : 'lazy'}
                     data-priority={index < 2 ? "true" : "false"}
-                    onLoad={() => handleImageLoad(photo.url)}
+                    onLoad={() => { handleImageLoad(photo.url); }}
                     style={{
                       objectFit: 'cover'
                     }}

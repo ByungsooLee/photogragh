@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import LoadingScreen from '../components/LoadingScreen';
 import { GlobalStyle } from '@/lib/styled-components';
 import StyledComponentsRegistry from '@/lib/registry';
 
@@ -71,7 +70,6 @@ export default function RootLayout({
       <body className={inter.className}>
         <StyledComponentsRegistry>
           <GlobalStyle />
-          <LoadingScreen />
           {children}
         </StyledComponentsRegistry>
       </body>
