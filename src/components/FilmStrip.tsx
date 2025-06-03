@@ -107,7 +107,7 @@ const StripWrapper = styled.div<StripWrapperProps>`
   @media (max-width: 1024px) {
     width: ${props => props.$isVertical ? '180px' : '100%'};
     height: ${props => props.$isVertical ? '120%' : 'auto'};
-    min-height: ${props => props.$isVertical ? 'auto' : '200px'};
+    min-height: ${props => props.$isVertical ? 'auto' : '220px'};
     left: ${props => {
       if (props.$isVertical) {
         switch (props.position) {
@@ -129,13 +129,13 @@ const StripWrapper = styled.div<StripWrapperProps>`
                `translateX(-50%) rotate(${rotation})`;
       }
       const rotations: Record<string, string> = {
-        'h1': '-8deg',
-        'h2': '6deg',
-        'h3': '-4deg'
+        'h1': '-6deg',
+        'h2': '4deg',
+        'h3': '-3deg'
       };
       return `rotate(${props.$stripId ? rotations[props.$stripId] || '0deg' : '0deg'})`;
     }};
-    margin: ${props => props.$isVertical ? '0' : '12px 0'};
+    margin: ${props => props.$isVertical ? '0' : '15px 0'};
   }
 
   @media (max-width: 768px) {

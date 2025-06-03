@@ -88,6 +88,11 @@ const ModalContent = styled.div<{
   transition: ${props => props.$isDragging ? 'none' : 'transform 0.18s cubic-bezier(0.4,0,0.2,1), opacity 0.18s cubic-bezier(0.4,0,0.2,1)'};
   will-change: transform, opacity;
 
+  @media (max-width: 1024px) {
+    width: 95vw;
+    height: 85vh;
+  }
+
   @media (max-width: 768px) {
     width: 100vw;
     height: 100vh;
