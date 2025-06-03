@@ -7,6 +7,7 @@ import { getPhotos, type Photo as MicroCMSPhoto } from '@/lib/microcms';
 import React from 'react';
 import Header from '@/components/Header';
 import { CustomSelect } from '@/components/CustomSelect';
+import { useRouter } from 'next/navigation';
 
 // カテゴリーの型定義
 type Category = 'all' | 'portrait' | 'bath' | 'person';
@@ -79,6 +80,9 @@ const StyledImage = styled(Image)`
   height: auto !important;
   position: relative !important;
   margin: auto !important;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
 
   @media (max-width: 768px) {
     max-height: 75vh !important;
@@ -156,6 +160,7 @@ const CategoryContainer = styled.div`
 const CATEGORIES: Category[] = ['all', 'portrait', 'bath', 'person'];
 
 export default function Gallery() {
+  const router = useRouter();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -164,6 +169,8 @@ export default function Gallery() {
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [translateX, setTranslateX] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  const [imagesLoaded, setImagesLoaded] = useState<Set<string>>(new Set());
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
   const scrollAccumulator = useRef(0);
   const lastScrollTime = useRef(Date.now());
@@ -178,6 +185,11 @@ export default function Gallery() {
   const SWIPE_THRESHOLD = 20;
   const SWIPE_VELOCITY_THRESHOLD = 0.1;
   const SWIPE_DISTANCE_MULTIPLIER = 0.5;
+
+  // マウント状態を管理
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -459,6 +471,59 @@ export default function Gallery() {
     }, 200);
   };
 
+  // 画像のプリロード処理を最適化
+  useEffect(() => {
+    if (!mounted || filteredPhotos.length === 0) return;
+
+    const preloadImages = () => {
+      const indices = [
+        currentIndex > 0 ? currentIndex - 1 : filteredPhotos.length - 1,
+        currentIndex < filteredPhotos.length - 1 ? currentIndex + 1 : 0
+      ];
+
+      indices.forEach(index => {
+        if (!imagesLoaded.has(filteredPhotos[index].url)) {
+          const img = new window.Image();
+          img.src = filteredPhotos[index].url;
+          img.onload = () => {
+            setImagesLoaded(prev => new Set([...prev, filteredPhotos[index].url]));
+          };
+        }
+      });
+    };
+
+    preloadImages();
+  }, [currentIndex, filteredPhotos, mounted, imagesLoaded]);
+
+  // 画像の読み込み状態を管理
+  const handleImageLoad = useCallback((url: string) => {
+    setImagesLoaded(prev => new Set([...prev, url]));
+  }, []);
+
+  // 初期画像のプリロード
+  useEffect(() => {
+    if (!mounted || filteredPhotos.length === 0) return;
+
+    const preloadInitialImages = () => {
+      const initialImages = filteredPhotos.slice(0, 3);
+      initialImages.forEach(photo => {
+        if (!imagesLoaded.has(photo.url)) {
+          const img = new window.Image();
+          img.src = photo.url;
+          img.onload = () => {
+            setImagesLoaded(prev => new Set([...prev, photo.url]));
+          };
+        }
+      });
+    };
+
+    preloadInitialImages();
+  }, [filteredPhotos, mounted, imagesLoaded]);
+
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <>
       <Header />
@@ -507,7 +572,10 @@ export default function Gallery() {
                   alt={filteredPhotos[currentIndex].title}
                   fill
                   sizes="100vw"
-                  priority={currentIndex === 0}
+                  priority={true}
+                  loading="eager"
+                  data-priority="true"
+                  onLoad={() => handleImageLoad(filteredPhotos[currentIndex].url)}
                 />
               </ImageWrapper>
             </MainImageContainer>
@@ -523,7 +591,10 @@ export default function Gallery() {
                     alt={photo.title}
                     fill
                     sizes="(max-width: 768px) 140px, 140px"
-                    priority={index < 4}
+                    priority={index < 2}
+                    loading={index < 2 ? 'eager' : 'lazy'}
+                    data-priority={index < 2 ? "true" : "false"}
+                    onLoad={() => handleImageLoad(photo.url)}
                     style={{
                       objectFit: 'cover'
                     }}

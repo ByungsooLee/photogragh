@@ -76,12 +76,20 @@ const LoadingPercentage = styled.p`
 const LoadingScreen = () => {
   const [loadProgress, setLoadProgress] = useState(0);
   const [isReady, setIsReady] = useState(false);
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    const handleImageLoad = (e: Event) => {
+      const img = e.target as HTMLImageElement;
+      if (img.dataset.priority === 'true') {
+        setLoadedImages(prev => new Set([...prev, img.src]));
+      }
+    };
+
     const updateProgress = () => {
-      const images = document.querySelectorAll('img');
-      const loaded = Array.from(images).filter(img => img.complete).length;
-      const total = images.length || 1;
+      const priorityImages = Array.from(document.querySelectorAll('img[data-priority="true"]')) as HTMLImageElement[];
+      const total = priorityImages.length || 1;
+      const loaded = priorityImages.filter(img => img.complete || loadedImages.has(img.src)).length;
       const progress = Math.round((loaded / total) * 100);
       setLoadProgress(progress);
       
@@ -90,9 +98,15 @@ const LoadingScreen = () => {
       }
     };
 
+    // 画像の読み込みイベントを監視
+    document.addEventListener('load', handleImageLoad, true);
     const interval = setInterval(updateProgress, 100);
-    return () => clearInterval(interval);
-  }, []);
+
+    return () => {
+      document.removeEventListener('load', handleImageLoad, true);
+      clearInterval(interval);
+    };
+  }, [loadedImages]);
 
   return (
     <LoadingScreenWrapper $isReady={isReady}>
