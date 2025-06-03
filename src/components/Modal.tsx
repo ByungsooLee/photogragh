@@ -101,8 +101,10 @@ const ModalCard = styled.div<{ $isLandscape: boolean }>`
 `;
 
 const ModalImage = styled.img<{ $isLandscape: boolean }>`
-  max-width: ${props => props.$isLandscape ? '60vw' : '40vw'};
-  max-height: ${props => props.$isLandscape ? '45vh' : '70vh'};
+  max-width: 100%;
+  max-height: calc(90vh - 64px);
+  width: auto;
+  height: auto;
   object-fit: contain;
   filter: sepia(5%) contrast(1.05) brightness(1.1);
   transition: all 0.3s ease;
@@ -114,13 +116,8 @@ const ModalImage = styled.img<{ $isLandscape: boolean }>`
     0 1.5px 8px rgba(0,0,0,0.10);
 
   @media (max-width: 1024px) {
-    max-width: ${props => props.$isLandscape ? '80vw' : '60vw'};
-    max-height: ${props => props.$isLandscape ? '32vh' : '60vh'};
-  }
-
-  @media (max-width: 768px) {
-    max-width: ${props => props.$isLandscape ? '92vw' : '80vw'};
-    max-height: ${props => props.$isLandscape ? '28vh' : '50vh'};
+    max-width: 100%;
+    max-height: calc(90vh - 32px);
   }
 `;
 

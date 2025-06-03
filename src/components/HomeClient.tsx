@@ -65,6 +65,7 @@ const ScrollPreventOverlay = styled.div`
 `;
 
 export default function HomeClient() {
+  const [mounted, setMounted] = useState(false);
   // 初期状態でlocalStorageキャッシュ or ダミー画像
   const getInitialPhotos = () => {
     if (typeof window !== 'undefined') {
@@ -121,6 +122,16 @@ export default function HomeClient() {
     window.addEventListener('load', handleLoad);
     return () => window.removeEventListener('load', handleLoad);
   }, []);
+
+  // マウント状態を管理
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // マウント前はローディング画面のみ表示
+  if (!mounted) {
+    return <LoadingScreen />;
+  }
 
   const handlePhotoClick = (photo: { url: string; title: string; caption: string; position: { x: number; y: number } }) => {
     setModalImage(photo.url);

@@ -509,6 +509,15 @@ const FilmStrip: React.FC<FilmStripProps> = ({
     setDisplayedPhotos(randomizedPhotos);
   }, [photos, stripId]);
 
+  // 優先的に読み込む画像を判定
+  const isPriorityImage = (index: number) => {
+    // 最初の3枚を優先的に読み込む
+    if (index < 3) return true;
+    // 中央の列（v2）の最初の2枚も優先的に読み込む
+    if (position === 'center' && index < 2) return true;
+    return false;
+  };
+
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setSpotlightPosition({
@@ -580,7 +589,8 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                   src={photo.url}
                   alt={photo.title || "ギャラリー画像"}
                   $isPicked={false}
-                  loading="eager"
+                  loading={isPriorityImage(index) ? "eager" : "lazy"}
+                  data-priority={isPriorityImage(index) ? "true" : "false"}
                 />
               </Content>
             </Frame>
