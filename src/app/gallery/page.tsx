@@ -7,7 +7,6 @@ import { getPhotos, type Photo as MicroCMSPhoto } from '@/lib/microcms';
 import React from 'react';
 import Header from '@/components/Header';
 import { CustomSelect } from '@/components/CustomSelect';
-import { useRouter } from 'next/navigation';
 
 // カテゴリーの型定義
 type Category = 'all' | 'portrait' | 'bath' | 'person';
@@ -50,6 +49,7 @@ const MainImageContainer = styled.div`
   @media (max-width: 768px) {
     height: 100svh;
     padding-top: 30px;
+    padding-bottom: 120px;
   }
 `;
 
@@ -85,8 +85,8 @@ const StyledImage = styled(Image)`
   -webkit-font-smoothing: antialiased;
 
   @media (max-width: 768px) {
-    max-height: 75vh !important;
-    max-width: 90vw !important;
+    max-height: 65vh !important;
+    max-width: 85vw !important;
   }
 `;
 
@@ -109,6 +109,11 @@ const ThumbnailContainer = styled.div`
   &::-webkit-scrollbar {
     display: none;
   }
+
+  @media (max-width: 768px) {
+    height: 90px;
+    padding: 0 15px;
+  }
 `;
 
 const ThumbnailWrapper = styled.div<{ $isActive: boolean }>`
@@ -124,6 +129,12 @@ const ThumbnailWrapper = styled.div<{ $isActive: boolean }>`
   &:hover {
     opacity: 1;
     transform: translateY(-2px);
+  }
+
+  @media (max-width: 768px) {
+    min-width: 120px;
+    height: 70px;
+    margin-right: 6px;
   }
 `;
 
@@ -160,7 +171,6 @@ const CategoryContainer = styled.div`
 const CATEGORIES: Category[] = ['all', 'portrait', 'bath', 'person'];
 
 export default function Gallery() {
-  const router = useRouter();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
