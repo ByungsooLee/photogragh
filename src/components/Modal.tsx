@@ -73,6 +73,7 @@ const ModalContent = styled.div<{
   transform: translate(${props => props.$dragOffset.x}px, ${props => props.$dragOffset.y}px);
   transition: ${props => props.$isDragging ? 'none' : 'transform 0.18s cubic-bezier(0.4,0,0.2,1), opacity 0.18s cubic-bezier(0.4,0,0.2,1)'};
   will-change: transform, opacity;
+  pointer-events: none;
 `;
 
 const ModalCard = styled.div<{ $isLandscape: boolean }>`
@@ -90,6 +91,7 @@ const ModalCard = styled.div<{ $isLandscape: boolean }>`
   justify-content: flex-start;
   position: relative;
   margin: 0 auto;
+  pointer-events: auto;
 
   @media (max-width: 1024px) {
     padding: 18px 8px 16px 8px;
@@ -310,7 +312,6 @@ const Modal: React.FC<ModalProps> = ({
         $sourcePosition={sourcePosition}
         $dragOffset={dragOffset}
         $isDragging={isDragging}
-        onClick={e => e.stopPropagation()}
       >
         <ModalCard $isLandscape={isLandscape}>
           <ModalHeader>

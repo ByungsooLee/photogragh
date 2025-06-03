@@ -32,7 +32,7 @@ const MainImageContainer = styled.div`
   width: 100%;
   height: 100vh;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   background: rgba(0, 0, 0, 0.3);
   overflow: hidden;
@@ -41,15 +41,21 @@ const MainImageContainer = styled.div`
   -webkit-user-select: none;
   user-select: none;
   cursor: grab;
+  padding-top: 40px;
   &:active {
     cursor: grabbing;
+  }
+
+  @media (max-width: 768px) {
+    height: 100svh;
+    padding-top: 30px;
   }
 `;
 
 const ImageWrapper = styled.div<{ $isTransitioning: boolean; $translateX: number }>`
   position: relative;
   width: 100%;
-  height: 100%;
+  height: calc(100% - 40px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -59,6 +65,25 @@ const ImageWrapper = styled.div<{ $isTransitioning: boolean; $translateX: number
   backface-visibility: hidden;
   -webkit-font-smoothing: antialiased;
   touch-action: none;
+
+  @media (max-width: 768px) {
+    height: calc(100% - 30px);
+  }
+`;
+
+const StyledImage = styled(Image)`
+  object-fit: contain !important;
+  max-width: 100% !important;
+  max-height: 90vh !important;
+  width: auto !important;
+  height: auto !important;
+  position: relative !important;
+  margin: auto !important;
+
+  @media (max-width: 768px) {
+    max-height: 75vh !important;
+    max-width: 90vw !important;
+  }
 `;
 
 const ThumbnailContainer = styled.div`
@@ -477,23 +502,12 @@ export default function Gallery() {
                 $isTransitioning={isTransitioning}
                 $translateX={translateX}
               >
-                <Image
+                <StyledImage
                   src={filteredPhotos[currentIndex].url}
                   alt={filteredPhotos[currentIndex].title}
                   fill
                   sizes="100vw"
                   priority={currentIndex === 0}
-                  style={{
-                    objectFit: 'contain',
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    touchAction: 'none',
-                    WebkitTouchCallout: 'none',
-                    WebkitUserSelect: 'none',
-                    userSelect: 'none',
-                    overscrollBehavior: 'none',
-                    WebkitOverflowScrolling: 'touch'
-                  }}
                 />
               </ImageWrapper>
             </MainImageContainer>

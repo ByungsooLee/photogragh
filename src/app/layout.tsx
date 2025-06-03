@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import LoadingScreen from '../components/LoadingScreen';
 import { GlobalStyle } from '@/lib/styled-components';
+import StyledComponentsRegistry from '@/lib/registry';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -68,9 +69,11 @@ export default function RootLayout({
   return (
     <html lang="ja" className={inter.variable}>
       <body className={inter.className}>
-        <GlobalStyle />
-        <LoadingScreen />
-        {children}
+        <StyledComponentsRegistry>
+          <GlobalStyle />
+          <LoadingScreen />
+          {children}
+        </StyledComponentsRegistry>
       </body>
     </html>
   );

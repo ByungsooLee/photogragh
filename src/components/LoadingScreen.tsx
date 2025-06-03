@@ -60,10 +60,10 @@ const ProgressContainer = styled.div`
   margin: 1rem auto;
 `;
 
-const ProgressBar = styled.div<{ progress: number }>`
+const ProgressBar = styled.div<{ $progress: number }>`
   height: 100%;
   background-color: #fff;
-  width: ${props => props.progress}%;
+  width: ${props => props.$progress}%;
   transition: width 0.3s ease-out;
 `;
 
@@ -103,7 +103,7 @@ const LoadingScreen = () => {
           </text>
         </LogoAnimation>
         <ProgressContainer>
-          <ProgressBar progress={loadProgress} />
+          <ProgressBar $progress={loadProgress} />
         </ProgressContainer>
         <LoadingPercentage>{loadProgress}%</LoadingPercentage>
       </LoadingContent>
