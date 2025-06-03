@@ -89,7 +89,7 @@ const ImageWrapper = styled.div`
 const ModalCard = styled.div<{ $isLandscape: boolean }>`
   background: #232323;
   border-radius: 18px;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.25), 0 1.5px 8px rgba(0,0,0,0.10);
+  box-shadow: none;
   padding: 32px 24px 24px 24px;
   width: 90vw;
   max-width: ${props => props.$isLandscape ? '420px' : '340px'};
@@ -102,6 +102,17 @@ const ModalCard = styled.div<{ $isLandscape: boolean }>`
   position: relative;
   margin: 0 auto;
   pointer-events: auto;
+
+  @media (max-width: 768px) {
+    padding: 8px 0 0 0;
+    max-width: 100vw;
+    width: 100vw;
+    max-height: 100vh;
+    min-height: 0;
+    height: 100vh;
+    border-radius: 0;
+    box-shadow: none;
+  }
 
   @media (max-width: 1024px) {
     padding: 18px 8px 16px 8px;
@@ -137,14 +148,14 @@ const ModalImage = styled.img<{ $isLandscape: boolean }>`
   transition: all 0.3s ease;
   margin: 0 auto;
   display: block;
-  box-shadow:
-    0 0 0 8px rgba(255,255,255,0.18),
-    0 8px 32px 0 rgba(0,0,0,0.7),
-    0 1.5px 8px rgba(0,0,0,0.10);
+  box-shadow: none;
 
-  @media (max-width: 1024px) {
-    max-width: 100%;
-    max-height: calc(90vh - 32px);
+  @media (max-width: 768px) {
+    max-width: 100vw;
+    max-height: 100vh;
+    width: auto;
+    height: 100vh;
+    object-fit: contain;
   }
   /* タブレット専用: 769px〜1024px */
   @media (min-width: 769px) and (max-width: 1024px) {
@@ -155,10 +166,7 @@ const ModalImage = styled.img<{ $isLandscape: boolean }>`
     height: auto;
     margin: 0 auto;
     display: block;
-    box-shadow:
-      0 0 0 6px rgba(255,255,255,0.13),
-      0 6px 24px 0 rgba(0,0,0,0.55),
-      0 1.5px 8px rgba(0,0,0,0.10);
+    box-shadow: none;
   }
 `;
 
@@ -175,7 +183,7 @@ const InfoPanel = styled.div`
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.95), transparent);
+  background: none;
   padding: 40px 20px 20px;
   color: var(--gold);
   transform: translateY(100%);
@@ -185,7 +193,7 @@ const InfoPanel = styled.div`
 
   @media (max-width: 768px) {
     padding: 30px 15px 15px;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.98), transparent);
+    background: none;
   }
   /* タブレット専用: 769px〜1024px */
   @media (min-width: 769px) and (max-width: 1024px) {
@@ -194,7 +202,7 @@ const InfoPanel = styled.div`
     width: 100%;
     margin-top: 12px;
     padding: 18px 8px 18px 8px;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.93), transparent);
+    background: none;
   }
 `;
 
@@ -223,7 +231,7 @@ const BottomSwipeHint = styled.div`
   text-align: center;
   letter-spacing: 0.05em;
   font-family: 'Bebas Neue', 'Noto Serif JP', serif;
-  @media (min-width: 769px) {
+  @media (min-width: 1025px) {
     display: none;
   }
 `;
