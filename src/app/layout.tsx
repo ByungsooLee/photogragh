@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import LoadingScreen from '../components/LoadingScreen';
+import { GlobalStyle } from '@/lib/styled-components';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -11,6 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.bml-studio.com'),
   title: 'L.MARK Photography - Professional Photography Studio',
   description: 'プロフェッショナルな写真撮影スタジオ。ポートレート、商品撮影、イベント撮影など幅広く対応',
   authors: [{ name: 'L.MARK Photography' }],
@@ -47,14 +49,15 @@ export const metadata: Metadata = {
     ]
   },
   manifest: '/site.webmanifest',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1
-  },
   robots: {
     index: true,
     follow: true
   }
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1
 };
 
 export default function RootLayout({
@@ -65,6 +68,7 @@ export default function RootLayout({
   return (
     <html lang="ja" className={inter.variable}>
       <body className={inter.className}>
+        <GlobalStyle />
         <LoadingScreen />
         {children}
       </body>
