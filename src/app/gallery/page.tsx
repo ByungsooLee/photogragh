@@ -755,8 +755,8 @@ export default function Gallery() {
           </>
         ) : (
           <MainImageContainer>
-            <div style={{ color: '#fff', textAlign: 'center' }}>
-              このカテゴリーには画像がありません
+            <div style={{ color: '#fff', textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%' }}>
+              No images in this category
             </div>
           </MainImageContainer>
         )}
