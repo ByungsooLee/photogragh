@@ -1,97 +1,54 @@
 import { createClient } from 'microcms-js-sdk';
+import type { GalleryItem, MicroCMSResponse } from '@/types/microcms';
+export type { GalleryItem } from '@/types/microcms';
 
-export type Photo = {
-  id: string;
-  url: string;
-  title: string;
-  caption: string;
-  image: {
-    url: string;
-  };
-  position?: {
-    x: number;
-    y: number;
-  };
-};
+const serviceDomain = process.env.NEXT_PUBLIC_MICROCMS_SERVICE_DOMAIN;
+const apiKey = process.env.NEXT_PUBLIC_MICROCMS_API_KEY;
 
-type MicroCMSResponse = {
-  contents: Array<{
-    id: string;
-    title: string;
-    caption: string;
-    image: {
-      url: string;
-    };
-  }>;
-  totalCount?: number;
-};
+if (!serviceDomain || !apiKey) {
+  console.error('microCMSの環境変数が設定されていません。');
+  console.error('NEXT_PUBLIC_MICROCMS_SERVICE_DOMAIN:', serviceDomain);
+  console.error('NEXT_PUBLIC_MICROCMS_API_KEY:', apiKey ? '設定済み' : '未設定');
+}
 
 const client = createClient({
-  serviceDomain: 'yye0dtjc5m',
-  apiKey: '26vuPmeJCBFmgs1DtAUURZZgq0gGSKs0w6YN',
+  serviceDomain: serviceDomain || '',
+  apiKey: apiKey || '',
 });
 
-export const getPhotos = async (params?: { limit?: number; offset?: number }): Promise<{ photos: Photo[]; totalCount?: number }> => {
+const ENDPOINT = 'gallery';
+
+const fields = [
+  'id',
+  'title',
+  'description',
+  'imageUrls',
+  'featured',
+  'tags',
+  'shootingDate',
+  'country2',
+  'metadata',
+  'category3'
+];
+
+export const getGallery = async (params?: { limit?: number; offset?: number; filters?: string }): Promise<{ items: GalleryItem[]; totalCount?: number }> => {
   try {
-    console.log('Fetching photos from microCMS...');
     const response = await client.get<MicroCMSResponse>({
-      endpoint: 'photos',
+      endpoint: ENDPOINT,
       queries: {
-        fields: ['id', 'title', 'caption', 'image'],
+        fields,
         ...(params?.limit ? { limit: params.limit } : {}),
-        ...(params?.offset ? { offset: params.offset } : {})
+        ...(params?.offset ? { offset: params.offset } : {}),
+        ...(params?.filters ? { filters: params.filters } : {})
       }
     });
-
-    console.log('microCMS response:', response);
-
     if (!response.contents || response.contents.length === 0) {
-      console.log('No photos found, using dummy photos');
-      return { photos: getDummyPhotos(), totalCount: 40 };
+      return { items: [], totalCount: 0 };
     }
-
-    const photos = response.contents.map(content => {
-      console.log('Processing photo:', content);
-      return {
-        id: content.id,
-        url: content.image.url,
-        title: content.title || 'Untitled',
-        caption: content.caption || '',
-        image: content.image
-      };
-    });
-
-    console.log('Processed photos:', photos);
-    return { photos, totalCount: response.totalCount };
+    console.log('imageUrls:', response.contents.map(p => p.imageUrls));
+    return { items: response.contents, totalCount: response.totalCount };
   } catch (error) {
-    console.error('Error fetching photos:', error);
-    return { photos: getDummyPhotos(), totalCount: 40 };
+    console.error('Error fetching gallery:', error);
+    return { items: [], totalCount: 0 };
   }
-};
-
-export const getAllPhotos = async (): Promise<Photo[]> => {
-  const limit = 100;
-  let offset = 0;
-  let allPhotos: Photo[] = [];
-  let totalCount = 0;
-  do {
-    const { photos, totalCount: count } = await getPhotos({ limit, offset });
-    allPhotos = allPhotos.concat(photos);
-    totalCount = count ?? 0;
-    offset += limit;
-  } while (offset < totalCount);
-  return allPhotos;
-};
-
-export const getDummyPhotos = (): Photo[] => {
-  console.log('Generating dummy photos');
-  return Array.from({ length: 40 }, (_, i) => ({
-    id: `dummy-${i}`,
-    url: `https://picsum.photos/800/1200?random=${i}`,
-    title: `Photo ${i + 1}`,
-    caption: `A beautiful moment captured on film ${i + 1}`,
-    image: {
-      url: `https://picsum.photos/800/1200?random=${i}`
-    }
-  }));
 }; 

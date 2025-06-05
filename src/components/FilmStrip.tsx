@@ -2,14 +2,25 @@
 
 import styled, { keyframes } from 'styled-components';
 import { useState, useEffect } from 'react';
-import type { Photo } from '../lib/microcms';
+import type { GalleryItem } from '../lib/microcms';
+
+// HomeClientやGalleryと同じPhoto型をローカルで定義
+interface Photo {
+  id: string;
+  title: string;
+  caption: string;
+  r2Url: string;
+  featured: boolean;
+  tags: string[];
+  shootingDate: string;
+}
 
 interface FilmStripProps {
   stripId: string;
   isVertical?: boolean;
   position?: 'left' | 'right' | 'center';
-  onPhotoClick: (photo: { url: string; title: string; caption: string; position: { x: number; y: number } }) => void;
-  photos: Photo[];
+  onPhotoClick: (photo: GalleryItem & { position: { x: number; y: number } }) => void;
+  photos: GalleryItem[];
   className?: string;
 }
 
@@ -488,6 +499,32 @@ const generateSeed = (stripId: string, photoId: string): number => {
   return hash;
 };
 
+// imageUrlsが{"オリジナル画像":...}のJSON文字列や配列の場合に対応
+function getOriginalImageUrl(imageUrls: string | string[] | undefined): string | undefined {
+  if (!imageUrls) return undefined;
+  if (Array.isArray(imageUrls)) return getOriginalImageUrl(imageUrls[0]);
+  try {
+    const obj = JSON.parse(imageUrls);
+    if (typeof obj === 'object' && obj['オリジナル画像']) {
+      return obj['オリジナル画像'];
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+// URLバリデーション関数を追加
+function isValidUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const FilmStrip: React.FC<FilmStripProps> = ({
   stripId,
   isVertical,
@@ -497,7 +534,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   className
 }) => {
   const [spotlightPosition, setSpotlightPosition] = useState({ x: 0, y: 0 });
-  const [displayedPhotos, setDisplayedPhotos] = useState<Photo[]>([]);
+  const [displayedPhotos, setDisplayedPhotos] = useState<GalleryItem[]>([]);
 
   useEffect(() => {
     // 列ごとに独立したランダム化
@@ -526,12 +563,10 @@ const FilmStrip: React.FC<FilmStripProps> = ({
     });
   };
 
-  const handlePhotoClick = (photo: Photo, event: React.MouseEvent) => {
+  const handlePhotoClick = (photo: GalleryItem, event: React.MouseEvent) => {
     const rect = event.currentTarget.getBoundingClientRect();
     onPhotoClick({
-      url: photo.url,
-      title: photo.title,
-      caption: photo.caption,
+      ...photo,
       position: {
         x: rect.left + rect.width / 2,
         y: rect.top + rect.height / 2
@@ -539,14 +574,12 @@ const FilmStrip: React.FC<FilmStripProps> = ({
     });
   };
 
-  const handleKeyDown = (photo: Photo, event: React.KeyboardEvent) => {
+  const handleKeyDown = (photo: GalleryItem, event: React.KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       const rect = event.currentTarget.getBoundingClientRect();
       onPhotoClick({
-        url: photo.url,
-        title: photo.title,
-        caption: photo.caption,
+        ...photo,
         position: {
           x: rect.left + rect.width / 2,
           y: rect.top + rect.height / 2
@@ -571,30 +604,45 @@ const FilmStrip: React.FC<FilmStripProps> = ({
           $isVertical={isVertical}
           onMouseMove={handleMouseMove}
         >
-          {displayedPhotos.map((photo, index) => (
-            <Frame
-              key={`${stripId}-${index}-${photo.id}-${photo.url}`}
-              $isVertical={isVertical}
-              className={''}
-              onClick={(e) => handlePhotoClick(photo, e)}
-              onKeyDown={(e) => handleKeyDown(photo, e)}
-              role="button"
-              tabIndex={0}
-              aria-label={`${photo.title}を表示`}
-            >
-              <Perforations side="left" />
-              <Perforations side="right" />
-              <Content>
-                <Photo
-                  src={photo.url}
-                  alt={photo.title || "ギャラリー画像"}
-                  $isPicked={false}
-                  loading={isPriorityImage(index) ? "eager" : "lazy"}
-                  data-priority={isPriorityImage(index) ? "true" : "false"}
-                />
-              </Content>
-            </Frame>
-          ))}
+          {displayedPhotos.map((photo, index) => {
+            // imageUrlsが配列かどうかをチェック
+            const imageUrlKey =
+              Array.isArray(photo.imageUrls) && photo.imageUrls.length > 0
+                ? photo.imageUrls[0]
+                : typeof photo.imageUrls === 'string'
+                  ? photo.imageUrls
+                  : '';
+
+            const originalUrl = getOriginalImageUrl(photo.imageUrls);
+
+            // 画像URLが取得できない、または不正な場合はスキップ
+            if (!isValidUrl(originalUrl)) return null;
+
+            return (
+              <Frame
+                key={`${stripId}-${index}-${photo.id}-${imageUrlKey}`}
+                $isVertical={isVertical}
+                className={''}
+                onClick={(e) => handlePhotoClick(photo, e)}
+                onKeyDown={(e) => handleKeyDown(photo, e)}
+                role="button"
+                tabIndex={0}
+                aria-label={`${photo.title}を表示`}
+              >
+                <Perforations side="left" />
+                <Perforations side="right" />
+                <Content>
+                  <Photo
+                    src={originalUrl}
+                    alt={photo.title || "ギャラリー画像"}
+                    $isPicked={false}
+                    loading={isPriorityImage(index) ? "eager" : "lazy"}
+                    data-priority={isPriorityImage(index) ? "true" : "false"}
+                  />
+                </Content>
+              </Frame>
+            );
+          })}
         </Strip>
       </StripWrapper>
     </>

@@ -3,7 +3,7 @@
 import styled from 'styled-components';
 import Image from 'next/image';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { getPhotos, type Photo as MicroCMSPhoto } from '@/lib/microcms';
+import { getGallery, type GalleryItem } from '@/lib/microcms';
 import React from 'react';
 import Header from '@/components/Header';
 import { CustomSelect } from '@/components/CustomSelect';
@@ -11,12 +11,6 @@ import GalleryLoadingScreen from '@/components/GalleryLoadingScreen';
 
 // カテゴリーの型定義
 type Category = 'all' | 'portrait' | 'bath' | 'person';
-
-// 写真データの型定義
-interface Photo extends MicroCMSPhoto {
-  category: Category;
-  date: string;
-}
 
 // スタイル定義
 const GalleryContainer = styled.div`
@@ -230,8 +224,52 @@ const useGalleryLoading = (photoUrls: string[], onAllLoaded: () => void) => {
   return { progress, handleImageLoad };
 };
 
+// 画像URLバリデーション関数
+function isValidUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// imageUrlsが{"オリジナル画像":...}のJSON文字列や配列の場合に対応
+function getOriginalImageUrl(imageUrls: string | string[] | undefined): string | undefined {
+  if (!imageUrls) return undefined;
+  if (Array.isArray(imageUrls)) return getOriginalImageUrl(imageUrls[0]);
+  try {
+    const obj = JSON.parse(imageUrls);
+    if (typeof obj === 'object' && obj['オリジナル画像']) {
+      return obj['オリジナル画像'];
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+// タイトル用のスタイルを追加
+const MainImageTitle = styled.div`
+  position: absolute;
+  top: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  text-align: center;
+  font-size: 1.6rem;
+  font-family: 'Bebas Neue', 'Noto Serif JP', serif;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.25);
+  padding: 8px 32px;
+  border-radius: 24px;
+  z-index: 10;
+`;
+
 export default function Gallery() {
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [photos, setPhotos] = useState<GalleryItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
@@ -256,6 +294,12 @@ export default function Gallery() {
   const SWIPE_VELOCITY_THRESHOLD = 0.1;
   const SWIPE_DISTANCE_MULTIPLIER = 0.5;
 
+  // filteredPhotosのuseMemoをここに移動
+  const filteredPhotos = useMemo(() => {
+    if (selectedCategory === 'all') return photos;
+    return photos.filter(photo => photo.category3 === selectedCategory);
+  }, [photos, selectedCategory]);
+
   // マウント状態を管理
   useEffect(() => {
     setMounted(true);
@@ -263,26 +307,13 @@ export default function Gallery() {
 
   useEffect(() => {
     const fetchPhotos = async () => {
+      setIsLoading(true);
+      setError(null);
       try {
-        setIsLoading(true);
-        setError(null);
-        const { photos: fetched } = await getPhotos({ limit: 50, offset: 0 });
-        if (!fetched || fetched.length === 0) {
-          setError('写真が見つかりませんでした');
-          setPhotos([]);
-          return;
-        }
-        const categories: Category[] = ['portrait', 'bath', 'person'];
-        const withMeta = fetched.map((p, i) => ({
-          ...p,
-          category: categories[i % categories.length],
-          date: '2024-03-01'
-        }));
-        setPhotos(withMeta);
+        const res = await getGallery({ limit: 100, offset: 0 });
+        setPhotos(res.items);
       } catch (err) {
-        console.error('写真の取得に失敗しました:', err);
-        setError('写真の読み込みに失敗しました');
-        setPhotos([]);
+        setError('APIエラー: ' + String(err));
       } finally {
         setIsLoading(false);
       }
@@ -290,18 +321,19 @@ export default function Gallery() {
     fetchPhotos();
   }, []);
 
-  // カテゴリーでフィルタリングされた写真を取得
-  const filteredPhotos = useMemo(() => {
-    if (selectedCategory === 'all') return photos;
-    return photos.filter(photo => photo.category === selectedCategory);
-  }, [photos, selectedCategory]);
+  // 画像取得後にcategory3の値をデバッグ出力
+  useEffect(() => {
+    if (photos.length > 0) {
+      console.log('category3 values:', photos.map(p => p.category3));
+    }
+  }, [photos]);
 
   // カテゴリーが変更されたときにインデックスをリセット
   useEffect(() => {
     setCurrentIndex(0);
   }, [selectedCategory]);
 
-  // currentIndexが範囲外の場合にリセット
+  // currentIndexが範囲外の場合にリセット（filteredPhotos基準に修正）
   useEffect(() => {
     if (filteredPhotos.length > 0 && currentIndex >= filteredPhotos.length) {
       setCurrentIndex(0);
@@ -314,7 +346,7 @@ export default function Gallery() {
 
   const handleScroll = useCallback((e: WheelEvent) => {
     const now = Date.now();
-    if (now - lastScrollTime.current < SCROLL_COOLDOWN || filteredPhotos.length === 0) return;
+    if (now - lastScrollTime.current < SCROLL_COOLDOWN || photos.length === 0) return;
 
     scrollAccumulator.current += e.deltaY;
     const absDelta = Math.abs(scrollAccumulator.current);
@@ -322,7 +354,7 @@ export default function Gallery() {
     if (absDelta > SCROLL_THRESHOLD) {
       lastScrollTime.current = now;
 
-      if (scrollAccumulator.current > 0 && currentIndex < filteredPhotos.length - 1) {
+      if (scrollAccumulator.current > 0 && currentIndex < photos.length - 1) {
         setIsTransitioning(true);
         setCurrentIndex(prev => prev + 1);
         scrollAccumulator.current = 0;
@@ -340,7 +372,7 @@ export default function Gallery() {
         setIsTransitioning(false);
       }, 150);
     }
-  }, [currentIndex, filteredPhotos.length]);
+  }, [currentIndex, photos.length]);
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
@@ -395,15 +427,15 @@ export default function Gallery() {
         const swipeIntensity = (swipeDistance * SWIPE_DISTANCE_MULTIPLIER) + (swipeVelocity * 100);
         const imageCount = Math.min(
           Math.max(Math.floor(swipeIntensity / 100), 1), // 最低1枚、最大は計算値
-          filteredPhotos.length - 1 // 最大でも残りの画像数まで
+          photos.length - 1 // 最大でも残りの画像数まで
         );
 
         if (deltaX > 0 && currentIndex > 0) {
           // 右スワイプ：前の画像へ
           setCurrentIndex(prev => Math.max(0, prev - imageCount));
-        } else if (deltaX < 0 && currentIndex < filteredPhotos.length - 1) {
+        } else if (deltaX < 0 && currentIndex < photos.length - 1) {
           // 左スワイプ：次の画像へ
-          setCurrentIndex(prev => Math.min(filteredPhotos.length - 1, prev + imageCount));
+          setCurrentIndex(prev => Math.min(photos.length - 1, prev + imageCount));
         }
       }
 
@@ -436,7 +468,7 @@ export default function Gallery() {
         clearTimeout(scrollTimeout.current);
       }
     };
-  }, [handleScroll, currentIndex, filteredPhotos.length, isDragging]);
+  }, [handleScroll, currentIndex, photos.length, isDragging]);
 
   // サムネイルのスクロール位置を更新する関数
   const scrollToCurrentThumbnail = useCallback(() => {
@@ -514,15 +546,15 @@ export default function Gallery() {
       const swipeIntensity = (swipeDistance * SWIPE_DISTANCE_MULTIPLIER) + (swipeVelocity * 100);
       const imageCount = Math.min(
         Math.max(Math.floor(swipeIntensity / 100), 1), // 最低1枚、最大は計算値
-        filteredPhotos.length - 1 // 最大でも残りの画像数まで
+        photos.length - 1 // 最大でも残りの画像数まで
       );
 
       if (deltaX > 0 && currentIndex > 0) {
         // 右スワイプ：前の画像へ
         setCurrentIndex(prev => Math.max(0, prev - imageCount));
-      } else if (deltaX < 0 && currentIndex < filteredPhotos.length - 1) {
+      } else if (deltaX < 0 && currentIndex < photos.length - 1) {
         // 左スワイプ：次の画像へ
-        setCurrentIndex(prev => Math.min(filteredPhotos.length - 1, prev + imageCount));
+        setCurrentIndex(prev => Math.min(photos.length - 1, prev + imageCount));
       }
     }
 
@@ -541,7 +573,7 @@ export default function Gallery() {
     }, 200);
   };
 
-  // 画像のプリロード処理を最適化
+  // 画像のプリロード処理を最適化（filteredPhotos基準に修正）
   useEffect(() => {
     if (!mounted || filteredPhotos.length === 0) return;
 
@@ -552,11 +584,12 @@ export default function Gallery() {
       ];
 
       indices.forEach(index => {
-        if (!imagesLoaded.has(filteredPhotos[index].url)) {
+        const url = getOriginalImageUrl(filteredPhotos[index].imageUrls);
+        if (isValidUrl(url) && !imagesLoaded.has(url!)) {
           const img = new window.Image();
-          img.src = filteredPhotos[index].url;
+          img.src = url!;
           img.onload = () => {
-            setImagesLoaded(prev => new Set([...prev, filteredPhotos[index].url]));
+            setImagesLoaded(prev => new Set([...prev, url!]));
           };
         }
       });
@@ -567,8 +600,10 @@ export default function Gallery() {
 
   // ギャラリー用ローディング進捗管理
   const allImageUrls = useMemo(() => {
-    // メイン画像＋サムネイル画像のURLを重複なしでリスト化
-    const urls = filteredPhotos.map(photo => photo.url);
+    // getOriginalImageUrlで取得し、バリデーション済みのみ
+    const urls = filteredPhotos
+      .map(photo => getOriginalImageUrl(photo.imageUrls))
+      .filter(isValidUrl) as string[];
     return Array.from(new Set(urls));
   }, [filteredPhotos]);
 
@@ -663,16 +698,22 @@ export default function Gallery() {
                 $isTransitioning={isTransitioning}
                 $translateX={translateX}
               >
-                <StyledImage
-                  src={filteredPhotos[currentIndex].url}
-                  alt={filteredPhotos[currentIndex].title}
-                  fill
-                  sizes="100vw"
-                  priority={true}
-                  loading="eager"
-                  data-priority="true"
-                  onLoad={() => { handleImageLoad(filteredPhotos[currentIndex].url); }}
-                />
+                {isValidUrl(getOriginalImageUrl(filteredPhotos[currentIndex]?.imageUrls)) && (
+                  <StyledImage
+                    src={getOriginalImageUrl(filteredPhotos[currentIndex].imageUrls)!}
+                    alt={filteredPhotos[currentIndex].title}
+                    fill
+                    sizes="100vw"
+                    priority={true}
+                    loading="eager"
+                    data-priority="true"
+                    onLoad={() => { handleImageLoad(getOriginalImageUrl(filteredPhotos[currentIndex].imageUrls)!); }}
+                  />
+                )}
+                {/* タイトルを画像の上部中央に重ねて表示 */}
+                <MainImageTitle>
+                  {filteredPhotos[currentIndex]?.title}
+                </MainImageTitle>
               </ImageWrapper>
             </MainImageContainer>
             <ThumbnailContainer ref={thumbnailContainerRef}>
@@ -682,19 +723,21 @@ export default function Gallery() {
                   $isActive={index === currentIndex}
                   onClick={() => handleThumbnailClick(index)}
                 >
-                  <Image
-                    src={photo.url}
-                    alt={photo.title}
-                    fill
-                    sizes="(max-width: 768px) 140px, 140px"
-                    priority={index < 2}
-                    loading={index < 2 ? 'eager' : 'lazy'}
-                    data-priority={index < 2 ? "true" : "false"}
-                    onLoad={() => { handleImageLoad(photo.url); }}
-                    style={{
-                      objectFit: 'cover'
-                    }}
-                  />
+                  {isValidUrl(getOriginalImageUrl(photo.imageUrls)) && (
+                    <Image
+                      src={getOriginalImageUrl(photo.imageUrls)!}
+                      alt={photo.title}
+                      fill
+                      sizes="(max-width: 768px) 140px, 140px"
+                      priority={index < 2}
+                      loading={index < 2 ? 'eager' : 'lazy'}
+                      data-priority={index < 2 ? "true" : "false"}
+                      onLoad={() => { handleImageLoad(getOriginalImageUrl(photo.imageUrls)!); }}
+                      style={{
+                        objectFit: 'cover'
+                      }}
+                    />
+                  )}
                 </ThumbnailWrapper>
               ))}
             </ThumbnailContainer>

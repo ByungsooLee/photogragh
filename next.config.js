@@ -15,6 +15,14 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'images.microcms-assets.io',
+      },
+      {
+        protocol: 'https',
+        hostname: 'pub-d725f2ba7c6b4036a81b2fe1e64121a9.r2.dev',
+      },
+      {
+        protocol: 'https',
         hostname: '**',
       },
     ],

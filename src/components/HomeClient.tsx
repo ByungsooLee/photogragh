@@ -7,7 +7,7 @@ import Modal from './Modal';
 import FilmStrip from './FilmStrip';
 import LoadingScreen from './LoadingScreen';
 import Navigation from './Navigation';
-import { type Photo, getDummyPhotos, getAllPhotos } from '../lib/microcms';
+import { getGallery, type GalleryItem } from '../lib/microcms';
 
 const FilmGallery = styled.div`
   position: relative;
@@ -64,26 +64,23 @@ const ScrollPreventOverlay = styled.div`
   pointer-events: none;
 `;
 
+function getOriginalImageUrl(imageUrls: string | string[] | undefined): string | undefined {
+  if (!imageUrls) return undefined;
+  if (Array.isArray(imageUrls)) return getOriginalImageUrl(imageUrls[0]);
+  try {
+    const obj = JSON.parse(imageUrls);
+    if (typeof obj === 'object' && obj['オリジナル画像']) {
+      return obj['オリジナル画像'];
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export default function HomeClient() {
   const [mounted, setMounted] = useState(false);
-  // 初期状態でlocalStorageキャッシュ or ダミー画像
-  const getInitialPhotos = () => {
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('gallery_photos');
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-          // 空配列や不正値は即クリア
-          localStorage.removeItem('gallery_photos');
-        } catch {
-          localStorage.removeItem('gallery_photos');
-        }
-      }
-    }
-    return getDummyPhotos();
-  };
-  const [photos, setPhotos] = useState<Photo[]>(getInitialPhotos().slice(0, 10));
+  const [photos, setPhotos] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalImage, setModalImage] = useState('');
@@ -92,26 +89,22 @@ export default function HomeClient() {
   const [modalSourcePosition, setModalSourcePosition] = useState<{ x: number; y: number } | undefined>();
   const [modalKey, setModalKey] = useState('');
 
-  // キャッシュがなければAPI取得、あれば即表示
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('gallery_photos');
-      if (cached) {
+    const fetchPhotos = async () => {
+      setIsLoading(true);
+      try {
+        const { items } = await getGallery({ filters: 'featured[equals]true', limit: 10 });
+        setPhotos(items);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('gallery_photos', JSON.stringify(items));
+        }
+      } catch {
+        setPhotos([]);
+      } finally {
         setIsLoading(false);
-        return;
       }
-    }
-    setIsLoading(true);
-    getAllPhotos().then((photos) => {
-      setPhotos(photos.slice(0, 10));
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('gallery_photos', JSON.stringify(photos.slice(0, 10)));
-      }
-      setIsLoading(false);
-    }).catch(() => {
-      setPhotos(getDummyPhotos().slice(0, 10));
-      setIsLoading(false);
-    });
+    };
+    fetchPhotos();
   }, []);
 
   useEffect(() => {
@@ -133,12 +126,13 @@ export default function HomeClient() {
     return <LoadingScreen />;
   }
 
-  const handlePhotoClick = (photo: { url: string; title: string; caption: string; position: { x: number; y: number } }) => {
-    setModalImage(photo.url);
+  const handlePhotoClick = (photo: GalleryItem & { position?: { x: number; y: number } }) => {
+    const url = getOriginalImageUrl(photo.imageUrls);
+    setModalImage(url || '');
     setModalTitle(photo.title);
-    setModalCaption(photo.caption);
+    setModalCaption(photo.description);
     setModalSourcePosition(photo.position);
-    setModalKey(photo.url + '_' + Date.now());
+    setModalKey((url || '') + '_' + Date.now());
     setIsModalOpen(true);
   };
 

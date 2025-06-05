@@ -214,15 +214,15 @@ const HomeLoadingScreen: React.FC<HomeLoadingScreenProps> = ({ onLoadingComplete
       console.log('[HomeLoadingScreen] Component unmounting');
       mountedRef.current = false;
       
-      // クリーンアップ時にrefをローカル変数にコピー
-      const listeners = imageLoadListenersRef.current;
-      listeners.forEach((listener, src) => {
+      // クリーンアップ時にrefの値をローカル変数にコピー
+      const currentListeners = new Map(imageLoadListenersRef.current);
+      currentListeners.forEach((listener, src) => {
         const img = document.querySelector(`img[src='${src}']`);
         if (img) {
           img.removeEventListener('load', listener);
         }
       });
-      listeners.clear();
+      imageLoadListenersRef.current.clear();
       
       if (observerRef.current) {
         observerRef.current.disconnect();
