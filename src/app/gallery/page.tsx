@@ -177,7 +177,7 @@ const useGalleryLoading = (photoUrls: string[], onAllLoaded: () => void) => {
     loadedSet.current.clear();
     preloadStarted.current = false;
     // デバッグ用: プリロード対象のURLリストを出力
-    console.log('[GalleryLoading] Preload target URLs:', photoUrls);
+    // console.log('[GalleryLoading] Preload target URLs:', photoUrls);
   }, [photoUrls]);
 
   // プリロード専用ロジック
@@ -297,7 +297,17 @@ export default function Gallery() {
   // filteredPhotosのuseMemoをここに移動
   const filteredPhotos = useMemo(() => {
     if (selectedCategory === 'all') return photos;
-    return photos.filter(photo => photo.category3 === selectedCategory);
+    return photos.filter(photo => {
+      if (Array.isArray(photo.category3)) {
+        return photo.category3
+          .map((v) => typeof v === 'string' ? v.trim().toLowerCase() : '')
+          .includes(selectedCategory.toLowerCase());
+      }
+      if (typeof photo.category3 === 'string') {
+        return photo.category3.trim().toLowerCase() === selectedCategory.toLowerCase();
+      }
+      return false;
+    });
   }, [photos, selectedCategory]);
 
   // マウント状態を管理
@@ -324,7 +334,8 @@ export default function Gallery() {
   // 画像取得後にcategory3の値をデバッグ出力
   useEffect(() => {
     if (photos.length > 0) {
-      console.log('category3 values:', photos.map(p => p.category3));
+      // console.log('category3 values:', photos.map(p => p.category3));
+      // console.log('全データ:', photos);
     }
   }, [photos]);
 
