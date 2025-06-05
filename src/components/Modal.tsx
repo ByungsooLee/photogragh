@@ -88,22 +88,9 @@ const ImageWrapper = styled.div`
   border: 2.5px solid rgba(80,100,160,0.22);
   overflow: hidden;
   margin: 0 8px;
+  height: auto;
 
-  @media (max-width: 1024px) {
-    border-radius: 10px;
-    margin: 0 2vw;
-    border-width: 1.5px;
-  }
-  @media (max-width: 768px) {
-    border-radius: 0;
-    margin: 0;
-    border-width: 0;
-    box-shadow: none;
-    justify-content: center;
-    align-items: center;
-    height: 60vh;
-  }
-
+  /* フィルム穴（全デバイスで表示） */
   &::before, &::after {
     content: '';
     position: absolute;
@@ -123,6 +110,10 @@ const ImageWrapper = styled.div`
   &::after { bottom: 6px; }
 
   @media (max-width: 1024px) {
+    border-radius: 10px;
+    margin: 0 2vw;
+    border-width: 1.5px;
+    box-shadow: 0 2px 16px 0 rgba(80,100,160,0.13), 0 0 0 1.5px #23272f inset;
     &::before, &::after {
       left: 4px; right: 4px; height: 3px; border-radius: 1.5px;
     }
@@ -130,7 +121,16 @@ const ImageWrapper = styled.div`
     &::after { bottom: 3px; }
   }
   @media (max-width: 768px) {
-    &::before, &::after { display: none; }
+    border-radius: 0;
+    margin: 0;
+    border-width: 0.5px;
+    box-shadow: 0 1px 8px 0 rgba(80,100,160,0.10), 0 0 0 1px #23272f inset;
+    height: 60vh;
+    &::before, &::after {
+      left: 2px; right: 2px; height: 2px; border-radius: 1px;
+    }
+    &::before { top: 1px; }
+    &::after { bottom: 1px; }
   }
 `;
 
@@ -168,6 +168,9 @@ const ModalCard = styled.div<{ $isLandscape: boolean }>`
     height: 100vh;
     border-radius: 0;
     box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 `;
 
