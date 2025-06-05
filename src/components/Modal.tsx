@@ -87,24 +87,51 @@ const ImageWrapper = styled.div`
   box-shadow: 0 2px 24px 0 rgba(80,100,160,0.18), 0 0 0 2px #23272f inset;
   border: 2.5px solid rgba(80,100,160,0.22);
   overflow: hidden;
-  margin: 0 16px;
+  margin: 0 8px;
+
+  @media (max-width: 1024px) {
+    border-radius: 10px;
+    margin: 0 2vw;
+    border-width: 1.5px;
+  }
+  @media (max-width: 768px) {
+    border-radius: 0;
+    margin: 0;
+    border-width: 0;
+    box-shadow: none;
+    justify-content: center;
+    align-items: center;
+    height: 60vh;
+  }
+
   &::before, &::after {
     content: '';
     position: absolute;
-    left: 12px; right: 12px;
-    height: 6px;
-    border-radius: 3px;
+    left: 8px; right: 8px;
+    height: 5px;
+    border-radius: 2.5px;
     background: repeating-linear-gradient(
       to right,
-      transparent 0 10px,
-      #fff 10px 14px,
-      transparent 14px 28px
+      transparent 0 8px,
+      #fff 8px 12px,
+      transparent 12px 24px
     );
-    opacity: 0.13;
+    opacity: 0.10;
     z-index: 2;
   }
-  &::before { top: 8px; }
-  &::after { bottom: 8px; }
+  &::before { top: 6px; }
+  &::after { bottom: 6px; }
+
+  @media (max-width: 1024px) {
+    &::before, &::after {
+      left: 4px; right: 4px; height: 3px; border-radius: 1.5px;
+    }
+    &::before { top: 3px; }
+    &::after { bottom: 3px; }
+  }
+  @media (max-width: 768px) {
+    &::before, &::after { display: none; }
+  }
 `;
 
 const ModalCard = styled.div<{ $isLandscape: boolean }>`
@@ -112,7 +139,7 @@ const ModalCard = styled.div<{ $isLandscape: boolean }>`
   border-radius: 20px;
   box-shadow: 0 8px 40px 0 rgba(0,0,0,0.45), 0 1.5px 8px 0 rgba(80,100,160,0.10);
   padding: 16px 0;
-  width: 92vw;
+  width: 96vw;
   max-width: ${props => props.$isLandscape ? '1200px' : '800px'};
   max-height: 94vh;
   min-height: ${props => props.$isLandscape ? '600px' : '700px'};
@@ -126,14 +153,14 @@ const ModalCard = styled.div<{ $isLandscape: boolean }>`
   overflow: visible;
 
   @media (max-width: 1024px) {
-    padding: 18px 8px 16px 8px;
-    max-width: ${props => props.$isLandscape ? '95vw' : '80vw'};
-    min-height: ${props => props.$isLandscape ? '320px' : '400px'};
-    max-height: 100vh;
+    padding: 8px 0;
+    max-width: 98vw;
+    min-height: 0;
+    max-height: 98vh;
+    border-radius: 14px;
   }
-
   @media (max-width: 768px) {
-    padding: 8px 0 0 0;
+    padding: 0;
     max-width: 100vw;
     width: 100vw;
     max-height: 100vh;
@@ -141,23 +168,6 @@ const ModalCard = styled.div<{ $isLandscape: boolean }>`
     height: 100vh;
     border-radius: 0;
     box-shadow: none;
-  }
-
-  /* タブレット専用: 769px〜1024px のみ余裕を持たせる */
-  @media (min-width: 769px) and (max-width: 1024px) {
-    max-width: 70vw;
-    max-height: 70vh;
-    min-width: 0;
-    min-height: 0;
-    height: 70vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 24px 12px;
-    box-sizing: border-box;
-    box-shadow: 0 12px 48px rgba(0,0,0,0.22), 0 2px 12px rgba(0,0,0,0.13);
   }
 `;
 
@@ -169,6 +179,18 @@ const ModalImage = styled.img`
   box-shadow: 0 0 0 1.5px #23272f inset;
   background: #181818;
   z-index: 3;
+
+  @media (max-width: 1024px) {
+    max-height: 70vh;
+    border-radius: 8px;
+  }
+  @media (max-width: 768px) {
+    max-width: 100vw;
+    max-height: 60vh;
+    border-radius: 0;
+    margin: auto;
+    display: block;
+  }
 `;
 
 const ModalHeader = styled.div`
