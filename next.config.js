@@ -26,6 +26,9 @@ const nextConfig = {
         hostname: '**',
       },
     ],
+    unoptimized: false,
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   async headers() {
     return [
@@ -47,12 +50,41 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+        ],
+      },
     ];
   },
   // パフォーマンス最適化のための追加設定
   poweredByHeader: false,
   compress: true,
   reactStrictMode: true,
+  // ビルド時の最適化
+  swcMinify: true,
+  // 静的生成の最適化
+  staticPageGenerationTimeout: 120,
 };
 
 module.exports = nextConfig; 

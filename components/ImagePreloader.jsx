@@ -14,51 +14,67 @@ const ImagePreloader = ({
   priority = false 
 }) => {
   const preloadedRef = useRef(new Set());
+  const queueRef = useRef([]);
+  const isProcessingRef = useRef(false);
 
-  useEffect(() => {
-    // プリロードする画像を選択
-    const preloadImages = images.slice(0, preloadCount);
-    
-    // プリロード処理
-    const preloadImage = (image) => {
-      if (preloadedRef.current.has(image.src)) return;
+  const processQueue = async () => {
+    if (isProcessingRef.current || queueRef.current.length === 0) return;
 
+    isProcessingRef.current = true;
+    const image = queueRef.current.shift();
+
+    if (!image || preloadedRef.current.has(image.src)) {
+      isProcessingRef.current = false;
+      processQueue();
+      return;
+    }
+
+    try {
       const link = document.createElement('link');
       link.rel = 'preload';
       link.as = 'image';
       link.href = image.src;
       
-      // 優先度の設定
       if (priority) {
         link.fetchPriority = 'high';
       }
 
-      // 画像の読み込み完了時の処理
-      link.onload = () => {
-        preloadedRef.current.add(image.src);
-        console.log(`✓ Preloaded: ${image.src}`);
-      };
+      await new Promise((resolve, reject) => {
+        link.onload = () => {
+          preloadedRef.current.add(image.src);
+          resolve();
+        };
+        link.onerror = reject;
+        document.head.appendChild(link);
+      });
+    } catch (error) {
+      console.error(`Failed to preload: ${image.src}`, error);
+    }
 
-      // エラー処理
-      link.onerror = () => {
-        console.error(`✗ Failed to preload: ${image.src}`);
-      };
+    isProcessingRef.current = false;
+    processQueue();
+  };
 
-      document.head.appendChild(link);
-    };
+  useEffect(() => {
+    // プリロードする画像を選択
+    const preloadImages = images.slice(0, preloadCount);
+    
+    // キューに追加
+    queueRef.current = [...preloadImages];
+    
+    // キュー処理を開始
+    processQueue();
 
-    // 画像のプリロードを実行
-    preloadImages.forEach(preloadImage);
-
-    // クリーンアップ関数
     return () => {
-      // プリロードされたリンク要素を削除
+      // クリーンアップ
       const links = document.querySelectorAll('link[rel="preload"][as="image"]');
       links.forEach(link => {
         if (preloadImages.some(img => img.src === link.href)) {
           link.remove();
         }
       });
+      queueRef.current = [];
+      isProcessingRef.current = false;
     };
   }, [images, preloadCount, priority]);
 
@@ -69,11 +85,11 @@ ImagePreloader.propTypes = {
   images: PropTypes.arrayOf(
     PropTypes.shape({
       src: PropTypes.string.isRequired,
-      id: PropTypes.string.isRequired
+      alt: PropTypes.string,
     })
   ).isRequired,
   preloadCount: PropTypes.number,
-  priority: PropTypes.bool
+  priority: PropTypes.bool,
 };
 
 export default ImagePreloader; 
