@@ -210,14 +210,14 @@ const HomeLoadingScreen: React.FC<HomeLoadingScreenProps> = ({ onLoadingComplete
     }
     tryUpdateProgress();
 
-    // クリーンアップ時にrefの値をローカル変数にコピー
-    const currentListeners = new Map(imageLoadListenersRef.current);
-    const currentObserver = observerRef.current;
-    const currentTimeout = progressTimeoutRef.current;
-
     return () => {
       console.log('[HomeLoadingScreen] Component unmounting');
       mountedRef.current = false;
+      
+      // クリーンアップ時にrefの値をローカル変数にコピー
+      const currentListeners = new Map(imageLoadListenersRef.current);
+      const currentObserver = observerRef.current;
+      const currentTimeout = progressTimeoutRef.current;
       
       currentListeners.forEach((listener, src) => {
         const img = document.querySelector(`img[src='${src}']`);

@@ -28,17 +28,6 @@ interface GalleryItemProps {
   priority: boolean;
 }
 
-interface BatteryManager extends EventTarget {
-  charging: boolean;
-  chargingTime: number;
-  dischargingTime: number;
-  level: number;
-}
-
-interface NavigatorWithBattery extends Navigator {
-  getBattery?: () => Promise<BatteryManager>;
-}
-
 interface NetworkInformation extends EventTarget {
   effectiveType: string;
   type: string;
@@ -124,26 +113,14 @@ const FilmType = styled.span`
 `;
 
 const getOptimalImageQuality = () => {
-  // ネットワーク状態の確認
+  // ネットワーク状態に基づく品質設定の最適化
   if (typeof navigator !== 'undefined' && 'connection' in navigator) {
     const connection = (navigator as NavigatorWithNetwork).connection;
-    if (connection?.effectiveType === '4g') return 85;
-    if (connection?.effectiveType === '3g') return 70;
-    if (connection?.effectiveType === '2g') return 50;
+    if (connection?.effectiveType === '4g') return 80;
+    if (connection?.effectiveType === '3g') return 60;
+    if (connection?.effectiveType === '2g') return 40;
   }
-
-  // デバイスのバッテリー状態の確認
-  if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
-    const nav = navigator as NavigatorWithBattery;
-    if (nav.getBattery) {
-      nav.getBattery().then((battery: BatteryManager) => {
-        if (battery.level <= 0.2) return 60; // バッテリー残量20%以下
-      });
-    }
-  }
-
-  // デフォルト値
-  return 75;
+  return 70;
 };
 
 const GalleryItem = memo(({ image, onHover, onClick, priority }: GalleryItemProps) => {
@@ -164,7 +141,7 @@ const GalleryItem = memo(({ image, onHover, onClick, priority }: GalleryItemProp
       connection?.addEventListener('change', updateQuality);
       return () => connection?.removeEventListener('change', updateQuality);
     }
-  }, []);
+  }, [setImageQuality]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -205,19 +182,17 @@ const GalleryItem = memo(({ image, onHover, onClick, priority }: GalleryItemProp
       <ImageWrapper>
         {isVisible && (
           <>
-            {/* 低解像度のプレビュー画像 */}
             {!isProgressiveLoaded && image.placeholder && (
               <Image
                 src={image.placeholder}
                 alt={`${image.alt} (プレビュー)`}
                 fill
-                quality={Math.min(20, imageQuality / 4)} // プレビュー画像の品質を動的に調整
-                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                style={{ objectFit: 'cover', filter: 'blur(20px)' }}
+                quality={10}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                style={{ objectFit: 'cover', filter: 'blur(10px)' }}
                 priority={priority}
               />
             )}
-            {/* メイン画像 */}
             <Image
               src={image.src}
               alt={image.alt}
@@ -226,14 +201,14 @@ const GalleryItem = memo(({ image, onHover, onClick, priority }: GalleryItemProp
               onLoad={handleImageLoad}
               placeholder="blur"
               blurDataURL={image.placeholder}
-              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               style={{ 
                 objectFit: 'cover',
                 opacity: isProgressiveLoaded ? 1 : 0,
-                transition: 'opacity 0.3s ease-in-out'
+                transition: 'opacity 0.2s ease-in-out'
               }}
               loading={priority ? 'eager' : 'lazy'}
-              quality={imageQuality} // 動的な品質設定
+              quality={imageQuality}
               fetchPriority={priority ? 'high' : 'auto'}
             />
           </>
