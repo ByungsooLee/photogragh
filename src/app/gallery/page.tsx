@@ -78,11 +78,25 @@ const StyledImage = styled(Image)`
   will-change: transform;
   backface-visibility: hidden;
   -webkit-font-smoothing: antialiased;
+  transition: opacity 0.3s ease-in-out;
 
   @media (max-width: 768px) {
     max-height: 65vh !important;
     max-width: 85vw !important;
   }
+`;
+
+// プレビュー画像用のスタイル
+const PreviewImage = styled(Image)`
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  filter: blur(20px) !important;
+  transform: scale(1.1) !important;
+  transition: opacity 0.3s ease-in-out !important;
 `;
 
 const ThumbnailContainer = styled.div`
@@ -584,11 +598,12 @@ export default function Gallery() {
     }, 200);
   };
 
-  // 画像のプリロード処理を最適化（filteredPhotos基準に修正）
+  // 画像のプリロード処理を最適化
   useEffect(() => {
     if (!mounted || filteredPhotos.length === 0) return;
 
     const preloadImages = () => {
+      // 現在の画像の前後の画像をプリロード
       const indices = [
         currentIndex > 0 ? currentIndex - 1 : filteredPhotos.length - 1,
         currentIndex < filteredPhotos.length - 1 ? currentIndex + 1 : 0
@@ -710,16 +725,33 @@ export default function Gallery() {
                 $translateX={translateX}
               >
                 {isValidUrl(getOriginalImageUrl(filteredPhotos[currentIndex]?.imageUrls)) && (
-                  <StyledImage
-                    src={getOriginalImageUrl(filteredPhotos[currentIndex].imageUrls)!}
-                    alt={filteredPhotos[currentIndex].title}
-                    fill
-                    sizes="100vw"
-                    priority={true}
-                    loading="eager"
-                    data-priority="true"
-                    onLoad={() => { handleImageLoad(getOriginalImageUrl(filteredPhotos[currentIndex].imageUrls)!); }}
-                  />
+                  <>
+                    {/* プレビュー画像 */}
+                    <PreviewImage
+                      src={getOriginalImageUrl(filteredPhotos[currentIndex].imageUrls)!}
+                      alt={`${filteredPhotos[currentIndex].title} (プレビュー)`}
+                      fill
+                      sizes="100vw"
+                      quality={20}
+                      priority={true}
+                      loading="eager"
+                    />
+                    {/* メイン画像 */}
+                    <StyledImage
+                      src={getOriginalImageUrl(filteredPhotos[currentIndex].imageUrls)!}
+                      alt={filteredPhotos[currentIndex].title}
+                      fill
+                      sizes="100vw"
+                      priority={true}
+                      loading="eager"
+                      data-priority="true"
+                      onLoad={() => { 
+                        handleImageLoad(getOriginalImageUrl(filteredPhotos[currentIndex].imageUrls)!);
+                      }}
+                      quality={85}
+                      fetchPriority="high"
+                    />
+                  </>
                 )}
                 {/* タイトルを画像の上部中央に重ねて表示 */}
                 <MainImageTitle>
@@ -747,6 +779,8 @@ export default function Gallery() {
                       style={{
                         objectFit: 'cover'
                       }}
+                      quality={index < 2 ? 85 : 60}
+                      fetchPriority={index < 2 ? "high" : "auto"}
                     />
                   )}
                 </ThumbnailWrapper>

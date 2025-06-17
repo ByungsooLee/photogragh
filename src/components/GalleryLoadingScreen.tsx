@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 
 interface GalleryLoadingScreenProps {
@@ -9,6 +9,11 @@ interface GalleryLoadingScreenProps {
 const fadeIn = keyframes`
   from { opacity: 0; }
   to { opacity: 1; }
+`;
+
+const fadeOut = keyframes`
+  from { opacity: 1; }
+  to { opacity: 0; }
 `;
 
 const LoadingScreenWrapper = styled.div<{ $isReady?: boolean }>`
@@ -23,10 +28,11 @@ const LoadingScreenWrapper = styled.div<{ $isReady?: boolean }>`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  animation: ${fadeIn} 0.5s;
-  pointer-events: all;
+  animation: ${props => props.$isReady ? fadeOut : fadeIn} 0.5s;
+  pointer-events: ${props => props.$isReady ? 'none' : 'all'};
   opacity: ${props => props.$isReady ? 0 : 1};
   transition: opacity 0.5s;
+  will-change: opacity, transform;
 `;
 
 const LoadingContent = styled.div`
@@ -62,6 +68,8 @@ const ProgressBar = styled.div<{ $progress: number }>`
   background: linear-gradient(90deg, #fff 0%, #d4af37 100%);
   border-radius: 8px;
   transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
+  will-change: width;
+  transform: translateZ(0);
 `;
 
 const LoadingPercentage = styled.p`
@@ -74,6 +82,19 @@ const LoadingPercentage = styled.p`
 `;
 
 const GalleryLoadingScreen: React.FC<GalleryLoadingScreenProps> = ({ progress, isReady }) => {
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    if (isReady) {
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isReady]);
+
+  if (!isVisible) return null;
+
   return (
     <LoadingScreenWrapper $isReady={isReady}>
       <LoadingContent>
