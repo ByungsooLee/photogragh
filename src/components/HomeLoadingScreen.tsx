@@ -210,12 +210,15 @@ const HomeLoadingScreen: React.FC<HomeLoadingScreenProps> = ({ onLoadingComplete
     }
     tryUpdateProgress();
 
+    // クリーンアップ時にrefの値をローカル変数にコピー
+    const currentListeners = new Map(imageLoadListenersRef.current);
+    const currentObserver = observerRef.current;
+    const currentTimeout = progressTimeoutRef.current;
+
     return () => {
       console.log('[HomeLoadingScreen] Component unmounting');
       mountedRef.current = false;
       
-      // クリーンアップ時にrefの値をローカル変数にコピー
-      const currentListeners = new Map(imageLoadListenersRef.current);
       currentListeners.forEach((listener, src) => {
         const img = document.querySelector(`img[src='${src}']`);
         if (img) {
@@ -224,14 +227,14 @@ const HomeLoadingScreen: React.FC<HomeLoadingScreenProps> = ({ onLoadingComplete
       });
       imageLoadListenersRef.current.clear();
       
-      if (observerRef.current) {
-        observerRef.current.disconnect();
+      if (currentObserver) {
+        currentObserver.disconnect();
       }
-      if (progressTimeoutRef.current) {
-        cancelAnimationFrame(progressTimeoutRef.current);
+      if (currentTimeout) {
+        cancelAnimationFrame(currentTimeout);
       }
     };
-  }, [handleImageLoad, updateProgress, addImageLoadListener, loadProgress]);
+  }, [addImageLoadListener, updateProgress, loadProgress]);
 
   return (
     <LoadingScreenWrapper $isReady={isReady}>

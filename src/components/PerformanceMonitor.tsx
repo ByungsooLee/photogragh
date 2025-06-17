@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { onCLS, onLCP, onFCP, onTTFB, onINP } from 'web-vitals';
+import { onCLS, onLCP, onFCP, onTTFB, onINP, Metric } from 'web-vitals';
 import { sendToAnalytics, getMetricRating, logPerformanceMetrics } from '@/utils/performance';
 
 const PerformanceMonitor = () => {
@@ -12,7 +12,7 @@ const PerformanceMonitor = () => {
       rating: 'good' | 'needs-improvement' | 'poor';
     }> = [];
 
-    const handleMetric = (metric: any) => {
+    const handleMetric = (metric: Metric) => {
       const rating = getMetricRating({
         name: metric.name,
         value: metric.value,

@@ -6,12 +6,24 @@ type MetricType = {
   rating: 'good' | 'needs-improvement' | 'poor';
 };
 
+interface NetworkInformation extends EventTarget {
+  effectiveType: string;
+  type: string;
+  downlink: number;
+  rtt: number;
+  saveData: boolean;
+}
+
+interface NavigatorWithNetwork extends Navigator {
+  connection?: NetworkInformation;
+}
+
 const vitalsUrl = 'https://vitals.vercel-analytics.com/v1/vitals';
 
 function getConnectionSpeed(): string {
   if (typeof navigator !== 'undefined' && 'connection' in navigator) {
-    const connection = navigator.connection as NetworkInformation;
-    return connection.effectiveType || '';
+    const connection = (navigator as NavigatorWithNetwork).connection;
+    return connection?.effectiveType || '';
   }
   return '';
 }

@@ -81,8 +81,6 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   reactStrictMode: true,
-  // ビルド時の最適化
-  swcMinify: true,
   // 静的生成の最適化
   staticPageGenerationTimeout: 120,
 };

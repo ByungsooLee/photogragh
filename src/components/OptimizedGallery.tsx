@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, memo, useEffect, Suspense, lazy } from 'react';
+import { useState, useCallback, useRef, memo, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import styled from 'styled-components';
 import dynamic from 'next/dynamic';
@@ -37,6 +37,18 @@ interface BatteryManager extends EventTarget {
 
 interface NavigatorWithBattery extends Navigator {
   getBattery?: () => Promise<BatteryManager>;
+}
+
+interface NetworkInformation extends EventTarget {
+  effectiveType: string;
+  type: string;
+  downlink: number;
+  rtt: number;
+  saveData: boolean;
+}
+
+interface NavigatorWithNetwork extends Navigator {
+  connection?: NetworkInformation;
 }
 
 const GalleryContainer = styled.div`
@@ -114,10 +126,10 @@ const FilmType = styled.span`
 const getOptimalImageQuality = () => {
   // ネットワーク状態の確認
   if (typeof navigator !== 'undefined' && 'connection' in navigator) {
-    const connection = navigator.connection as any;
-    if (connection.effectiveType === '4g') return 85;
-    if (connection.effectiveType === '3g') return 70;
-    if (connection.effectiveType === '2g') return 50;
+    const connection = (navigator as NavigatorWithNetwork).connection;
+    if (connection?.effectiveType === '4g') return 85;
+    if (connection?.effectiveType === '3g') return 70;
+    if (connection?.effectiveType === '2g') return 50;
   }
 
   // デバイスのバッテリー状態の確認
@@ -144,13 +156,13 @@ const GalleryItem = memo(({ image, onHover, onClick, priority }: GalleryItemProp
   // ネットワーク状態の監視
   useEffect(() => {
     if (typeof navigator !== 'undefined' && 'connection' in navigator) {
-      const connection = navigator.connection as any;
+      const connection = (navigator as NavigatorWithNetwork).connection;
       const updateQuality = () => {
         setImageQuality(getOptimalImageQuality());
       };
 
-      connection.addEventListener('change', updateQuality);
-      return () => connection.removeEventListener('change', updateQuality);
+      connection?.addEventListener('change', updateQuality);
+      return () => connection?.removeEventListener('change', updateQuality);
     }
   }, []);
 
@@ -242,17 +254,13 @@ interface OptimizedGalleryProps {
 
 const OptimizedGallery = ({ images }: OptimizedGalleryProps) => {
   const [selectedImage, setSelectedImage] = useState<ImageData | null>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
   const preloadedImagesRef = useRef<Set<string>>(new Set());
   
   const preloadImage = useCallback((src: string) => {
     if (preloadedImagesRef.current.has(src)) return;
     
-    const link = document.createElement('link');
-    link.rel = 'prefetch';
-    link.as = 'image';
-    link.href = src;
-    document.head.appendChild(link);
+    const img = new window.Image();
+    img.src = src;
     preloadedImagesRef.current.add(src);
   }, []);
 
