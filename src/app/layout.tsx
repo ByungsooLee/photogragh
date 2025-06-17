@@ -1,15 +1,7 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import { GlobalStyle } from '@/lib/styled-components';
 import StyledComponentsRegistry from '@/lib/registry';
-
-const inter = Inter({ 
-  subsets: ['latin'],
-  display: 'swap',
-  preload: true,
-  variable: '--font-inter'
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.bml-studio.com'),
@@ -66,8 +58,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja" className={inter.variable}>
-      <body className={inter.className}>
+    <html lang="ja">
+      <body>
         <StyledComponentsRegistry>
           <GlobalStyle />
           {children}

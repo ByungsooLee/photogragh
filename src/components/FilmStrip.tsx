@@ -3,17 +3,7 @@
 import styled, { keyframes } from 'styled-components';
 import { useState, useEffect } from 'react';
 import type { GalleryItem } from '../lib/microcms';
-
-// HomeClientやGalleryと同じPhoto型をローカルで定義
-interface Photo {
-  id: string;
-  title: string;
-  caption: string;
-  r2Url: string;
-  featured: boolean;
-  tags: string[];
-  shootingDate: string;
-}
+import Image from 'next/image';
 
 interface FilmStripProps {
   stripId: string;
@@ -440,29 +430,6 @@ const Content = styled.div`
   min-height: 100px;
 `;
 
-const Photo = styled.img<{ $isPicked?: boolean }>`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 5px;
-  filter: sepia(20%) contrast(1.1);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 1;
-  will-change: filter, transform;
-  backface-visibility: hidden;
-  -webkit-font-smoothing: antialiased;
-
-  ${Frame}:hover & {
-    filter: sepia(0%) contrast(1.2) brightness(1.15);
-    transform: scale(1.02);
-  }
-
-  ${props => props.$isPicked && `
-    filter: sepia(0%) contrast(1.2) brightness(1.15);
-    box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
-  `}
-`;
-
 const Spotlight = styled.div<{ x: number; y: number }>`
   position: fixed;
   top: 0;
@@ -632,12 +599,15 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                 <Perforations side="left" />
                 <Perforations side="right" />
                 <Content>
-                  <Photo
-                    src={originalUrl}
+                  <Image
+                    src={originalUrl || ''}
                     alt={photo.title || "ギャラリー画像"}
-                    $isPicked={false}
+                    fill
+                    sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 300px"
+                    quality={70}
+                    priority={isPriorityImage(index)}
                     loading={isPriorityImage(index) ? "eager" : "lazy"}
-                    data-priority={isPriorityImage(index) ? "true" : "false"}
+                    style={{ objectFit: 'cover', borderRadius: '5px' }}
                   />
                 </Content>
               </Frame>
