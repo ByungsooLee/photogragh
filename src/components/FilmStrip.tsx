@@ -321,10 +321,6 @@ const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
     if (props.$isVertical) return '140px';
     return props.isPortrait ? '140px' : '200px';
   }};
-  height: ${props => {
-    if (props.$isVertical) return '200px';
-    return props.isPortrait ? '200px' : '140px';
-  }};
   min-width: 100px;
   min-height: 100px;
   margin: ${props => props.isPortrait || props.$isVertical ? '0 auto' : '0'};
@@ -406,10 +402,6 @@ const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
       if (props.$isVertical) return '160px';
       return props.isPortrait ? '160px' : '200px';
     }};
-    height: ${props => {
-      if (props.$isVertical) return '200px';
-      return props.isPortrait ? '200px' : '160px';
-    }};
   }
 
   @media (max-width: 768px) {
@@ -417,20 +409,12 @@ const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
       if (props.$isVertical) return '140px';
       return props.isPortrait ? '140px' : '180px';
     }};
-    height: ${props => {
-      if (props.$isVertical) return '180px';
-      return props.isPortrait ? '180px' : '140px';
-    }};
   }
 
   @media (max-width: 480px) {
     width: ${props => {
       if (props.$isVertical) return '120px';
       return props.isPortrait ? '120px' : '160px';
-    }};
-    height: ${props => {
-      if (props.$isVertical) return '160px';
-      return props.isPortrait ? '160px' : '120px';
     }};
   }
 `;
@@ -454,10 +438,12 @@ const Perforations = styled.div<{ side: 'left' | 'right' }>`
 const Content = styled.div`
   position: absolute;
   inset: 0;
-  padding: 20px;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
   background: linear-gradient(135deg, rgba(34,34,34,0.8) 0%, rgba(17,17,17,0.8) 100%);
   min-width: 100px;
   min-height: 100px;
