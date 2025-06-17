@@ -344,6 +344,7 @@ const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
   -webkit-font-smoothing: antialiased;
   role: "button";
   tabIndex: 0;
+  aspect-ratio: 4 / 3;
 
   &::after {
     content: '';
