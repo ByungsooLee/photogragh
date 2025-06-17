@@ -8,6 +8,7 @@ import React from 'react';
 import Header from '@/components/Header';
 import { CustomSelect } from '@/components/CustomSelect';
 import GalleryLoadingScreen from '@/components/GalleryLoadingScreen';
+import Head from 'next/head';
 
 // カテゴリーの型定義
 type Category = 'all' | 'portrait' | 'bath' | 'person';
@@ -378,6 +379,13 @@ export default function Gallery() {
       return false;
     });
   }, [photos, selectedCategory]);
+
+  // LCP画像のURLを取得
+  const lcpImageUrl = useMemo(() => {
+    if (filteredPhotos.length === 0) return undefined;
+    const urls = getResponsiveImageUrls(filteredPhotos[0]?.imageUrls);
+    return urls.large || urls.medium || urls.original || '';
+  }, [filteredPhotos]);
 
   // マウント状態を管理
   useEffect(() => {
@@ -802,6 +810,12 @@ export default function Gallery() {
 
   return (
     <>
+      {/* LCP画像のpreloadをheadに追加 */}
+      {lcpImageUrl && (
+        <Head>
+          <link rel="preload" as="image" href={lcpImageUrl} imageSrcSet={lcpImageUrl} />
+        </Head>
+      )}
       <Header />
       {showLoading && !galleryReady && <GalleryLoadingScreen progress={progress} isReady={galleryReady} />}
       <GalleryContainer>
@@ -931,13 +945,11 @@ export default function Gallery() {
                         sizes="(max-width: 768px) 140px, 140px"
                         priority={index < 2}
                         loading={index < 2 ? 'eager' : 'lazy'}
-                        data-priority={index < 2 ? "true" : "false"}
+                        data-priority={index < 2 ? 'true' : 'false'}
                         onLoad={() => { handleImageLoad(thumbSrc); }}
-                        style={{
-                          objectFit: 'cover'
-                        }}
+                        style={{ objectFit: 'cover' }}
                         quality={index < 2 ? 85 : 60}
-                        fetchPriority={index < 2 ? "high" : "auto"}
+                        fetchPriority={index < 2 ? 'high' : 'auto'}
                         aria-hidden="true"
                       />
                     )}
@@ -948,12 +960,12 @@ export default function Gallery() {
           </>
         ) : (
           <MainImageContainer>
-            <ErrorMessage role="status">
-              このカテゴリーには画像がありません。
-            </ErrorMessage>
+            <div style={{ color: '#fff', textAlign: 'center' }} role="status" aria-live="polite">
+              ギャラリーが空です。
+            </div>
           </MainImageContainer>
         )}
       </GalleryContainer>
     </>
   );
-} 
+}
