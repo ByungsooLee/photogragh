@@ -48,26 +48,27 @@ const MainImageContainer = styled.div`
   }
 `;
 
-const ImageWrapper = styled.div<{ $isTransitioning: boolean; $translateX: number }>`
+const ImageWrapper = styled.div<{ $isTransitioning: boolean; $translateX: number; $isLoading: boolean }>`
   position: relative;
   width: 100%;
   height: calc(100% - 40px);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   transform: ${props => props.$isTransitioning ? 'scale(0.98)' : 'scale(1)'} translateX(${props => props.$translateX}px);
   will-change: transform;
   backface-visibility: hidden;
   -webkit-font-smoothing: antialiased;
   touch-action: none;
+  opacity: ${props => props.$isLoading ? 0.5 : 1};
 
   @media (max-width: 768px) {
     height: calc(100% - 30px);
   }
 `;
 
-const StyledImage = styled(Image)`
+const StyledImage = styled(Image)<{ $isLoading?: boolean }>`
   object-fit: contain !important;
   max-width: 100% !important;
   max-height: 90vh !important;
@@ -79,6 +80,7 @@ const StyledImage = styled(Image)`
   backface-visibility: hidden;
   -webkit-font-smoothing: antialiased;
   transition: opacity 0.3s ease-in-out;
+  opacity: ${props => props.$isLoading ? 0 : 1};
 
   @media (max-width: 768px) {
     max-height: 65vh !important;
@@ -299,6 +301,37 @@ const MainImageTitle = styled.div`
   z-index: 10;
 `;
 
+const ErrorMessage = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  text-align: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
+  max-width: 80%;
+  z-index: 100;
+`;
+
+const RetryButton = styled.button`
+  margin-top: 16px;
+  padding: 8px 16px;
+  background: #fff;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f0f0f0;
+    transform: translateY(-1px);
+  }
+`;
+
 export default function Gallery() {
   const [photos, setPhotos] = useState<GalleryItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -319,11 +352,16 @@ export default function Gallery() {
   const touchStartY = useRef<number>(0);
   const lastTouchX = useRef<number>(0);
   const lastTouchY = useRef<number>(0);
-  const SCROLL_THRESHOLD = 10;
-  const SCROLL_COOLDOWN = 20;
+  const SCROLL_THRESHOLD = 6;
+  const SCROLL_COOLDOWN = 12;
   const SWIPE_THRESHOLD = 20;
   const SWIPE_VELOCITY_THRESHOLD = 0.1;
   const SWIPE_DISTANCE_MULTIPLIER = 0.5;
+  const SCROLL_SMOOTHING = 0.6;
+  const SCROLL_DECAY = 0.95;
+  const [isImageLoading, setIsImageLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
 
   // filteredPhotosのuseMemoをここに移動
   const filteredPhotos = useMemo(() => {
@@ -390,7 +428,8 @@ export default function Gallery() {
     const now = Date.now();
     if (now - lastScrollTime.current < SCROLL_COOLDOWN || photos.length === 0) return;
 
-    scrollAccumulator.current += e.deltaY;
+    const deltaY = e.deltaY * SCROLL_SMOOTHING;
+    scrollAccumulator.current = scrollAccumulator.current * SCROLL_DECAY + deltaY;
     const absDelta = Math.abs(scrollAccumulator.current);
 
     if (absDelta > SCROLL_THRESHOLD) {
@@ -412,7 +451,7 @@ export default function Gallery() {
 
       scrollTimeout.current = setTimeout(() => {
         setIsTransitioning(false);
-      }, 150);
+      }, 350);
     }
   }, [currentIndex, photos.length]);
 
@@ -440,9 +479,9 @@ export default function Gallery() {
       const deltaX = touch.clientX - touchStartX.current;
       const deltaY = touch.clientY - touchStartY.current;
       
-      // 水平方向の移動が垂直方向より大きい場合のみ、水平方向の移動を許可
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        setTranslateX(deltaX);
+        const limitedDeltaX = Math.max(Math.min(deltaX, 80), -80);
+        setTranslateX(limitedDeltaX * 0.4);
       }
       
       lastTouchX.current = touch.clientX;
@@ -458,30 +497,25 @@ export default function Gallery() {
       const deltaTime = touchEndTime - touchStartTime.current;
       const velocityX = Math.abs(deltaX) / deltaTime;
 
-      // 水平方向のスワイプ判定
       if (Math.abs(deltaX) > Math.abs(deltaY) && 
           (Math.abs(deltaX) > SWIPE_THRESHOLD || velocityX > SWIPE_VELOCITY_THRESHOLD)) {
         setIsTransitioning(true);
         
-        // スワイプの強度に基づいて切り替える枚数を計算
         const swipeDistance = Math.abs(deltaX);
         const swipeVelocity = Math.abs(velocityX);
-        const swipeIntensity = (swipeDistance * SWIPE_DISTANCE_MULTIPLIER) + (swipeVelocity * 100);
+        const swipeIntensity = (swipeDistance * SWIPE_DISTANCE_MULTIPLIER) + (swipeVelocity * 60);
         const imageCount = Math.min(
-          Math.max(Math.floor(swipeIntensity / 100), 1), // 最低1枚、最大は計算値
-          photos.length - 1 // 最大でも残りの画像数まで
+          Math.max(Math.floor(swipeIntensity / 140), 1),
+          photos.length - 1
         );
 
         if (deltaX > 0 && currentIndex > 0) {
-          // 右スワイプ：前の画像へ
           setCurrentIndex(prev => Math.max(0, prev - imageCount));
         } else if (deltaX < 0 && currentIndex < photos.length - 1) {
-          // 左スワイプ：次の画像へ
           setCurrentIndex(prev => Math.min(photos.length - 1, prev + imageCount));
         }
       }
 
-      // 状態をリセット
       setIsDragging(false);
       setTranslateX(0);
       touchStartTime.current = 0;
@@ -490,10 +524,9 @@ export default function Gallery() {
       lastTouchX.current = 0;
       lastTouchY.current = 0;
 
-      // トランジション終了後に状態をリセット
       setTimeout(() => {
         setIsTransitioning(false);
-      }, 200);
+      }, 350);
     };
 
     window.addEventListener('wheel', handleWheel, { passive: false });
@@ -558,9 +591,9 @@ export default function Gallery() {
     const deltaX = touch.clientX - touchStartX.current;
     const deltaY = touch.clientY - touchStartY.current;
     
-    // 水平方向の移動が垂直方向より大きい場合のみ、水平方向の移動を許可
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
-      setTranslateX(deltaX);
+      const limitedDeltaX = Math.max(Math.min(deltaX, 80), -80);
+      setTranslateX(limitedDeltaX * 0.4);
     }
     
     lastTouchX.current = touch.clientX;
@@ -577,30 +610,25 @@ export default function Gallery() {
     const deltaTime = touchEndTime - touchStartTime.current;
     const velocityX = Math.abs(deltaX) / deltaTime;
 
-    // 水平方向のスワイプ判定
     if (Math.abs(deltaX) > Math.abs(deltaY) && 
         (Math.abs(deltaX) > SWIPE_THRESHOLD || velocityX > SWIPE_VELOCITY_THRESHOLD)) {
       setIsTransitioning(true);
       
-      // スワイプの強度に基づいて切り替える枚数を計算
       const swipeDistance = Math.abs(deltaX);
       const swipeVelocity = Math.abs(velocityX);
-      const swipeIntensity = (swipeDistance * SWIPE_DISTANCE_MULTIPLIER) + (swipeVelocity * 100);
+      const swipeIntensity = (swipeDistance * SWIPE_DISTANCE_MULTIPLIER) + (swipeVelocity * 60);
       const imageCount = Math.min(
-        Math.max(Math.floor(swipeIntensity / 100), 1), // 最低1枚、最大は計算値
-        photos.length - 1 // 最大でも残りの画像数まで
+        Math.max(Math.floor(swipeIntensity / 140), 1),
+        photos.length - 1
       );
 
       if (deltaX > 0 && currentIndex > 0) {
-        // 右スワイプ：前の画像へ
         setCurrentIndex(prev => Math.max(0, prev - imageCount));
       } else if (deltaX < 0 && currentIndex < photos.length - 1) {
-        // 左スワイプ：次の画像へ
         setCurrentIndex(prev => Math.min(photos.length - 1, prev + imageCount));
       }
     }
 
-    // 状態をリセット
     setIsDragging(false);
     setTranslateX(0);
     touchStartTime.current = 0;
@@ -609,10 +637,9 @@ export default function Gallery() {
     lastTouchX.current = 0;
     lastTouchY.current = 0;
 
-    // トランジション終了後に状態をリセット
     setTimeout(() => {
       setIsTransitioning(false);
-    }, 200);
+    }, 350);
   };
 
   // 画像のプリロード処理を最適化
@@ -620,19 +647,35 @@ export default function Gallery() {
     if (!mounted || filteredPhotos.length === 0) return;
 
     const preloadImages = () => {
-      // 現在の画像の前後の画像をプリロード
+      // 現在の画像の前後の画像をプリロード（前後2枚ずつ）
       const indices = [
+        currentIndex > 1 ? currentIndex - 2 : currentIndex > 0 ? currentIndex - 1 : filteredPhotos.length - 1,
         currentIndex > 0 ? currentIndex - 1 : filteredPhotos.length - 1,
-        currentIndex < filteredPhotos.length - 1 ? currentIndex + 1 : 0
+        currentIndex < filteredPhotos.length - 1 ? currentIndex + 1 : 0,
+        currentIndex < filteredPhotos.length - 2 ? currentIndex + 2 : currentIndex < filteredPhotos.length - 1 ? currentIndex + 1 : 0
       ];
 
-      indices.forEach(index => {
-        const url = getOriginalImageUrl(filteredPhotos[index].imageUrls);
+      // 重複を除去
+      const uniqueIndices = Array.from(new Set(indices));
+
+      uniqueIndices.forEach(index => {
+        const urls = getResponsiveImageUrls(filteredPhotos[index].imageUrls);
+        const url = urls.medium || urls.small || urls.original;
         if (isValidUrl(url) && !imagesLoaded.has(url!)) {
           const img = new window.Image();
           img.src = url!;
           img.onload = () => {
-            setImagesLoaded(prev => new Set([...prev, url!]));
+            setImagesLoaded(prev => {
+              const newSet = new Set(prev);
+              newSet.add(url!);
+              // メモリリークを防ぐため、古い画像のURLを削除
+              if (newSet.size > 10) {
+                const urls = Array.from(newSet);
+                newSet.clear();
+                urls.slice(-10).forEach(url => newSet.add(url));
+              }
+              return newSet;
+            });
           };
         }
       });
@@ -691,6 +734,68 @@ export default function Gallery() {
     }
   }, [galleryReady]);
 
+  const handleRetry = useCallback(() => {
+    if (retryCount < MAX_RETRIES) {
+      setRetryCount(prev => prev + 1);
+      setError(null);
+      setIsLoading(true);
+      const fetchPhotos = async () => {
+        try {
+          const res = await getGallery({ limit: 100, offset: 0 });
+          setPhotos(res.items);
+        } catch {
+          setError('データの読み込みに失敗しました。もう一度お試しください。');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchPhotos();
+    } else {
+      setError('申し訳ありません。しばらく時間をおいてから再度お試しください。');
+    }
+  }, [retryCount]);
+
+  // キーボードナビゲーション用のハンドラー
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (filteredPhotos.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowLeft':
+        if (currentIndex > 0) {
+          setIsTransitioning(true);
+          setCurrentIndex(prev => prev - 1);
+          setTimeout(() => setIsTransitioning(false), 200);
+        }
+        break;
+      case 'ArrowRight':
+        if (currentIndex < filteredPhotos.length - 1) {
+          setIsTransitioning(true);
+          setCurrentIndex(prev => prev + 1);
+          setTimeout(() => setIsTransitioning(false), 200);
+        }
+        break;
+      case 'Home':
+        if (currentIndex !== 0) {
+          setIsTransitioning(true);
+          setCurrentIndex(0);
+          setTimeout(() => setIsTransitioning(false), 200);
+        }
+        break;
+      case 'End':
+        if (currentIndex !== filteredPhotos.length - 1) {
+          setIsTransitioning(true);
+          setCurrentIndex(filteredPhotos.length - 1);
+          setTimeout(() => setIsTransitioning(false), 200);
+        }
+        break;
+    }
+  }, [currentIndex, filteredPhotos.length]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
   if (!mounted) {
     return null;
   }
@@ -710,17 +815,25 @@ export default function Gallery() {
             value={selectedCategory}
             onChange={(value) => setSelectedCategory(value as Category)}
             style={{ minWidth: '140px' }}
+            aria-label="カテゴリーを選択"
           />
         </CategoryContainer>
-        {(isLoading) ? (
+        {isLoading ? (
           <MainImageContainer>
-            <div style={{ color: '#fff', textAlign: 'center' }}>
+            <div style={{ color: '#fff', textAlign: 'center' }} role="status" aria-live="polite">
               読み込み中...
             </div>
           </MainImageContainer>
         ) : error ? (
           <MainImageContainer>
-            <div style={{ color: '#fff', textAlign: 'center' }}>{error}</div>
+            <ErrorMessage role="alert">
+              {error}
+              {retryCount < MAX_RETRIES && (
+                <RetryButton onClick={handleRetry} aria-label="再試行">
+                  再試行
+                </RetryButton>
+              )}
+            </ErrorMessage>
           </MainImageContainer>
         ) : filteredPhotos.length > 0 ? (
           <>
@@ -736,10 +849,13 @@ export default function Gallery() {
                 overscrollBehavior: 'none',
                 WebkitOverflowScrolling: 'touch'
               }}
+              role="region"
+              aria-label="ギャラリー画像"
             >
               <ImageWrapper 
                 $isTransitioning={isTransitioning}
                 $translateX={translateX}
+                $isLoading={isImageLoading}
               >
                 {(() => {
                   const urls = getResponsiveImageUrls(filteredPhotos[currentIndex]?.imageUrls);
@@ -747,17 +863,16 @@ export default function Gallery() {
                   const previewSrc = urls.small || urls.medium || urls.large || urls.original || '';
                   return (
                     <>
-                      {/* プレビュー画像 */}
                       <PreviewImage
                         src={previewSrc}
-                        alt={`${filteredPhotos[currentIndex].title} (プレビュー)`}
+                        alt=""
                         fill
                         sizes="100vw"
                         quality={20}
                         priority={true}
                         loading="eager"
+                        aria-hidden="true"
                       />
-                      {/* メイン画像 */}
                       <StyledImage
                         src={mainSrc}
                         alt={filteredPhotos[currentIndex].title}
@@ -766,20 +881,29 @@ export default function Gallery() {
                         priority={true}
                         loading="eager"
                         data-priority="true"
-                        onLoad={() => { handleImageLoad(mainSrc); }}
+                        onLoadStart={() => setIsImageLoading(true)}
+                        onLoad={() => { 
+                          setIsImageLoading(false);
+                          handleImageLoad(mainSrc); 
+                        }}
                         quality={85}
                         fetchPriority="high"
+                        $isLoading={isImageLoading}
+                        aria-label={`${filteredPhotos[currentIndex].title} (${currentIndex + 1}/${filteredPhotos.length})`}
                       />
                     </>
                   );
                 })()}
-                {/* タイトルを画像の上部中央に重ねて表示 */}
                 <MainImageTitle>
                   {filteredPhotos[currentIndex]?.title}
                 </MainImageTitle>
               </ImageWrapper>
             </MainImageContainer>
-            <ThumbnailContainer ref={thumbnailContainerRef}>
+            <ThumbnailContainer 
+              ref={thumbnailContainerRef}
+              role="navigation"
+              aria-label="サムネイルナビゲーション"
+            >
               {filteredPhotos.map((photo, index) => {
                 const urls = getResponsiveImageUrls(photo.imageUrls);
                 const thumbSrc = urls.small || urls.medium || urls.large || urls.original || '';
@@ -788,11 +912,21 @@ export default function Gallery() {
                     key={photo.id}
                     $isActive={index === currentIndex}
                     onClick={() => handleThumbnailClick(index)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${photo.title}を表示`}
+                    aria-current={index === currentIndex ? 'true' : undefined}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleThumbnailClick(index);
+                      }
+                    }}
                   >
                     {isValidUrl(thumbSrc) && (
                       <Image
                         src={thumbSrc}
-                        alt={photo.title}
+                        alt=""
                         fill
                         sizes="(max-width: 768px) 140px, 140px"
                         priority={index < 2}
@@ -804,6 +938,7 @@ export default function Gallery() {
                         }}
                         quality={index < 2 ? 85 : 60}
                         fetchPriority={index < 2 ? "high" : "auto"}
+                        aria-hidden="true"
                       />
                     )}
                   </ThumbnailWrapper>
@@ -813,9 +948,9 @@ export default function Gallery() {
           </>
         ) : (
           <MainImageContainer>
-            <div style={{ color: '#fff', textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%' }}>
-              No images in this category
-            </div>
+            <ErrorMessage role="status">
+              このカテゴリーには画像がありません。
+            </ErrorMessage>
           </MainImageContainer>
         )}
       </GalleryContainer>
