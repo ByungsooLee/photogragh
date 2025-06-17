@@ -284,7 +284,7 @@ const Strip = styled.div<{ $isVertical?: boolean }>`
   position: relative;
   align-items: center;
   overflow: hidden;
-  animation: ${props => props.$isVertical ? verticalScroll : horizontalScroll} 180s linear infinite;
+  animation: ${props => props.$isVertical ? verticalScroll : horizontalScroll} 120s linear infinite;
   will-change: transform;
   cursor: grab;
   white-space: nowrap;
@@ -315,9 +315,10 @@ const Strip = styled.div<{ $isVertical?: boolean }>`
   }
 `;
 
-const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean }>`
+const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean; position?: string }>`
   flex-shrink: 0;
   width: ${props => {
+    if (props.$isVertical && props.position === 'center') return '90vw';
     if (props.$isVertical) return '140px';
     return props.isPortrait ? '140px' : '200px';
   }};
@@ -529,7 +530,10 @@ const FilmStrip: React.FC<FilmStripProps> = ({
       const seedB = generateSeed(stripId, b.id);
       return seededRandom(seedA) - seededRandom(seedB);
     });
-    setDisplayedPhotos(randomizedPhotos);
+
+    // 画像を2回繰り返して途切れないようにする
+    const duplicatedPhotos = [...randomizedPhotos, ...randomizedPhotos];
+    setDisplayedPhotos(duplicatedPhotos);
   }, [photos, stripId]);
 
   // 優先的に読み込む画像を判定
@@ -608,6 +612,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
               <Frame
                 key={`${stripId}-${index}-${photo.id}-${imageUrlKey}`}
                 $isVertical={isVertical}
+                position={position}
                 className={''}
                 onClick={(e) => handlePhotoClick(photo, e)}
                 onKeyDown={(e) => handleKeyDown(photo, e)}
