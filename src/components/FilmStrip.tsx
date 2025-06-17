@@ -27,6 +27,9 @@ const StripWrapper = styled.div<StripWrapperProps>`
   height: ${props => props.$isVertical ? '100vh' : 'auto'};
   min-height: ${props => props.$isVertical ? '100vh' : '220px'};
   left: ${props => {
+    if (props.$isVertical && props.position === 'center') {
+      return '50%';
+    }
     if (props.$isVertical) {
       switch (props.position) {
         case 'left': return '0%';
@@ -82,6 +85,35 @@ const StripWrapper = styled.div<StripWrapperProps>`
 
   @media (min-width: 768px) {
     display: block;
+  }
+
+  @media (max-width: 600px) {
+    /* モバイルでは縦ストリップはcenterのみ表示 */
+    display: ${props => {
+      if (props.$isVertical && props.position !== 'center') {
+        return 'none';
+      }
+      return 'block';
+    }};
+    left: ${props => {
+      if (props.$isVertical && props.position === 'center') {
+        return '50%';
+      }
+      if (props.$isVertical) {
+        switch (props.position) {
+          case 'left': return '0%';
+          case 'right': return '100%';
+          default: return '50%';
+        }
+      }
+      return '0';
+    }};
+    transform: ${props => {
+      if (props.$isVertical && props.position === 'center') {
+        return 'translateX(-50%) rotate(-2deg)';
+      }
+      return '';
+    }};
   }
 
   &::before,

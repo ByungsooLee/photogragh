@@ -43,8 +43,8 @@ const FilmContainer = styled.div`
     gap: 6vw;
   }
   @media (max-width: 600px) {
-    gap: 4vw;
-    padding: 0 2vw;
+    gap: 2vw;
+    padding: 0 1vw 16vw 1vw;
   }
 `;
 

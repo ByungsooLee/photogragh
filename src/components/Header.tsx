@@ -19,6 +19,11 @@ const HeaderContainer = styled.header`
   justify-content: space-between;
   align-items: center;
   height: 80px;
+
+  @media (max-width: 600px) {
+    height: 48px;
+    padding: 0.5rem 1rem;
+  }
 `;
 
 const Logo = styled.h1`
@@ -34,6 +39,10 @@ const Logo = styled.h1`
   &::after {
     display: none !important;
     content: none !important;
+  }
+
+  @media (max-width: 600px) {
+    font-size: 1.1rem;
   }
 `;
 
