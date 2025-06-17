@@ -264,6 +264,23 @@ function getOriginalImageUrl(imageUrls: string | string[] | undefined): string |
   }
 }
 
+// 画像URLのJSONから最適なサイズを取得する関数を追加
+function getResponsiveImageUrls(imageUrls: string | string[] | undefined): { large?: string, medium?: string, small?: string, original?: string } {
+  if (!imageUrls) return {};
+  if (Array.isArray(imageUrls)) return getResponsiveImageUrls(imageUrls[0]);
+  try {
+    const obj = JSON.parse(imageUrls);
+    return {
+      large: obj['大サイズ'],
+      medium: obj['中サイズ'],
+      small: obj['小サイズ'],
+      original: obj['オリジナル画像'],
+    };
+  } catch {
+    return {};
+  }
+}
+
 // タイトル用のスタイルを追加
 const MainImageTitle = styled.div`
   position: absolute;
@@ -724,35 +741,38 @@ export default function Gallery() {
                 $isTransitioning={isTransitioning}
                 $translateX={translateX}
               >
-                {isValidUrl(getOriginalImageUrl(filteredPhotos[currentIndex]?.imageUrls)) && (
-                  <>
-                    {/* プレビュー画像 */}
-                    <PreviewImage
-                      src={getOriginalImageUrl(filteredPhotos[currentIndex].imageUrls)!}
-                      alt={`${filteredPhotos[currentIndex].title} (プレビュー)`}
-                      fill
-                      sizes="100vw"
-                      quality={20}
-                      priority={true}
-                      loading="eager"
-                    />
-                    {/* メイン画像 */}
-                    <StyledImage
-                      src={getOriginalImageUrl(filteredPhotos[currentIndex].imageUrls)!}
-                      alt={filteredPhotos[currentIndex].title}
-                      fill
-                      sizes="100vw"
-                      priority={true}
-                      loading="eager"
-                      data-priority="true"
-                      onLoad={() => { 
-                        handleImageLoad(getOriginalImageUrl(filteredPhotos[currentIndex].imageUrls)!);
-                      }}
-                      quality={85}
-                      fetchPriority="high"
-                    />
-                  </>
-                )}
+                {(() => {
+                  const urls = getResponsiveImageUrls(filteredPhotos[currentIndex]?.imageUrls);
+                  const mainSrc = urls.large || urls.medium || urls.original || '';
+                  const previewSrc = urls.small || urls.medium || urls.large || urls.original || '';
+                  return (
+                    <>
+                      {/* プレビュー画像 */}
+                      <PreviewImage
+                        src={previewSrc}
+                        alt={`${filteredPhotos[currentIndex].title} (プレビュー)`}
+                        fill
+                        sizes="100vw"
+                        quality={20}
+                        priority={true}
+                        loading="eager"
+                      />
+                      {/* メイン画像 */}
+                      <StyledImage
+                        src={mainSrc}
+                        alt={filteredPhotos[currentIndex].title}
+                        fill
+                        sizes="100vw"
+                        priority={true}
+                        loading="eager"
+                        data-priority="true"
+                        onLoad={() => { handleImageLoad(mainSrc); }}
+                        quality={85}
+                        fetchPriority="high"
+                      />
+                    </>
+                  );
+                })()}
                 {/* タイトルを画像の上部中央に重ねて表示 */}
                 <MainImageTitle>
                   {filteredPhotos[currentIndex]?.title}
@@ -760,31 +780,35 @@ export default function Gallery() {
               </ImageWrapper>
             </MainImageContainer>
             <ThumbnailContainer ref={thumbnailContainerRef}>
-              {filteredPhotos.map((photo, index) => (
-                <ThumbnailWrapper
-                  key={photo.id}
-                  $isActive={index === currentIndex}
-                  onClick={() => handleThumbnailClick(index)}
-                >
-                  {isValidUrl(getOriginalImageUrl(photo.imageUrls)) && (
-                    <Image
-                      src={getOriginalImageUrl(photo.imageUrls)!}
-                      alt={photo.title}
-                      fill
-                      sizes="(max-width: 768px) 140px, 140px"
-                      priority={index < 2}
-                      loading={index < 2 ? 'eager' : 'lazy'}
-                      data-priority={index < 2 ? "true" : "false"}
-                      onLoad={() => { handleImageLoad(getOriginalImageUrl(photo.imageUrls)!); }}
-                      style={{
-                        objectFit: 'cover'
-                      }}
-                      quality={index < 2 ? 85 : 60}
-                      fetchPriority={index < 2 ? "high" : "auto"}
-                    />
-                  )}
-                </ThumbnailWrapper>
-              ))}
+              {filteredPhotos.map((photo, index) => {
+                const urls = getResponsiveImageUrls(photo.imageUrls);
+                const thumbSrc = urls.small || urls.medium || urls.large || urls.original || '';
+                return (
+                  <ThumbnailWrapper
+                    key={photo.id}
+                    $isActive={index === currentIndex}
+                    onClick={() => handleThumbnailClick(index)}
+                  >
+                    {isValidUrl(thumbSrc) && (
+                      <Image
+                        src={thumbSrc}
+                        alt={photo.title}
+                        fill
+                        sizes="(max-width: 768px) 140px, 140px"
+                        priority={index < 2}
+                        loading={index < 2 ? 'eager' : 'lazy'}
+                        data-priority={index < 2 ? "true" : "false"}
+                        onLoad={() => { handleImageLoad(thumbSrc); }}
+                        style={{
+                          objectFit: 'cover'
+                        }}
+                        quality={index < 2 ? 85 : 60}
+                        fetchPriority={index < 2 ? "high" : "auto"}
+                      />
+                    )}
+                  </ThumbnailWrapper>
+                );
+              })}
             </ThumbnailContainer>
           </>
         ) : (
