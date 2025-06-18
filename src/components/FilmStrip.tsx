@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { GalleryItem } from '../lib/microcms';
 import Image from 'next/image';
 import useIsMobileOrTablet from '../../hooks/useIsMobileOrTablet';
+import Link from 'next/link';
 
 interface FilmStripProps {
   stripId: string;
@@ -550,8 +551,10 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   const touchStartPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const touchThreshold = 10;
   const tapThreshold = 300;
+  const isLogoFrame = useRef(false);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = (e: React.TouchEvent, isLogo: boolean) => {
+    isLogoFrame.current = isLogo;
     const touch = e.touches[0];
     touchStartTime.current = Date.now();
     touchStartPosition.current = {
@@ -560,7 +563,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
     };
   };
 
-  const handleTouchEnd = (e: React.TouchEvent, photo: GalleryItem) => {
+  const handleTouchEnd = (e: React.TouchEvent, photo: GalleryItem, link?: string) => {
     const touch = e.changedTouches[0];
     const touchEndTime = Date.now();
     const touchDuration = touchEndTime - touchStartTime.current;
@@ -568,6 +571,16 @@ const FilmStrip: React.FC<FilmStripProps> = ({
     const deltaX = Math.abs(touch.clientX - touchStartPosition.current.x);
     const deltaY = Math.abs(touch.clientY - touchStartPosition.current.y);
     
+    // ロゴフレームの場合
+    if (isLogoFrame.current && link) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.nativeEvent.stopImmediatePropagation();
+      window.location.href = link;
+      return;
+    }
+    
+    // 通常の画像の場合
     if (touchDuration <= tapThreshold && deltaX <= touchThreshold && deltaY <= touchThreshold) {
       e.preventDefault();
       const rect = e.currentTarget.getBoundingClientRect();
@@ -579,6 +592,17 @@ const FilmStrip: React.FC<FilmStripProps> = ({
         }
       });
     }
+  };
+
+  const handleClick = (e: React.MouseEvent, photo: GalleryItem) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    onPhotoClick({
+      ...photo,
+      position: {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2
+      }
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, photo: GalleryItem) => {
@@ -628,11 +652,6 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   const handleLogoClick = (e: React.MouseEvent, link: string) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // クリックイベントの伝播を完全に停止
-    e.nativeEvent.stopImmediatePropagation();
-    
-    // 即座に遷移
     window.location.href = link;
   };
 
@@ -651,28 +670,31 @@ const FilmStrip: React.FC<FilmStripProps> = ({
         >
           {(isMobileOrTablet
             ? (() => {
-                // ロゴ3種をランダムな位置に必ず1回ずつ挿入
-                const total = displayedPhotos.length;
-                const logoCount = logoImages.length;
-                // ロゴを挿入するランダムなindexを生成（重複なし）
-                const logoIndexes: number[] = [];
-                while (logoIndexes.length < logoCount) {
-                  const idx = Math.floor(Math.random() * total);
-                  if (!logoIndexes.includes(idx)) logoIndexes.push(idx);
-                }
+                // ギャラリーロゴをランダムで選択
+                const galleryLogos = [
+                  { src: '/images/logo_gallery_01.jpg', alt: 'ギャラリーへ', link: '/gallery' },
+                  { src: '/images/logo_gallery_02.jpg', alt: 'ギャラリーへ', link: '/gallery' }
+                ];
+                const aboutLogo = { src: '/images/logo_about_01.jpg', alt: 'Aboutへ', link: '/about' };
+                // ギャラリーロゴをランダムで1つ選択
+                const randomGalleryLogo = galleryLogos[Math.floor(Math.random() * galleryLogos.length)];
+                // ロゴリストを作成（ギャラリー・about）
+                const logoImages = [randomGalleryLogo, aboutLogo];
+                // ロゴの出現位置をランダムに決定（0か1）
+                const logoOrder = Math.random() < 0.5 ? [0, 1] : [1, 0];
+                const imageUrlKey = Date.now();
                 return displayedPhotos.map((photo, index) => {
-                  // 通常画像用の変数を先に定義
-                  const imageUrlKey =
-                    Array.isArray(photo.imageUrls) && photo.imageUrls.length > 0
-                      ? photo.imageUrls[0]
-                      : typeof photo.imageUrls === 'string'
-                      ? photo.imageUrls
-                      : '';
+                  const imageUrl = Array.isArray(photo.imageUrls) && photo.imageUrls.length > 0
+                    ? photo.imageUrls[0]
+                    : typeof photo.imageUrls === 'string'
+                    ? photo.imageUrls
+                    : '';
                   const originalUrl = getOriginalImageUrl(photo.imageUrls);
-                  // ロゴ挿入位置ならロゴを表示
-                  const logoIdx = logoIndexes.indexOf(index);
-                  if (logoIdx !== -1) {
-                    const logo = logoImages[logoIdx];
+                  if (!isValidUrl(originalUrl)) return null;
+
+                  // ロゴを2枚、ランダムな位置に挿入
+                  if (index === logoOrder[0]) {
+                    const logo = logoImages[0];
                     return (
                       <Frame
                         key={`logo-${stripId}-${index}`}
@@ -680,6 +702,8 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                         position={position}
                         className={'logo-frame'}
                         onClick={(e) => handleLogoClick(e, logo.link)}
+                        onTouchStart={(e) => handleTouchStart(e, true)}
+                        onTouchEnd={(e) => handleTouchEnd(e, photo, logo.link)}
                         role="link"
                         tabIndex={0}
                         aria-label={logo.alt}
@@ -701,15 +725,47 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                       </Frame>
                     );
                   }
-                  // 通常の写真表示
-                  if (!isValidUrl(originalUrl)) return null;
+                  if (index === logoOrder[1]) {
+                    const logo = logoImages[1];
+                    return (
+                      <Frame
+                        key={`logo-${stripId}-${index}`}
+                        $isVertical={isVertical}
+                        position={position}
+                        className={'logo-frame'}
+                        onClick={(e) => handleLogoClick(e, logo.link)}
+                        onTouchStart={(e) => handleTouchStart(e, true)}
+                        onTouchEnd={(e) => handleTouchEnd(e, photo, logo.link)}
+                        role="link"
+                        tabIndex={0}
+                        aria-label={logo.alt}
+                        style={{ pointerEvents: 'auto' }}
+                      >
+                        <Perforations side="left" />
+                        <Perforations side="right" />
+                        <Content style={{ pointerEvents: 'none' }}>
+                          <Image
+                            src={logo.src}
+                            alt={logo.alt}
+                            fill
+                            sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 300px"
+                            quality={85}
+                            priority={true}
+                            style={{ objectFit: 'cover', pointerEvents: 'none' }}
+                          />
+                        </Content>
+                      </Frame>
+                    );
+                  }
+                  // 通常の写真
                   return (
                     <Frame
                       key={`${stripId}-${index}-${photo.id}-${imageUrlKey}`}
                       $isVertical={isVertical}
                       position={position}
                       className={''}
-                      onTouchStart={handleTouchStart}
+                      onClick={(e) => handleClick(e, photo)}
+                      onTouchStart={(e) => handleTouchStart(e, false)}
                       onTouchEnd={(e) => handleTouchEnd(e, photo)}
                       onKeyDown={(e) => handleKeyDown(e, photo)}
                       role="button"
@@ -724,55 +780,135 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                           alt={photo.title || "ギャラリー画像"}
                           fill
                           sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 300px"
-                          quality={70}
-                          priority={isPriorityImage(index)}
-                          loading={isPriorityImage(index) ? "eager" : "lazy"}
-                          style={{ objectFit: 'cover', borderRadius: '5px' }}
+                          quality={85}
+                          priority={true}
+                          style={{ objectFit: 'cover' }}
                         />
                       </Content>
                     </Frame>
                   );
                 });
               })()
-            : displayedPhotos.map((photo, index) => {
-                const imageUrlKey =
-                  Array.isArray(photo.imageUrls) && photo.imageUrls.length > 0
+            : (() => {
+                // ギャラリーロゴをランダムで選択
+                const galleryLogos = [
+                  { src: '/images/logo_gallery_01.jpg', alt: 'ギャラリーへ', link: '/gallery' },
+                  { src: '/images/logo_gallery_02.jpg', alt: 'ギャラリーへ', link: '/gallery' }
+                ];
+                const aboutLogo = { src: '/images/logo_about_01.jpg', alt: 'Aboutへ', link: '/about' };
+                // ギャラリーロゴをランダムで1つ選択
+                const randomGalleryLogo = galleryLogos[Math.floor(Math.random() * galleryLogos.length)];
+                // ロゴリストを作成（ギャラリー・about）
+                const logoImages = [randomGalleryLogo, aboutLogo];
+                // ロゴの出現位置をランダムに決定（0か1）
+                const logoOrder = Math.random() < 0.5 ? [0, 1] : [1, 0];
+                const imageUrlKey = Date.now();
+                return displayedPhotos.map((photo, index) => {
+                  const imageUrl = Array.isArray(photo.imageUrls) && photo.imageUrls.length > 0
                     ? photo.imageUrls[0]
                     : typeof photo.imageUrls === 'string'
                     ? photo.imageUrls
                     : '';
-                const originalUrl = getOriginalImageUrl(photo.imageUrls);
-                if (!isValidUrl(originalUrl)) return null;
-                return (
-                  <Frame
-                    key={`${stripId}-${index}-${photo.id}-${imageUrlKey}`}
-                    $isVertical={isVertical}
-                    position={position}
-                    className={''}
-                    onTouchStart={handleTouchStart}
-                    onTouchEnd={(e) => handleTouchEnd(e, photo)}
-                    onKeyDown={(e) => handleKeyDown(e, photo)}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`${photo.title}を表示`}
-                  >
-                    <Perforations side="left" />
-                    <Perforations side="right" />
-                    <Content>
-                      <Image
-                        src={originalUrl || ''}
-                        alt={photo.title || "ギャラリー画像"}
-                        fill
-                        sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 300px"
-                        quality={70}
-                        priority={isPriorityImage(index)}
-                        loading={isPriorityImage(index) ? "eager" : "lazy"}
-                        style={{ objectFit: 'cover', borderRadius: '5px' }}
-                      />
-                    </Content>
-                  </Frame>
-                );
-              })
+                  const originalUrl = getOriginalImageUrl(photo.imageUrls);
+                  if (!isValidUrl(originalUrl)) return null;
+
+                  // ロゴを2枚、ランダムな位置に挿入
+                  if (index === logoOrder[0]) {
+                    const logo = logoImages[0];
+                    return (
+                      <Frame
+                        key={`logo-${stripId}-${index}`}
+                        $isVertical={isVertical}
+                        position={position}
+                        className={'logo-frame'}
+                        onClick={(e) => handleLogoClick(e, logo.link)}
+                        onTouchStart={(e) => handleTouchStart(e, true)}
+                        onTouchEnd={(e) => handleTouchEnd(e, photo, logo.link)}
+                        role="link"
+                        tabIndex={0}
+                        aria-label={logo.alt}
+                        style={{ pointerEvents: 'auto' }}
+                      >
+                        <Perforations side="left" />
+                        <Perforations side="right" />
+                        <Content style={{ pointerEvents: 'none' }}>
+                          <Image
+                            src={logo.src}
+                            alt={logo.alt}
+                            fill
+                            sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 300px"
+                            quality={85}
+                            priority={true}
+                            style={{ objectFit: 'cover', pointerEvents: 'none' }}
+                          />
+                        </Content>
+                      </Frame>
+                    );
+                  }
+                  if (index === logoOrder[1]) {
+                    const logo = logoImages[1];
+                    return (
+                      <Frame
+                        key={`logo-${stripId}-${index}`}
+                        $isVertical={isVertical}
+                        position={position}
+                        className={'logo-frame'}
+                        onClick={(e) => handleLogoClick(e, logo.link)}
+                        onTouchStart={(e) => handleTouchStart(e, true)}
+                        onTouchEnd={(e) => handleTouchEnd(e, photo, logo.link)}
+                        role="link"
+                        tabIndex={0}
+                        aria-label={logo.alt}
+                        style={{ pointerEvents: 'auto' }}
+                      >
+                        <Perforations side="left" />
+                        <Perforations side="right" />
+                        <Content style={{ pointerEvents: 'none' }}>
+                          <Image
+                            src={logo.src}
+                            alt={logo.alt}
+                            fill
+                            sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 300px"
+                            quality={85}
+                            priority={true}
+                            style={{ objectFit: 'cover', pointerEvents: 'none' }}
+                          />
+                        </Content>
+                      </Frame>
+                    );
+                  }
+                  // 通常の写真
+                  return (
+                    <Frame
+                      key={`${stripId}-${index}-${photo.id}-${imageUrlKey}`}
+                      $isVertical={isVertical}
+                      position={position}
+                      className={''}
+                      onClick={(e) => handleClick(e, photo)}
+                      onTouchStart={(e) => handleTouchStart(e, false)}
+                      onTouchEnd={(e) => handleTouchEnd(e, photo)}
+                      onKeyDown={(e) => handleKeyDown(e, photo)}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`${photo.title}を表示`}
+                    >
+                      <Perforations side="left" />
+                      <Perforations side="right" />
+                      <Content>
+                        <Image
+                          src={originalUrl || ''}
+                          alt={photo.title || "ギャラリー画像"}
+                          fill
+                          sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 300px"
+                          quality={85}
+                          priority={true}
+                          style={{ objectFit: 'cover' }}
+                        />
+                      </Content>
+                    </Frame>
+                  );
+                });
+              })()
           )}
         </Strip>
       </StripWrapper>
