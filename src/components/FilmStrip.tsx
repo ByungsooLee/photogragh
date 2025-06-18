@@ -493,18 +493,15 @@ const generateSeed = (stripId: string, photoId: string, isMobileOrTablet: boolea
   return hash;
 };
 
-// imageUrlsが{"オリジナル画像":...}のJSON文字列や配列の場合に対応
-function getOriginalImageUrl(imageUrls: string | string[] | undefined): string | undefined {
-  if (!imageUrls) return undefined;
-  if (Array.isArray(imageUrls)) return getOriginalImageUrl(imageUrls[0]);
+// 各サイズの画像URLを取得する関数
+function getImageUrls(imageUrls: string | string[] | undefined) {
+  if (!imageUrls) return {};
+  if (Array.isArray(imageUrls)) return getImageUrls(imageUrls[0]);
   try {
     const obj = JSON.parse(imageUrls);
-    if (typeof obj === 'object' && obj['オリジナル画像']) {
-      return obj['オリジナル画像'];
-    }
-    return undefined;
+    return obj;
   } catch {
-    return undefined;
+    return {};
   }
 }
 
@@ -656,7 +653,12 @@ const FilmStrip: React.FC<FilmStripProps> = ({
             const aboutLogo = { src: '/images/logo_about_01.jpg', alt: 'Aboutへ', link: '/about' };
             const randomGalleryLogo = galleryLogos[Math.floor(Math.random() * galleryLogos.length)];
             const logoImages = [randomGalleryLogo, aboutLogo];
-            const originalUrl = getOriginalImageUrl(photo.imageUrls);
+            const urls = getImageUrls(photo.imageUrls);
+            const originalUrl = urls['オリジナル画像'] || '';
+            const thumbUrl = urls['サムネイル'] || '';
+            const smallUrl = urls['小サイズ'] || '';
+            const mediumUrl = urls['中サイズ'] || '';
+            const largeUrl = urls['大サイズ'] || '';
             if (!isValidUrl(originalUrl)) return null;
 
             // ロゴの表示位置の場合のみロゴを表示
@@ -683,9 +685,11 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                       src={logo.src}
                       alt={logo.alt}
                       fill
-                      sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 300px"
+                      sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 900px"
                       quality={85}
-                      priority={true}
+                      priority={index === 0}
+                      placeholder="blur"
+                      blurDataURL={thumbUrl}
                       style={{ objectFit: 'cover', pointerEvents: 'none' }}
                     />
                   </Content>
@@ -704,15 +708,31 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                 <Perforations side="left" />
                 <Perforations side="right" />
                 <Content>
-                  <Image
-                    src={originalUrl || ''}
-                    alt={photo.title}
-                    fill
-                    sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 300px"
-                    quality={85}
-                    priority={true}
-                    style={{ objectFit: 'cover' }}
-                  />
+                  {(
+                    <Image
+                      src={mediumUrl || originalUrl}
+                      alt={photo.title}
+                      fill
+                      unoptimized
+                      sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 900px"
+                      quality={85}
+                      priority={index === 0}
+                      placeholder="blur"
+                      blurDataURL={thumbUrl}
+                      style={{ objectFit: 'cover' }}
+                      // @ts-ignore
+                      imgProps={{
+                        srcSet: `
+                          ${thumbUrl} 400w,
+                          ${smallUrl} 600w,
+                          ${mediumUrl} 900w,
+                          ${largeUrl} 1400w,
+                          ${originalUrl} 1920w
+                        `,
+                        sizes: "(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 900px"
+                      }}
+                    />
+                  ) as any}
                 </Content>
               </Frame>
             );
