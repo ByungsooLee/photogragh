@@ -203,12 +203,10 @@ export default function HomeClient() {
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setTimeout(() => {
-            setModalImage('');
-            setModalTitle('');
-            setModalCaption('');
-            setModalSourcePosition(undefined);
-          }, 300);
+          setModalImage('');
+          setModalTitle('');
+          setModalCaption('');
+          setModalSourcePosition(undefined);
         }}
         imageUrl={modalImage}
         title={modalTitle}
