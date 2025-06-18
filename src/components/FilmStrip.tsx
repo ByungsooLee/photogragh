@@ -628,6 +628,11 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   const handleLogoClick = (e: React.MouseEvent, link: string) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // クリックイベントの伝播を完全に停止
+    e.nativeEvent.stopImmediatePropagation();
+    
+    // 即座に遷移
     window.location.href = link;
   };
 
@@ -673,15 +678,16 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                         key={`logo-${stripId}-${index}`}
                         $isVertical={isVertical}
                         position={position}
-                        className={''}
+                        className={'logo-frame'}
                         onClick={(e) => handleLogoClick(e, logo.link)}
                         role="link"
                         tabIndex={0}
                         aria-label={logo.alt}
+                        style={{ pointerEvents: 'auto' }}
                       >
                         <Perforations side="left" />
                         <Perforations side="right" />
-                        <Content>
+                        <Content style={{ pointerEvents: 'none' }}>
                           <Image
                             src={logo.src}
                             alt={logo.alt}
@@ -689,7 +695,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                             sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 300px"
                             quality={85}
                             priority={true}
-                            style={{ objectFit: 'cover' }}
+                            style={{ objectFit: 'cover', pointerEvents: 'none' }}
                           />
                         </Content>
                       </Frame>

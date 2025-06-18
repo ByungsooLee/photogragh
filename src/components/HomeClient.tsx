@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import Header from './Header';
 import Modal from './Modal';
@@ -88,6 +88,7 @@ export default function HomeClient() {
   const [modalCaption, setModalCaption] = useState('');
   const [modalSourcePosition, setModalSourcePosition] = useState<{ x: number; y: number } | undefined>();
   const [modalKey, setModalKey] = useState('');
+  const isNavigating = useRef(false);
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -121,18 +122,27 @@ export default function HomeClient() {
     setMounted(true);
   }, []);
 
+  // ナビゲーション中はモーダルを開かないようにする
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      isNavigating.current = true;
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
   // マウント前はローディング画面のみ表示
   if (!mounted) {
     return <LoadingScreen />;
   }
 
   const handlePhotoClick = (photo: GalleryItem & { position?: { x: number; y: number } }) => {
-    if (!photo || !photo.imageUrls) return;
+    if (!photo || !photo.imageUrls || isNavigating.current) return;
     
     const url = getOriginalImageUrl(photo.imageUrls);
     if (!url) return;
     
-    // モーダルを表示する前に少し遅延を入れる
     setTimeout(() => {
       setModalImage(url);
       setModalTitle(photo.title || '');
