@@ -90,6 +90,23 @@ export default function HomeClient() {
   const [modalKey, setModalKey] = useState('');
   const isNavigating = useRef(false);
 
+  const stripIds = [
+    { id: 'h1', isVertical: false, position: undefined, className: undefined },
+    { id: 'h2', isVertical: false, position: undefined, className: undefined },
+    { id: 'h3', isVertical: false, position: undefined, className: undefined },
+    { id: 'v1', isVertical: true, position: 'left' as const, className: 'hidden md:block' },
+    { id: 'v2', isVertical: true, position: 'center' as const, className: undefined },
+    { id: 'v3', isVertical: true, position: 'right' as const, className: 'hidden md:block' },
+  ];
+
+  // 各列ごとにロゴを入れるかランダムで決定
+  const logoFlags = stripIds.map(() => Math.random() < 0.5);
+  // どの列にもロゴが入らなければ、どれか1列に必ずロゴを入れる
+  if (!logoFlags.includes(true)) {
+    const randomIndex = Math.floor(Math.random() * logoFlags.length);
+    logoFlags[randomIndex] = true;
+  }
+
   useEffect(() => {
     const fetchPhotos = async () => {
       setIsLoading(true);
@@ -165,15 +182,18 @@ export default function HomeClient() {
             <div style={{ color: '#d4af37', textAlign: 'center', margin: '2rem auto' }}>Loading...</div>
           ) : (
             <>
-              {/* 横3列 */}
-              <FilmStrip stripId="h1" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
-              <FilmStrip stripId="h2" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
-              <FilmStrip stripId="h3" isVertical={false} onPhotoClick={handlePhotoClick} photos={photos} />
-              
-              {/* 縦3列 */}
-              <FilmStrip stripId="v1" isVertical position="left" onPhotoClick={handlePhotoClick} photos={photos} className="hidden md:block" />
-              <FilmStrip stripId="v2" isVertical position="center" onPhotoClick={handlePhotoClick} photos={photos} />
-              <FilmStrip stripId="v3" isVertical position="right" onPhotoClick={handlePhotoClick} photos={photos} className="hidden md:block" />
+              {stripIds.map((strip, idx) => (
+                <FilmStrip
+                  key={strip.id}
+                  stripId={strip.id}
+                  isVertical={strip.isVertical}
+                  position={strip.position}
+                  onPhotoClick={handlePhotoClick}
+                  photos={photos}
+                  className={strip.className}
+                  showLogo={logoFlags[idx]}
+                />
+              ))}
             </>
           )}
         </FilmContainer>
@@ -183,7 +203,6 @@ export default function HomeClient() {
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          // モーダルを閉じた後、少し遅延を入れてから状態をリセット
           setTimeout(() => {
             setModalImage('');
             setModalTitle('');

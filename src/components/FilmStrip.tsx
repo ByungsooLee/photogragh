@@ -13,6 +13,7 @@ interface FilmStripProps {
   onPhotoClick: (photo: GalleryItem & { position: { x: number; y: number } }) => void;
   photos: GalleryItem[];
   className?: string;
+  showLogo?: boolean;
 }
 
 interface StripWrapperProps {
@@ -524,7 +525,8 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   position,
   onPhotoClick,
   photos,
-  className
+  className,
+  showLogo
 }) => {
   const [spotlightPosition, setSpotlightPosition] = useState({ x: 0, y: 0 });
   const [displayedPhotos, setDisplayedPhotos] = useState<GalleryItem[]>([]);
@@ -608,16 +610,14 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   };
 
   useEffect(() => {
-    // 列ごとに独立したランダム化
-    const randomizedPhotos = [...photos].sort((a, b) => {
-      const seedA = generateSeed(stripId, a.id, isMobileOrTablet);
-      const seedB = generateSeed(stripId, b.id, isMobileOrTablet);
-      return seededRandom(seedA) - seededRandom(seedB);
-    });
-
+    // 完全ランダムなシャッフル
+    const shuffledPhotos = [...photos].sort(() => Math.random() - 0.5);
     // 画像を2回繰り返して途切れないようにする
-    const duplicatedPhotos = [...randomizedPhotos, ...randomizedPhotos];
-    setDisplayedPhotos(duplicatedPhotos);
+    const duplicatedPhotos = [...shuffledPhotos, ...shuffledPhotos];
+    // ランダムな開始位置を決定
+    const startIndex = Math.floor(Math.random() * shuffledPhotos.length);
+    const rotatedPhotos = duplicatedPhotos.slice(startIndex).concat(duplicatedPhotos.slice(0, startIndex));
+    setDisplayedPhotos(rotatedPhotos);
   }, [photos, stripId, isMobileOrTablet]);
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -660,7 +660,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
             if (!isValidUrl(originalUrl)) return null;
 
             // ロゴの表示位置の場合のみロゴを表示
-            if (index === logoPosition) {
+            if (index === logoPosition && showLogo) {
               const logo = logoImages[0];
               return (
                 <Frame
