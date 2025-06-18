@@ -708,31 +708,20 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                 <Perforations side="left" />
                 <Perforations side="right" />
                 <Content>
-                  {(
-                    <Image
-                      src={mediumUrl || originalUrl}
-                      alt={photo.title}
-                      fill
-                      unoptimized
-                      sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 900px"
-                      quality={85}
-                      priority={index === 0}
-                      placeholder="blur"
-                      blurDataURL={thumbUrl}
-                      style={{ objectFit: 'cover' }}
-                      // @ts-ignore
-                      imgProps={{
-                        srcSet: `
-                          ${thumbUrl} 400w,
-                          ${smallUrl} 600w,
-                          ${mediumUrl} 900w,
-                          ${largeUrl} 1400w,
-                          ${originalUrl} 1920w
-                        `,
-                        sizes: "(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 900px"
-                      }}
-                    />
-                  ) as any}
+                  <img
+                    src={mediumUrl || originalUrl}
+                    alt={photo.title}
+                    style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                    srcSet={`
+                      ${thumbUrl} 400w,
+                      ${smallUrl} 600w,
+                      ${mediumUrl} 900w,
+                      ${largeUrl} 1400w,
+                      ${originalUrl} 1920w
+                    `}
+                    sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 900px"
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                  />
                 </Content>
               </Frame>
             );
