@@ -210,29 +210,21 @@ const HomeLoadingScreen: React.FC<HomeLoadingScreenProps> = ({ onLoadingComplete
     }
     tryUpdateProgress();
 
+    const currentListeners = imageLoadListenersRef.current;
+    
+    // イベントリスナーの設定
+    currentListeners.forEach((listener) => {
+      window.addEventListener('load', listener);
+    });
+
     return () => {
       console.log('[HomeLoadingScreen] Component unmounting');
       mountedRef.current = false;
       
-      // クリーンアップ時にrefの値をローカル変数にコピー
-      const currentListeners = new Map(imageLoadListenersRef.current);
-      const currentObserver = observerRef.current;
-      const currentTimeout = progressTimeoutRef.current;
-      
-      currentListeners.forEach((listener, src) => {
-        const img = document.querySelector(`img[src='${src}']`);
-        if (img) {
-          img.removeEventListener('load', listener);
-        }
+      // クリーンアップ時に保存したリスナーを使用
+      currentListeners.forEach((listener) => {
+        window.removeEventListener('load', listener);
       });
-      imageLoadListenersRef.current.clear();
-      
-      if (currentObserver) {
-        currentObserver.disconnect();
-      }
-      if (currentTimeout) {
-        cancelAnimationFrame(currentTimeout);
-      }
     };
   }, [addImageLoadListener, updateProgress, loadProgress]);
 

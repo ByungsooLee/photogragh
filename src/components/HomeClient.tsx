@@ -127,10 +127,14 @@ export default function HomeClient() {
   }
 
   const handlePhotoClick = (photo: GalleryItem & { position?: { x: number; y: number } }) => {
+    if (!photo || !photo.imageUrls) return;
+    
     const url = getOriginalImageUrl(photo.imageUrls);
-    setModalImage(url || '');
-    setModalTitle(photo.title);
-    setModalCaption(photo.description);
+    if (!url) return;
+    
+    setModalImage(url);
+    setModalTitle(photo.title || '');
+    setModalCaption(photo.description || '');
     setModalSourcePosition(photo.position);
     setModalKey((url || '') + '_' + Date.now());
     setIsModalOpen(true);
@@ -164,7 +168,13 @@ export default function HomeClient() {
       <Modal
         key={modalKey}
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setModalImage('');
+          setModalTitle('');
+          setModalCaption('');
+          setModalSourcePosition(undefined);
+        }}
         imageUrl={modalImage}
         title={modalTitle}
         caption={modalCaption}

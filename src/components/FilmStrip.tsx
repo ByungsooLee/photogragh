@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import type { GalleryItem } from '../lib/microcms';
 import Image from 'next/image';
 import useIsMobileOrTablet from '../../hooks/useIsMobileOrTablet';
-import Link from 'next/link';
 
 interface FilmStripProps {
   stripId: string;
@@ -578,15 +577,23 @@ const FilmStrip: React.FC<FilmStripProps> = ({
     });
   };
 
-  const handlePhotoClick = (photo: GalleryItem, event: React.MouseEvent) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    onPhotoClick({
-      ...photo,
-      position: {
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2
-      }
-    });
+  const handlePhotoClick = (photo: GalleryItem, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const position = {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2
+    };
+    
+    onPhotoClick({ ...photo, position });
+  };
+
+  const handleLogoClick = (e: React.MouseEvent, link: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.location.href = link;
   };
 
   const handleKeyDown = (photo: GalleryItem, event: React.KeyboardEvent) => {
@@ -649,18 +656,23 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                         $isVertical={isVertical}
                         position={position}
                         className={''}
+                        onClick={(e) => handleLogoClick(e, logo.link)}
+                        role="link"
+                        tabIndex={0}
+                        aria-label={logo.alt}
                       >
                         <Perforations side="left" />
                         <Perforations side="right" />
                         <Content>
-                          <Link href={logo.link}>
-                            <img
-                              src={logo.src}
-                              alt={logo.alt}
-                              className="object-cover w-full h-full"
-                              style={{ maxHeight: '100%', maxWidth: '100%' }}
-                            />
-                          </Link>
+                          <Image
+                            src={logo.src}
+                            alt={logo.alt}
+                            fill
+                            sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 300px"
+                            quality={85}
+                            priority={true}
+                            style={{ objectFit: 'cover' }}
+                          />
                         </Content>
                       </Frame>
                     );

@@ -529,7 +529,7 @@ export default function Gallery() {
       );
     }
     return result;
-  }, [photos, selectedCategory, selectedMonth, monthIndex, shootingMonths]);
+  }, [photos, selectedCategory, selectedMonth]);
 
   // LCP画像のURLを取得
   const lcpImageUrl = useMemo(() => {
