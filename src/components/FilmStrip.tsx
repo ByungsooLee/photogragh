@@ -548,8 +548,8 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   const isMobileOrTablet = useIsMobileOrTablet();
   const touchStartTime = useRef<number>(0);
   const touchStartPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const touchThreshold = 10; // タップと判定する移動量の閾値（ピクセル）
-  const tapThreshold = 300; // タップと判定する時間の閾値（ミリ秒）
+  const touchThreshold = 10;
+  const tapThreshold = 300;
 
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
@@ -565,14 +565,24 @@ const FilmStrip: React.FC<FilmStripProps> = ({
     const touchEndTime = Date.now();
     const touchDuration = touchEndTime - touchStartTime.current;
     
-    // タッチ開始位置からの移動量を計算
     const deltaX = Math.abs(touch.clientX - touchStartPosition.current.x);
     const deltaY = Math.abs(touch.clientY - touchStartPosition.current.y);
     
-    // タップと判定する条件：
-    // 1. タッチ時間が閾値以下
-    // 2. 移動量が閾値以下
     if (touchDuration <= tapThreshold && deltaX <= touchThreshold && deltaY <= touchThreshold) {
+      e.preventDefault();
+      const rect = e.currentTarget.getBoundingClientRect();
+      onPhotoClick({
+        ...photo,
+        position: {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2
+        }
+      });
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, photo: GalleryItem) => {
+    if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       const rect = e.currentTarget.getBoundingClientRect();
       onPhotoClick({
@@ -615,45 +625,15 @@ const FilmStrip: React.FC<FilmStripProps> = ({
     });
   };
 
-  const handlePhotoClick = (photo: GalleryItem, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    const position = {
-      x: rect.left + rect.width / 2,
-      y: rect.top + rect.height / 2
-    };
-    
-    onPhotoClick({ ...photo, position });
-  };
-
   const handleLogoClick = (e: React.MouseEvent, link: string) => {
     e.preventDefault();
     e.stopPropagation();
     window.location.href = link;
   };
 
-  const handleKeyDown = (photo: GalleryItem, event: React.KeyboardEvent) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      const rect = event.currentTarget.getBoundingClientRect();
-      onPhotoClick({
-        ...photo,
-        position: {
-          x: rect.left + rect.width / 2,
-          y: rect.top + rect.height / 2
-        }
-      });
-    }
-  };
-
   return (
     <>
-      <Spotlight 
-        x={spotlightPosition.x} 
-        y={spotlightPosition.y} 
-      />
+      <Spotlight x={spotlightPosition.x} y={spotlightPosition.y} />
       <StripWrapper 
         $isVertical={isVertical} 
         position={position} 
@@ -725,6 +705,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                       className={''}
                       onTouchStart={handleTouchStart}
                       onTouchEnd={(e) => handleTouchEnd(e, photo)}
+                      onKeyDown={(e) => handleKeyDown(e, photo)}
                       role="button"
                       tabIndex={0}
                       aria-label={`${photo.title}を表示`}
@@ -764,6 +745,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                     className={''}
                     onTouchStart={handleTouchStart}
                     onTouchEnd={(e) => handleTouchEnd(e, photo)}
+                    onKeyDown={(e) => handleKeyDown(e, photo)}
                     role="button"
                     tabIndex={0}
                     aria-label={`${photo.title}を表示`}
