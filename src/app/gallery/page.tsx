@@ -10,9 +10,6 @@ import { CustomSelect } from '@/components/CustomSelect';
 import GalleryLoadingScreen from '@/components/GalleryLoadingScreen';
 import Head from 'next/head';
 
-// カテゴリーの型定義
-type Category = 'all' | 'portrait' | 'bath' | 'person';
-
 // スタイル定義
 const GalleryContainer = styled.div`
   width: 100%;
@@ -150,37 +147,129 @@ const ThumbnailWrapper = styled.div<{ $isActive: boolean }>`
   }
 `;
 
-const Title = styled.h1`
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  font-family: 'Playfair Display', serif;
-  font-size: 1.8rem;
-  margin: 0;
-  z-index: 10;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  opacity: 0.9;
-  transition: opacity 0.3s ease;
-
-  &:hover {
-    opacity: 1;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 1.4rem;
-  }
-`;
-
 const CategoryContainer = styled.div`
   position: fixed;
-  top: 100px;
-  left: 20px;
-  z-index: 10;
-  transform: scale(0.85);
-  transform-origin: top left;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  z-index: 20;
+  transform: none;
+  padding: 0 8px;
+  box-sizing: border-box;
+  @media (max-width: 599px) {
+    top: 68px;
+    padding: 0 6px;
+  }
+  @media (min-width: 600px) {
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding-left: 24px;
+  }
+  @media (min-width: 1025px) {
+    top: 100px;
+    left: 20px;
+    width: auto;
+    display: block;
+    justify-content: flex-start;
+    transform: scale(0.85);
+    transform-origin: top left;
+    z-index: 10;
+    padding: 0;
+  }
 `;
 
-const CATEGORIES: Category[] = ['all', 'portrait', 'bath', 'person'];
+// タイトル用のスタイルを追加
+const MainImageTitle = styled.div`
+  position: absolute;
+  top: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  text-align: center;
+  font-size: 1.6rem;
+  font-family: 'Bebas Neue', 'Noto Serif JP', serif;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.25);
+  padding: 8px 32px;
+  border-radius: 24px;
+  z-index: 10;
+`;
+
+const ErrorMessage = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  text-align: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
+  max-width: 80%;
+  z-index: 100;
+`;
+
+const RetryButton = styled.button`
+  margin-top: 16px;
+  padding: 8px 16px;
+  background: #fff;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f0f0f0;
+    transform: translateY(-1px);
+  }
+`;
+
+// 画像URLバリデーション関数
+function isValidUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// imageUrlsが{"オリジナル画像":...}のJSON文字列や配列の場合に対応
+function getOriginalImageUrl(imageUrls: string | string[] | undefined): string | undefined {
+  if (!imageUrls) return undefined;
+  if (Array.isArray(imageUrls)) return getOriginalImageUrl(imageUrls[0]);
+  try {
+    const obj = JSON.parse(imageUrls);
+    if (typeof obj === 'object' && obj['オリジナル画像']) {
+      return obj['オリジナル画像'];
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+// 画像URLのJSONから最適なサイズを取得する関数を追加
+function getResponsiveImageUrls(imageUrls: string | string[] | undefined): { large?: string, medium?: string, small?: string, original?: string } {
+  if (!imageUrls) return {};
+  if (Array.isArray(imageUrls)) return getResponsiveImageUrls(imageUrls[0]);
+  try {
+    const obj = JSON.parse(imageUrls);
+    return {
+      large: obj['大サイズ'],
+      medium: obj['中サイズ'],
+      small: obj['小サイズ'],
+      original: obj['オリジナル画像'],
+    };
+  } catch {
+    return {};
+  }
+}
 
 // --- ギャラリー専用ローディング進捗管理 ---
 const useGalleryLoading = (photoUrls: string[], onAllLoaded: () => void) => {
@@ -241,95 +330,100 @@ const useGalleryLoading = (photoUrls: string[], onAllLoaded: () => void) => {
   return { progress, handleImageLoad };
 };
 
-// 画像URLバリデーション関数
-function isValidUrl(url: string | undefined): boolean {
-  if (!url) return false;
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
+// カテゴリー・月選択UIのラッパー
+const CategoryMonthWrapper = styled.div`
+  width: 100%;
+  max-width: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 4px;
+  @media (min-width: 600px) and (max-width: 1024px) {
+    align-items: stretch;
+    width: 140px;
+    max-width: 140px;
+    margin-left: 0;
+    margin-bottom: 0;
+    gap: 4px;
+    flex-direction: column;
   }
-}
-
-// imageUrlsが{"オリジナル画像":...}のJSON文字列や配列の場合に対応
-function getOriginalImageUrl(imageUrls: string | string[] | undefined): string | undefined {
-  if (!imageUrls) return undefined;
-  if (Array.isArray(imageUrls)) return getOriginalImageUrl(imageUrls[0]);
-  try {
-    const obj = JSON.parse(imageUrls);
-    if (typeof obj === 'object' && obj['オリジナル画像']) {
-      return obj['オリジナル画像'];
-    }
-    return undefined;
-  } catch {
-    return undefined;
+  @media (max-width: 599px) {
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    max-width: none;
+    gap: 4px;
+    margin-bottom: 0;
   }
-}
-
-// 画像URLのJSONから最適なサイズを取得する関数を追加
-function getResponsiveImageUrls(imageUrls: string | string[] | undefined): { large?: string, medium?: string, small?: string, original?: string } {
-  if (!imageUrls) return {};
-  if (Array.isArray(imageUrls)) return getResponsiveImageUrls(imageUrls[0]);
-  try {
-    const obj = JSON.parse(imageUrls);
-    return {
-      large: obj['大サイズ'],
-      medium: obj['中サイズ'],
-      small: obj['小サイズ'],
-      original: obj['オリジナル画像'],
-    };
-  } catch {
-    return {};
-  }
-}
-
-// タイトル用のスタイルを追加
-const MainImageTitle = styled.div`
-  position: absolute;
-  top: 32px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #fff;
-  text-align: center;
-  font-size: 1.6rem;
-  font-family: 'Bebas Neue', 'Noto Serif JP', serif;
-  letter-spacing: 0.08em;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.7);
-  background: rgba(0,0,0,0.25);
-  padding: 8px 32px;
-  border-radius: 24px;
-  z-index: 10;
 `;
-
-const ErrorMessage = styled.div`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #fff;
-  text-align: center;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.7);
-  border-radius: 8px;
-  max-width: 80%;
-  z-index: 100;
+const MonthSelectorRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 2px;
+  width: 140px;
+  @media (min-width: 600px) and (max-width: 1024px) {
+    justify-content: flex-start;
+    gap: 4px;
+    margin-bottom: 0;
+    width: 140px;
+  }
+  @media (max-width: 599px) {
+    gap: 2px;
+    margin-bottom: 0;
+    width: auto;
+    flex: 1;
+    min-width: 0;
+  }
 `;
-
-const RetryButton = styled.button`
-  margin-top: 16px;
-  padding: 8px 16px;
-  background: #fff;
-  color: #000;
+const MonthArrowButton = styled.button`
+  font-size: 1.1rem;
+  background: none;
   border: none;
-  border-radius: 4px;
+  color: #ffe082;
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: #f0f0f0;
-    transform: translateY(-1px);
+  opacity: 1;
+  padding: 0 2px;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+  width: 24px;
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  @media (min-width: 600px) and (max-width: 1024px) {
+    font-size: 0.95rem;
+    padding: 0 2px;
+  }
+  @media (max-width: 599px) {
+    font-size: 0.9rem;
+    padding: 0 1px;
+  }
+`;
+const MonthLabel = styled.span`
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #ffe082;
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  text-align: center;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  @media (min-width: 600px) and (max-width: 1024px) {
+    flex: 1;
+    min-width: 0;
+  }
+  @media (max-width: 599px) {
+    font-size: 0.88rem;
+    height: 30px;
+    flex: 1;
+    min-width: 0;
   }
 `;
 
@@ -337,7 +431,7 @@ export default function Gallery() {
   const [photos, setPhotos] = useState<GalleryItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -364,21 +458,78 @@ export default function Gallery() {
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 3;
 
-  // filteredPhotosのuseMemoをここに移動
-  const filteredPhotos = useMemo(() => {
-    if (selectedCategory === 'all') return photos;
-    return photos.filter(photo => {
-      if (Array.isArray(photo.category3)) {
-        return photo.category3
-          .map((v) => typeof v === 'string' ? v.trim().toLowerCase() : '')
-          .includes(selectedCategory.toLowerCase());
-      }
-      if (typeof photo.category3 === 'string') {
-        return photo.category3.trim().toLowerCase() === selectedCategory.toLowerCase();
-      }
-      return false;
+  // 撮影月リストを生成
+  const shootingMonths = useMemo(() => {
+    return Array.from(new Set(
+      photos
+        .map((photo: GalleryItem) => typeof photo.shootingDate === 'string' ? photo.shootingDate.slice(0, 7) : undefined)
+        .filter((v: string | undefined): v is string => Boolean(v))
+    )).sort((a, b) => b.localeCompare(a)) as string[];
+  }, [photos]);
+
+  // 月インデックスで管理
+  const [monthIndex, setMonthIndex] = useState<number>(0);
+  const selectedMonth = useMemo(
+    () => shootingMonths[monthIndex] ? `month-${shootingMonths[monthIndex]}` : '',
+    [shootingMonths, monthIndex]
+  );
+
+  // 左矢印: 過去（月index+1）、右矢印: 未来（月index-1）
+  const handlePrevMonth = useCallback((e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    setMonthIndex((prev) => {
+      const next = prev < shootingMonths.length - 1 ? prev + 1 : prev;
+      if (next !== prev) setCurrentIndex(0);
+      return next;
     });
-  }, [photos, selectedCategory]);
+  }, [shootingMonths.length]);
+  const handleNextMonth = useCallback((e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    setMonthIndex((prev) => {
+      const next = prev > 0 ? prev - 1 : prev;
+      if (next !== prev) setCurrentIndex(0);
+      return next;
+    });
+  }, []);
+
+  // shootingMonthsが更新されたら最新月をデフォルト選択
+  useEffect(() => {
+    if (shootingMonths.length > 0) {
+      setMonthIndex(0); // 0が最新月
+    }
+  }, [shootingMonths]);
+
+  // カテゴリーリスト（英語表記）
+  const CATEGORY_OPTIONS = [
+    { value: 'all', label: 'All' },
+    { value: 'portrait', label: 'Portrait' },
+    { value: 'bath', label: 'Bath' },
+    { value: 'person', label: 'Person' },
+  ];
+
+  const filteredPhotos = useMemo(() => {
+    let result = photos;
+    if (selectedCategory !== 'all') {
+      result = result.filter((photo: GalleryItem) => {
+        if (Array.isArray(photo.category3)) {
+          return photo.category3
+            .map((v: string) => typeof v === 'string' ? v.trim().toLowerCase() : '')
+            .includes(selectedCategory.toLowerCase());
+        }
+        if (typeof photo.category3 === 'string') {
+          return photo.category3.trim().toLowerCase() === selectedCategory.toLowerCase();
+        }
+        return false;
+      });
+    }
+    if (selectedMonth) {
+      const month = selectedMonth.replace('month-', '');
+      result = result.filter((photo: GalleryItem) =>
+        typeof photo.shootingDate === 'string' && photo.shootingDate.startsWith(month)
+      );
+    }
+    return result;
+  }, [photos, selectedCategory, selectedMonth, monthIndex, shootingMonths]);
 
   // LCP画像のURLを取得
   const lcpImageUrl = useMemo(() => {
@@ -819,18 +970,21 @@ export default function Gallery() {
       <Header />
       {showLoading && !galleryReady && <GalleryLoadingScreen progress={progress} isReady={galleryReady} />}
       <GalleryContainer>
-        <Title>Gallery</Title>
         <CategoryContainer>
-          <CustomSelect
-            options={CATEGORIES.map(category => ({
-              value: category,
-              label: category.charAt(0).toUpperCase() + category.slice(1)
-            }))}
-            value={selectedCategory}
-            onChange={(value) => setSelectedCategory(value as Category)}
-            style={{ minWidth: '140px' }}
-            aria-label="カテゴリーを選択"
-          />
+          <CategoryMonthWrapper>
+            <MonthSelectorRow>
+              <MonthArrowButton onClick={(e) => handlePrevMonth(e)} disabled={monthIndex === shootingMonths.length - 1} aria-label="Previous month" type="button">&#9664;</MonthArrowButton>
+              <MonthLabel>{shootingMonths[monthIndex]?.replace('-', '/') || ''}</MonthLabel>
+              <MonthArrowButton onClick={(e) => handleNextMonth(e)} disabled={monthIndex === 0} aria-label="Next month" type="button">&#9654;</MonthArrowButton>
+            </MonthSelectorRow>
+            <CustomSelect
+              options={CATEGORY_OPTIONS}
+              value={selectedCategory}
+              onChange={setSelectedCategory}
+              aria-label="Select category"
+              style={{ width: '140px', minWidth: '0', maxWidth: 'none', flex: 1, boxSizing: 'border-box', fontSize: '0.92rem', height: '30px', padding: '0 6px', lineHeight: '30px', verticalAlign: 'middle', margin: 0 }}
+            />
+          </CategoryMonthWrapper>
         </CategoryContainer>
         {isLoading ? (
           <MainImageContainer>
@@ -871,7 +1025,7 @@ export default function Gallery() {
                 $translateX={translateX}
                 $isLoading={isImageLoading}
               >
-                {(() => {
+                {filteredPhotos[currentIndex] && (() => {
                   const urls = getResponsiveImageUrls(filteredPhotos[currentIndex]?.imageUrls);
                   const mainSrc = urls.large || urls.medium || urls.original || '';
                   const previewSrc = urls.small || urls.medium || urls.large || urls.original || '';
@@ -889,7 +1043,7 @@ export default function Gallery() {
                       />
                       <StyledImage
                         src={mainSrc}
-                        alt={filteredPhotos[currentIndex].title}
+                        alt={filteredPhotos[currentIndex]?.title || ''}
                         fill
                         sizes="100vw"
                         priority={true}
@@ -903,13 +1057,13 @@ export default function Gallery() {
                         quality={85}
                         fetchPriority="high"
                         $isLoading={isImageLoading}
-                        aria-label={`${filteredPhotos[currentIndex].title} (${currentIndex + 1}/${filteredPhotos.length})`}
+                        aria-label={`${filteredPhotos[currentIndex]?.title || ''} (${currentIndex + 1}/${filteredPhotos.length})`}
                       />
                     </>
                   );
                 })()}
                 <MainImageTitle>
-                  {filteredPhotos[currentIndex]?.title}
+                  {filteredPhotos[currentIndex]?.title || ''}
                 </MainImageTitle>
               </ImageWrapper>
             </MainImageContainer>

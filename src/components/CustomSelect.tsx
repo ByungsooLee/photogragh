@@ -52,15 +52,20 @@ const SelectButton = styled.button<{ $isOpen: boolean }>`
     color: #fff;
   }
   @media (max-width: 600px) {
-    font-size: 1.08rem;
-    padding: 0.9rem 2.2rem 0.9rem 1.1rem;
-    border-radius: 18px;
-    background: linear-gradient(90deg, #18120a 60%, #2d230c 100%);
-    color: #ffe9a7;
-    border-width: 2.5px;
-    box-shadow: 0 4px 24px rgba(212,175,55,0.18), 0 0 0 2px #000;
-    letter-spacing: 1.2px;
-    font-weight: 600;
+    font-size: 0.92rem;
+    padding: 0.3rem 1.2rem 0.3rem 0.7rem;
+    border-radius: 8px;
+    min-height: 30px;
+    height: 30px;
+    box-shadow: 0 2px 8px rgba(212,175,55,0.08);
+    letter-spacing: 1px;
+  }
+  @media (max-width: 400px) {
+    font-size: 0.88rem;
+    padding: 0.2rem 0.7rem 0.2rem 0.5rem;
+    border-radius: 6px;
+    min-height: 26px;
+    height: 26px;
   }
 `;
 
@@ -101,11 +106,17 @@ const OptionList = styled.ul<{ $isOpen: boolean }>`
   overflow-y: auto;
   padding: 0.2rem 0;
   @media (max-width: 600px) {
-    border-radius: 18px;
-    box-shadow: 0 8px 40px 0 #d4af37cc, 0 0 0 2px #000;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px 0 #d4af37cc, 0 0 0 2px #000;
     background: linear-gradient(90deg, #18120a 60%, #2d230c 100%);
-    border-width: 2.5px;
-    padding: 0.5rem 0;
+    border-width: 2px;
+    padding: 0.1rem 0;
+    max-height: 180px;
+  }
+  @media (max-width: 400px) {
+    border-radius: 6px;
+    padding: 0.05rem 0;
+    max-height: 120px;
   }
 `;
 
@@ -122,15 +133,18 @@ const OptionItem = styled.li<{ selected: boolean }>`
     color: var(--gold);
   }
   @media (max-width: 600px) {
-    font-size: 1.12rem;
-    padding: 1.1rem 1.5rem;
-    color: ${props => (props.selected ? '#ffe9a7' : '#fff')};
-    background: ${props => (props.selected ? 'rgba(255,233,167,0.13)' : 'transparent')};
-    border-radius: 12px;
-    margin: 0.1rem 0.2rem;
+    font-size: 0.92rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 6px;
+    margin: 0.05rem 0.1rem;
     font-weight: 600;
-    letter-spacing: 1.1px;
-    box-shadow: ${props => (props.selected ? '0 2px 8px #d4af37cc' : 'none')};
+    letter-spacing: 1px;
+    box-shadow: ${props => (props.selected ? '0 1px 4px #d4af37cc' : 'none')};
+  }
+  @media (max-width: 400px) {
+    font-size: 0.88rem;
+    padding: 0.3rem 0.4rem;
+    border-radius: 4px;
   }
 `;
 
