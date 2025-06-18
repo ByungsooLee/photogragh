@@ -132,12 +132,15 @@ export default function HomeClient() {
     const url = getOriginalImageUrl(photo.imageUrls);
     if (!url) return;
     
-    setModalImage(url);
-    setModalTitle(photo.title || '');
-    setModalCaption(photo.description || '');
-    setModalSourcePosition(photo.position);
-    setModalKey((url || '') + '_' + Date.now());
-    setIsModalOpen(true);
+    // モーダルを表示する前に少し遅延を入れる
+    setTimeout(() => {
+      setModalImage(url);
+      setModalTitle(photo.title || '');
+      setModalCaption(photo.description || '');
+      setModalSourcePosition(photo.position);
+      setModalKey((url || '') + '_' + Date.now());
+      setIsModalOpen(true);
+    }, 50);
   };
 
   return (
@@ -170,10 +173,13 @@ export default function HomeClient() {
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setModalImage('');
-          setModalTitle('');
-          setModalCaption('');
-          setModalSourcePosition(undefined);
+          // モーダルを閉じた後、少し遅延を入れてから状態をリセット
+          setTimeout(() => {
+            setModalImage('');
+            setModalTitle('');
+            setModalCaption('');
+            setModalSourcePosition(undefined);
+          }, 300);
         }}
         imageUrl={modalImage}
         title={modalTitle}

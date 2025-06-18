@@ -1,7 +1,7 @@
 'use client';
 
 import styled, { keyframes } from 'styled-components';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { GalleryItem } from '../lib/microcms';
 import Image from 'next/image';
 import useIsMobileOrTablet from '../../hooks/useIsMobileOrTablet';
@@ -546,6 +546,44 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   const [spotlightPosition, setSpotlightPosition] = useState({ x: 0, y: 0 });
   const [displayedPhotos, setDisplayedPhotos] = useState<GalleryItem[]>([]);
   const isMobileOrTablet = useIsMobileOrTablet();
+  const touchStartTime = useRef<number>(0);
+  const touchStartPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const touchThreshold = 10; // タップと判定する移動量の閾値（ピクセル）
+  const tapThreshold = 300; // タップと判定する時間の閾値（ミリ秒）
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartTime.current = Date.now();
+    touchStartPosition.current = {
+      x: touch.clientX,
+      y: touch.clientY
+    };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent, photo: GalleryItem) => {
+    const touch = e.changedTouches[0];
+    const touchEndTime = Date.now();
+    const touchDuration = touchEndTime - touchStartTime.current;
+    
+    // タッチ開始位置からの移動量を計算
+    const deltaX = Math.abs(touch.clientX - touchStartPosition.current.x);
+    const deltaY = Math.abs(touch.clientY - touchStartPosition.current.y);
+    
+    // タップと判定する条件：
+    // 1. タッチ時間が閾値以下
+    // 2. 移動量が閾値以下
+    if (touchDuration <= tapThreshold && deltaX <= touchThreshold && deltaY <= touchThreshold) {
+      e.preventDefault();
+      const rect = e.currentTarget.getBoundingClientRect();
+      onPhotoClick({
+        ...photo,
+        position: {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2
+        }
+      });
+    }
+  };
 
   useEffect(() => {
     // 列ごとに独立したランダム化
@@ -685,8 +723,8 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                       $isVertical={isVertical}
                       position={position}
                       className={''}
-                      onClick={(e) => handlePhotoClick(photo, e)}
-                      onKeyDown={(e) => handleKeyDown(photo, e)}
+                      onTouchStart={handleTouchStart}
+                      onTouchEnd={(e) => handleTouchEnd(e, photo)}
                       role="button"
                       tabIndex={0}
                       aria-label={`${photo.title}を表示`}
@@ -724,8 +762,8 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                     $isVertical={isVertical}
                     position={position}
                     className={''}
-                    onClick={(e) => handlePhotoClick(photo, e)}
-                    onKeyDown={(e) => handleKeyDown(photo, e)}
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={(e) => handleTouchEnd(e, photo)}
                     role="button"
                     tabIndex={0}
                     aria-label={`${photo.title}を表示`}
