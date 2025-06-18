@@ -4,6 +4,8 @@ import styled, { keyframes } from 'styled-components';
 import { useState, useEffect } from 'react';
 import type { GalleryItem } from '../lib/microcms';
 import Image from 'next/image';
+import useIsMobileOrTablet from '../../hooks/useIsMobileOrTablet';
+import Link from 'next/link';
 
 interface FilmStripProps {
   stripId: string;
@@ -512,6 +514,28 @@ function isValidUrl(url: string | undefined): boolean {
   }
 }
 
+// ロゴ画像情報
+const logoImages = [
+  {
+    src: '/images/logo_about_01.jpg',
+    alt: 'Aboutページへ',
+    link: '/about',
+    type: 'about',
+  },
+  {
+    src: '/images/logo_gallery_01.jpg',
+    alt: 'Galleryページへ',
+    link: '/gallery',
+    type: 'gallery',
+  },
+  {
+    src: '/images/logo_gallery_02.jpg',
+    alt: 'Galleryページへ',
+    link: '/gallery',
+    type: 'gallery',
+  },
+];
+
 const FilmStrip: React.FC<FilmStripProps> = ({
   stripId,
   isVertical,
@@ -522,6 +546,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
 }) => {
   const [spotlightPosition, setSpotlightPosition] = useState({ x: 0, y: 0 });
   const [displayedPhotos, setDisplayedPhotos] = useState<GalleryItem[]>([]);
+  const isMobileOrTablet = useIsMobileOrTablet();
 
   useEffect(() => {
     // 列ごとに独立したランダム化
@@ -594,53 +619,127 @@ const FilmStrip: React.FC<FilmStripProps> = ({
           $isVertical={isVertical}
           onMouseMove={handleMouseMove}
         >
-          {displayedPhotos.map((photo, index) => {
-            // imageUrlsが配列かどうかをチェック
-            const imageUrlKey =
-              Array.isArray(photo.imageUrls) && photo.imageUrls.length > 0
-                ? photo.imageUrls[0]
-                : typeof photo.imageUrls === 'string'
-                  ? photo.imageUrls
-                  : '';
-
-            const originalUrl = getOriginalImageUrl(photo.imageUrls);
-
-            // 画像URLが取得できない、または不正な場合はスキップ
-            if (!isValidUrl(originalUrl)) return null;
-
-            return (
-              <Frame
-                key={`${stripId}-${index}-${photo.id}-${imageUrlKey}`}
-                $isVertical={isVertical}
-                position={position}
-                className={''}
-                onClick={(e) => handlePhotoClick(photo, e)}
-                onKeyDown={(e) => handleKeyDown(photo, e)}
-                role="button"
-                tabIndex={0}
-                aria-label={`${photo.title}を表示`}
-              >
-                <Perforations side="left" />
-                <Perforations side="right" />
-                <Content>
-                  <Image
-                    src={originalUrl || ''}
-                    alt={photo.title || "ギャラリー画像"}
-                    fill
-                    sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 300px"
-                    quality={70}
-                    priority={isPriorityImage(index)}
-                    loading={isPriorityImage(index) ? "eager" : "lazy"}
-                    style={{ objectFit: 'cover', borderRadius: '5px' }}
-                  />
-                </Content>
-              </Frame>
-            );
-          })}
+          {(isMobileOrTablet
+            ? (() => {
+                // ロゴ3種をランダムな位置に必ず1回ずつ挿入
+                const total = displayedPhotos.length;
+                const logoCount = logoImages.length;
+                // ロゴを挿入するランダムなindexを生成（重複なし）
+                const logoIndexes: number[] = [];
+                while (logoIndexes.length < logoCount) {
+                  const idx = Math.floor(Math.random() * total);
+                  if (!logoIndexes.includes(idx)) logoIndexes.push(idx);
+                }
+                return displayedPhotos.map((photo, index) => {
+                  // 通常画像用の変数を先に定義
+                  const imageUrlKey =
+                    Array.isArray(photo.imageUrls) && photo.imageUrls.length > 0
+                      ? photo.imageUrls[0]
+                      : typeof photo.imageUrls === 'string'
+                      ? photo.imageUrls
+                      : '';
+                  const originalUrl = getOriginalImageUrl(photo.imageUrls);
+                  // ロゴ挿入位置ならロゴを表示
+                  const logoIdx = logoIndexes.indexOf(index);
+                  if (logoIdx !== -1) {
+                    const logo = logoImages[logoIdx];
+                    return (
+                      <Frame
+                        key={`logo-${stripId}-${index}`}
+                        $isVertical={isVertical}
+                        position={position}
+                        className={''}
+                      >
+                        <Perforations side="left" />
+                        <Perforations side="right" />
+                        <Content>
+                          <Link href={logo.link}>
+                            <img
+                              src={logo.src}
+                              alt={logo.alt}
+                              className="object-cover w-full h-full"
+                              style={{ maxHeight: '100%', maxWidth: '100%' }}
+                            />
+                          </Link>
+                        </Content>
+                      </Frame>
+                    );
+                  }
+                  // 通常の写真表示
+                  if (!isValidUrl(originalUrl)) return null;
+                  return (
+                    <Frame
+                      key={`${stripId}-${index}-${photo.id}-${imageUrlKey}`}
+                      $isVertical={isVertical}
+                      position={position}
+                      className={''}
+                      onClick={(e) => handlePhotoClick(photo, e)}
+                      onKeyDown={(e) => handleKeyDown(photo, e)}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`${photo.title}を表示`}
+                    >
+                      <Perforations side="left" />
+                      <Perforations side="right" />
+                      <Content>
+                        <Image
+                          src={originalUrl || ''}
+                          alt={photo.title || "ギャラリー画像"}
+                          fill
+                          sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 300px"
+                          quality={70}
+                          priority={isPriorityImage(index)}
+                          loading={isPriorityImage(index) ? "eager" : "lazy"}
+                          style={{ objectFit: 'cover', borderRadius: '5px' }}
+                        />
+                      </Content>
+                    </Frame>
+                  );
+                });
+              })()
+            : displayedPhotos.map((photo, index) => {
+                const imageUrlKey =
+                  Array.isArray(photo.imageUrls) && photo.imageUrls.length > 0
+                    ? photo.imageUrls[0]
+                    : typeof photo.imageUrls === 'string'
+                    ? photo.imageUrls
+                    : '';
+                const originalUrl = getOriginalImageUrl(photo.imageUrls);
+                if (!isValidUrl(originalUrl)) return null;
+                return (
+                  <Frame
+                    key={`${stripId}-${index}-${photo.id}-${imageUrlKey}`}
+                    $isVertical={isVertical}
+                    position={position}
+                    className={''}
+                    onClick={(e) => handlePhotoClick(photo, e)}
+                    onKeyDown={(e) => handleKeyDown(photo, e)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${photo.title}を表示`}
+                  >
+                    <Perforations side="left" />
+                    <Perforations side="right" />
+                    <Content>
+                      <Image
+                        src={originalUrl || ''}
+                        alt={photo.title || "ギャラリー画像"}
+                        fill
+                        sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 300px"
+                        quality={70}
+                        priority={isPriorityImage(index)}
+                        loading={isPriorityImage(index) ? "eager" : "lazy"}
+                        style={{ objectFit: 'cover', borderRadius: '5px' }}
+                      />
+                    </Content>
+                  </Frame>
+                );
+              })
+          )}
         </Strip>
       </StripWrapper>
     </>
   );
 };
 
-export default FilmStrip; 
+export default FilmStrip;
