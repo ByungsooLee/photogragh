@@ -78,6 +78,27 @@ function getOriginalImageUrl(imageUrls: string | string[] | undefined): string |
   }
 }
 
+function getImageUrls(imageUrls: string | string[] | undefined) {
+  if (!imageUrls) return {};
+  if (Array.isArray(imageUrls)) return getImageUrls(imageUrls[0]);
+  try {
+    const obj = JSON.parse(imageUrls);
+    return obj;
+  } catch {
+    return {};
+  }
+}
+
+function isValidUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export default function HomeClient() {
   const [mounted, setMounted] = useState(false);
   const [photos, setPhotos] = useState<GalleryItem[]>([]);
@@ -155,19 +176,32 @@ export default function HomeClient() {
   }
 
   const handlePhotoClick = (photo: GalleryItem & { position?: { x: number; y: number } }) => {
-    if (!photo || !photo.imageUrls || isNavigating.current) return;
+    console.log('HomeClient: handlePhotoClick called', { photo, isNavigating: isNavigating.current });
     
-    const url = getOriginalImageUrl(photo.imageUrls);
-    if (!url) return;
+    if (!photo || !photo.imageUrls || isNavigating.current) {
+      console.log('HomeClient: Early return', { hasPhoto: !!photo, hasImageUrls: !!photo?.imageUrls, isNavigating: isNavigating.current });
+      return;
+    }
     
-    setTimeout(() => {
-      setModalImage(url);
-      setModalTitle(photo.title || '');
-      setModalCaption(photo.description || '');
-      setModalSourcePosition(photo.position);
-      setModalKey((url || '') + '_' + Date.now());
-      setIsModalOpen(true);
-    }, 50);
+    // FilmStripと同じ方法で画像URLを取得
+    const urls = getImageUrls(photo.imageUrls);
+    const url = urls['オリジナル画像'] || urls['大サイズ'] || urls['中サイズ'] || '';
+    
+    console.log('HomeClient: Image URLs', { urls, selectedUrl: url });
+    
+    if (!isValidUrl(url)) {
+      console.log('HomeClient: Invalid URL', { url });
+      return;
+    }
+    
+    // setTimeoutを削除して即座にモーダルを開く
+    console.log('HomeClient: Opening modal', { url, title: photo.title });
+    setModalImage(url);
+    setModalTitle(photo.title || '');
+    setModalCaption(photo.description || '');
+    setModalSourcePosition(photo.position);
+    setModalKey((url || '') + '_' + Date.now());
+    setIsModalOpen(true);
   };
 
   return (

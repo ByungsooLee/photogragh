@@ -450,6 +450,7 @@ const Content = styled.div`
   background: linear-gradient(135deg, rgba(34,34,34,0.8) 0%, rgba(17,17,17,0.8) 100%);
   min-width: 100px;
   min-height: 100px;
+  pointer-events: none;
 `;
 
 const Spotlight = styled.div<{ x: number; y: number }>`
@@ -582,6 +583,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   };
 
   const handleClick = (e: React.MouseEvent, photo: GalleryItem) => {
+    console.log('FilmStrip: handleClick called', { photo, stripId });
     const rect = e.currentTarget.getBoundingClientRect();
     onPhotoClick({
       ...photo,
@@ -704,6 +706,9 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                 position={position}
                 onClick={(e) => handleClick(e, photo)}
                 onKeyDown={(e) => handleKeyDown(e, photo)}
+                role="button"
+                tabIndex={0}
+                aria-label={`${photo.title}を表示`}
               >
                 <Perforations side="left" />
                 <Perforations side="right" />
@@ -711,7 +716,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                   <img
                     src={mediumUrl || originalUrl}
                     alt={photo.title}
-                    style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                    style={{ objectFit: 'cover', width: '100%', height: '100%', pointerEvents: 'none' }}
                     srcSet={`
                       ${thumbUrl} 400w,
                       ${smallUrl} 600w,

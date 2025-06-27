@@ -308,6 +308,8 @@ const Modal: React.FC<ModalProps> = ({
   caption,
   sourcePosition
 }) => {
+  console.log('Modal: Render', { isOpen, imageUrl, title });
+  
   const modalRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
