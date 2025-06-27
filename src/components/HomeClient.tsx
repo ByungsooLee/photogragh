@@ -64,20 +64,6 @@ const ScrollPreventOverlay = styled.div`
   pointer-events: none;
 `;
 
-function getOriginalImageUrl(imageUrls: string | string[] | undefined): string | undefined {
-  if (!imageUrls) return undefined;
-  if (Array.isArray(imageUrls)) return getOriginalImageUrl(imageUrls[0]);
-  try {
-    const obj = JSON.parse(imageUrls);
-    if (typeof obj === 'object' && obj['オリジナル画像']) {
-      return obj['オリジナル画像'];
-    }
-    return undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 function getImageUrls(imageUrls: string | string[] | undefined) {
   if (!imageUrls) return {};
   if (Array.isArray(imageUrls)) return getImageUrls(imageUrls[0]);

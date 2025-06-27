@@ -746,19 +746,17 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                 <Perforations side="left" />
                 <Perforations side="right" />
                 <Content>
-                  <img
+                  <Image
                     src={mediumUrl || originalUrl}
                     alt={photo.title}
-                    style={{ objectFit: 'cover', width: '100%', height: '100%', pointerEvents: 'none' }}
-                    srcSet={`
-                      ${thumbUrl} 400w,
-                      ${smallUrl} 600w,
-                      ${mediumUrl} 900w,
-                      ${largeUrl} 1400w,
-                      ${originalUrl} 1920w
-                    `}
+                    fill
                     sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 900px"
-                    loading={index === 0 ? 'eager' : 'lazy'}
+                    style={{ objectFit: 'cover', pointerEvents: 'none' }}
+                    quality={85}
+                    priority={index < 3}
+                    loading={index < 3 ? 'eager' : 'lazy'}
+                    placeholder="blur"
+                    blurDataURL={thumbUrl}
                   />
                 </Content>
               </Frame>
