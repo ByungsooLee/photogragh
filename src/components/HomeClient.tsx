@@ -176,10 +176,18 @@ export default function HomeClient() {
   }
 
   const handlePhotoClick = (photo: GalleryItem & { position?: { x: number; y: number } }) => {
-    console.log('HomeClient: handlePhotoClick called', { photo, isNavigating: isNavigating.current });
+    console.log('HomeClient: handlePhotoClick called', { 
+      photo, 
+      isNavigating: isNavigating.current,
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+    });
     
     if (!photo || !photo.imageUrls || isNavigating.current) {
-      console.log('HomeClient: Early return', { hasPhoto: !!photo, hasImageUrls: !!photo?.imageUrls, isNavigating: isNavigating.current });
+      console.log('HomeClient: Early return', { 
+        hasPhoto: !!photo, 
+        hasImageUrls: !!photo?.imageUrls, 
+        isNavigating: isNavigating.current 
+      });
       return;
     }
     

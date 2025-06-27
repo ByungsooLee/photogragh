@@ -341,6 +341,10 @@ const Frame = styled.div<{ isPortrait?: boolean; $isVertical?: boolean; position
   transform-origin: center center;
   backface-visibility: hidden;
   -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
   role: "button";
   tabIndex: 0;
   aspect-ratio: 4 / 3;
@@ -531,8 +535,8 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   const isMobileOrTablet = useIsMobileOrTablet();
   const touchStartTime = useRef<number>(0);
   const touchStartPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const touchThreshold = 10;
-  const tapThreshold = 300;
+  const touchThreshold = isMobileOrTablet ? 15 : 10;
+  const tapThreshold = isMobileOrTablet ? 400 : 300;
   const isLogoFrame = useRef(false);
 
   // ロゴの表示位置を決定する関数
@@ -541,7 +545,13 @@ const FilmStrip: React.FC<FilmStripProps> = ({
     return Math.floor(seededRandom(seed) * photos.length);
   };
 
+  const handleTouchMove = (e: React.TouchEvent) => {
+    // タッチ移動中は何もしない（スクロールを防ぐため）
+    e.preventDefault();
+  };
+
   const handleTouchStart = (e: React.TouchEvent, isLogo: boolean) => {
+    console.log('FilmStrip: handleTouchStart', { isLogo, stripId });
     isLogoFrame.current = isLogo;
     const touch = e.touches[0];
     touchStartTime.current = Date.now();
@@ -552,12 +562,22 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   };
 
   const handleTouchEnd = (e: React.TouchEvent, photo: GalleryItem, link?: string) => {
+    console.log('FilmStrip: handleTouchEnd', { photo, link, stripId });
     const touch = e.changedTouches[0];
     const touchEndTime = Date.now();
     const touchDuration = touchEndTime - touchStartTime.current;
     
     const deltaX = Math.abs(touch.clientX - touchStartPosition.current.x);
     const deltaY = Math.abs(touch.clientY - touchStartPosition.current.y);
+    
+    console.log('FilmStrip: Touch metrics', { 
+      touchDuration, 
+      deltaX, 
+      deltaY, 
+      tapThreshold, 
+      touchThreshold,
+      isLogoFrame: isLogoFrame.current 
+    });
     
     // ロゴフレームの場合
     if (isLogoFrame.current && link) {
@@ -570,6 +590,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
     
     // 通常の画像の場合
     if (touchDuration <= tapThreshold && deltaX <= touchThreshold && deltaY <= touchThreshold) {
+      console.log('FilmStrip: Valid touch detected, calling onPhotoClick');
       e.preventDefault();
       const rect = e.currentTarget.getBoundingClientRect();
       onPhotoClick({
@@ -578,6 +599,14 @@ const FilmStrip: React.FC<FilmStripProps> = ({
           x: rect.left + rect.width / 2,
           y: rect.top + rect.height / 2
         }
+      });
+    } else {
+      console.log('FilmStrip: Touch rejected', { 
+        touchDuration, 
+        deltaX, 
+        deltaY, 
+        tapThreshold, 
+        touchThreshold 
       });
     }
   };
@@ -674,6 +703,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                   className={'logo-frame'}
                   onClick={(e) => handleLogoClick(e, logo.link)}
                   onTouchStart={(e) => handleTouchStart(e, true)}
+                  onTouchMove={handleTouchMove}
                   onTouchEnd={(e) => handleTouchEnd(e, photo, logo.link)}
                   role="link"
                   tabIndex={0}
@@ -705,6 +735,9 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                 $isVertical={isVertical}
                 position={position}
                 onClick={(e) => handleClick(e, photo)}
+                onTouchStart={(e) => handleTouchStart(e, false)}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={(e) => handleTouchEnd(e, photo)}
                 onKeyDown={(e) => handleKeyDown(e, photo)}
                 role="button"
                 tabIndex={0}
