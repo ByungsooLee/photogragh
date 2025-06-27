@@ -687,9 +687,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
             const urls = getImageUrls(photo.imageUrls);
             const originalUrl = urls['オリジナル画像'] || '';
             const thumbUrl = urls['サムネイル'] || '';
-            const smallUrl = urls['小サイズ'] || '';
             const mediumUrl = urls['中サイズ'] || '';
-            const largeUrl = urls['大サイズ'] || '';
             if (!isValidUrl(originalUrl)) return null;
 
             // ロゴの表示位置の場合のみロゴを表示
