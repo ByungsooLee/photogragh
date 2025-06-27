@@ -534,7 +534,9 @@ export default function Gallery() {
   // LCP画像のURLを取得
   const lcpImageUrl = useMemo(() => {
     if (filteredPhotos.length === 0) return undefined;
-    const urls = getResponsiveImageUrls(filteredPhotos[0]?.imageUrls);
+    const firstPhoto = filteredPhotos[0];
+    if (!firstPhoto || !firstPhoto.imageUrls) return undefined;
+    const urls = getResponsiveImageUrls(firstPhoto.imageUrls);
     return urls.large || urls.medium || urls.original || '';
   }, [filteredPhotos]);
 
@@ -818,7 +820,13 @@ export default function Gallery() {
       const uniqueIndices = Array.from(new Set(indices));
 
       uniqueIndices.forEach(index => {
-        const urls = getResponsiveImageUrls(filteredPhotos[index].imageUrls);
+        // インデックスが有効範囲内かチェック
+        if (index < 0 || index >= filteredPhotos.length) return;
+        
+        const photo = filteredPhotos[index];
+        if (!photo || !photo.imageUrls) return;
+        
+        const urls = getResponsiveImageUrls(photo.imageUrls);
         const url = urls.medium || urls.small || urls.original;
         if (isValidUrl(url) && !imagesLoaded.has(url!)) {
           const img = new window.Image();
@@ -847,6 +855,7 @@ export default function Gallery() {
   const allImageUrls = useMemo(() => {
     // getOriginalImageUrlで取得し、バリデーション済みのみ
     const urls = filteredPhotos
+      .filter(photo => photo && photo.imageUrls) // photoオブジェクトとimageUrlsの存在をチェック
       .map(photo => getOriginalImageUrl(photo.imageUrls))
       .filter(isValidUrl) as string[];
     return Array.from(new Set(urls));
@@ -1073,6 +1082,7 @@ export default function Gallery() {
               aria-label="サムネイルナビゲーション"
             >
               {filteredPhotos.map((photo, index) => {
+                if (!photo || !photo.imageUrls) return null; // photoオブジェクトとimageUrlsの存在をチェック
                 const urls = getResponsiveImageUrls(photo.imageUrls);
                 const thumbSrc = urls.small || urls.medium || urls.large || urls.original || '';
                 return (
