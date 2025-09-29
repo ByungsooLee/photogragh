@@ -3,7 +3,7 @@
 import styled from 'styled-components';
 import Image from 'next/image';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { getAllGallery, getGallery, type GalleryItem } from '@/lib/microcms';
+import { getAllGallery, type GalleryItem } from '@/lib/microcms';
 import React from 'react';
 import Header from '@/components/Header';
 import { CustomSelect } from '@/components/CustomSelect';
