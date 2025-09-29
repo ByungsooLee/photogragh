@@ -3,7 +3,7 @@
 import styled from 'styled-components';
 import Image from 'next/image';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { getGallery, type GalleryItem } from '@/lib/microcms';
+import { getAllGallery, getGallery, type GalleryItem } from '@/lib/microcms';
 import React from 'react';
 import Header from '@/components/Header';
 import { CustomSelect } from '@/components/CustomSelect';
@@ -550,8 +550,8 @@ export default function Gallery() {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await getGallery({ limit: 100, offset: 0 });
-        setPhotos(res.items);
+        const items = await getAllGallery();
+        setPhotos(items);
       } catch (err) {
         setError('APIエラー: ' + String(err));
       } finally {
@@ -909,8 +909,8 @@ export default function Gallery() {
       setIsLoading(true);
       const fetchPhotos = async () => {
         try {
-          const res = await getGallery({ limit: 100, offset: 0 });
-          setPhotos(res.items);
+          const items = await getAllGallery();
+          setPhotos(items);
         } catch {
           setError('データの読み込みに失敗しました。もう一度お試しください。');
         } finally {
