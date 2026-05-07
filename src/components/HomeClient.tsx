@@ -79,6 +79,22 @@ const fadeUp = keyframes`
   to { opacity: 1; transform: translateY(0); }
 `;
 
+const projectorDrift = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
+`;
+
+const projectorSpin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
+const projectorFlicker = keyframes`
+  0%, 100% { opacity: 0.16; }
+  45% { opacity: 0.24; }
+  65% { opacity: 0.19; }
+`;
+
 const singeFlicker = keyframes`
   0% { opacity: 0.14; transform: scale(1) translate3d(0, 0, 0); }
   35% { opacity: 0.28; transform: scale(1.015) translate3d(1px, -1px, 0); }
@@ -562,6 +578,7 @@ const ModeSwitch = styled.div`
   display: flex;
   gap: 10px;
   pointer-events: auto;
+  z-index: 2;
 
   @media (max-width: ${MOBILE_BREAKPOINT}px) {
     gap: 8px;
@@ -603,6 +620,232 @@ const ModeButton = styled.button<{ $active: boolean; $variant: Mode }>`
     background: currentColor;
     min-height: ${props => props.$variant === 'grid' ? '4px' : '19px'};
   }
+`;
+
+const ProjectorAccent = styled.div<{ $compact: boolean }>`
+  position: absolute;
+  left: max(16px, calc(env(safe-area-inset-left, 0px) + 10px));
+  bottom: max(22px, calc(env(safe-area-inset-bottom, 0px) + 22px));
+  width: ${props => props.$compact ? '150px' : '216px'};
+  height: ${props => props.$compact ? '122px' : '154px'};
+  z-index: 1;
+  opacity: 0.9;
+  transform: translate3d(0, calc(var(--scroll-speed, 0) * -5px), 0);
+  transform-origin: left bottom;
+  animation: ${projectorDrift} 4.8s ease-in-out infinite;
+
+  @media (min-width: ${TABLET_BREAKPOINT + 1}px) {
+    display: none;
+  }
+
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
+    bottom: max(26px, calc(env(safe-area-inset-bottom, 0px) + 26px));
+  }
+`;
+
+const ProjectorBeam = styled.div<{ $compact: boolean }>`
+  position: absolute;
+  left: ${props => props.$compact ? '72px' : '92px'};
+  bottom: ${props => props.$compact ? '44px' : '58px'};
+  width: min(${props => props.$compact ? '54vw' : '48vw'}, ${props => props.$compact ? '250px' : '390px'});
+  height: ${props => props.$compact ? '104px' : '148px'};
+  transform-origin: left center;
+  transform:
+    rotate(calc(-11deg + (var(--scroll-velocity, 0) * -7deg)))
+    skewY(calc(var(--scroll-velocity, 0) * -1.6deg));
+  opacity: calc(0.16 + (var(--scroll-speed, 0) * 0.16));
+  filter: blur(1px);
+  mix-blend-mode: screen;
+  animation: ${projectorFlicker} 1.8s ease-in-out infinite;
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+
+  &::before {
+    clip-path: polygon(0 47%, 100% 0, 100% 100%);
+    background:
+      linear-gradient(90deg, rgba(246, 235, 207, 0.22) 0%, rgba(246, 235, 207, 0.11) 42%, rgba(246, 235, 207, 0) 100%),
+      radial-gradient(circle at 0% 50%, rgba(255, 222, 153, 0.28), rgba(255, 222, 153, 0) 34%);
+  }
+
+  &::after {
+    width: ${props => props.$compact ? '56px' : '84px'};
+    height: ${props => props.$compact ? '56px' : '84px'};
+    right: -6%;
+    top: 50%;
+    transform: translateY(-50%);
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(246, 235, 207, 0.16), rgba(246, 235, 207, 0) 72%);
+    filter: blur(2px);
+  }
+`;
+
+const ProjectorMachine = styled.div<{ $compact: boolean }>`
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: ${props => props.$compact ? '114px' : '154px'};
+  height: ${props => props.$compact ? '88px' : '112px'};
+  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.34));
+`;
+
+const ProjectorBody = styled.div<{ $compact: boolean }>`
+  position: absolute;
+  left: ${props => props.$compact ? '16px' : '22px'};
+  bottom: ${props => props.$compact ? '18px' : '22px'};
+  width: ${props => props.$compact ? '62px' : '84px'};
+  height: ${props => props.$compact ? '36px' : '46px'};
+  border: 1px solid rgba(246, 235, 207, 0.32);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(43, 33, 21, 0.96), rgba(17, 12, 8, 0.96)),
+    linear-gradient(90deg, rgba(201, 154, 52, 0.08), rgba(0, 0, 0, 0));
+  box-shadow:
+    inset 0 0 0 1px rgba(246, 235, 207, 0.08),
+    0 8px 18px rgba(0, 0, 0, 0.28);
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    top: 9px;
+    height: 1px;
+    background: rgba(246, 235, 207, 0.18);
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    right: -18px;
+    top: 11px;
+    width: 24px;
+    height: 12px;
+    border: 1px solid rgba(246, 235, 207, 0.28);
+    border-radius: 0 999px 999px 0;
+    background: linear-gradient(90deg, rgba(31, 24, 16, 0.98), rgba(8, 6, 4, 0.92));
+    box-shadow: inset 0 0 0 1px rgba(246, 235, 207, 0.08);
+  }
+`;
+
+const ProjectorPanel = styled.div<{ $compact: boolean }>`
+  position: absolute;
+  left: ${props => props.$compact ? '24px' : '31px'};
+  bottom: ${props => props.$compact ? '30px' : '38px'};
+  width: ${props => props.$compact ? '32px' : '42px'};
+  height: ${props => props.$compact ? '14px' : '18px'};
+  border: 1px solid rgba(201, 154, 52, 0.3);
+  border-radius: 7px;
+  background: rgba(8, 6, 4, 0.5);
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    top: 50%;
+    height: 1px;
+    background: rgba(246, 235, 207, 0.18);
+    transform: translateY(-50%);
+  }
+`;
+
+const ProjectorLeg = styled.div<{ $left: number; $compact: boolean }>`
+  position: absolute;
+  left: ${props => props.$left}px;
+  bottom: 0;
+  width: 2px;
+  height: ${props => props.$compact ? '24px' : '30px'};
+  background: linear-gradient(180deg, rgba(246, 235, 207, 0.24), rgba(78, 56, 35, 0.72));
+  transform-origin: top center;
+  transform: rotate(${props => props.$left < 40 ? '-18deg' : props.$left > 70 ? '18deg' : '0deg'});
+`;
+
+const ProjectorReel = styled.div<{ $size: number; $left: number; $top: number }>`
+  position: absolute;
+  left: ${props => props.$left}px;
+  top: ${props => props.$top}px;
+  width: ${props => props.$size}px;
+  height: ${props => props.$size}px;
+  border-radius: 999px;
+  border: 1px solid rgba(246, 235, 207, 0.34);
+  background:
+    radial-gradient(circle at center, rgba(246, 235, 207, 0.18) 0 14%, transparent 15%),
+    radial-gradient(circle at center, transparent 0 35%, rgba(246, 235, 207, 0.12) 36% 41%, transparent 42%),
+    linear-gradient(180deg, rgba(36, 28, 19, 0.95), rgba(8, 6, 4, 0.96));
+  box-shadow:
+    inset 0 0 0 1px rgba(246, 235, 207, 0.08),
+    0 6px 14px rgba(0, 0, 0, 0.22);
+  transform: rotate(calc(var(--scroll-velocity, 0) * 18deg));
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 14%;
+    border-radius: inherit;
+    border: 1px solid rgba(246, 235, 207, 0.18);
+  }
+
+  &::after {
+    inset: 21%;
+    border: 0;
+    background:
+      conic-gradient(
+        from 0deg,
+        rgba(246, 235, 207, 0.18) 0deg 18deg,
+        transparent 18deg 72deg,
+        rgba(246, 235, 207, 0.15) 72deg 90deg,
+        transparent 90deg 144deg,
+        rgba(246, 235, 207, 0.18) 144deg 162deg,
+        transparent 162deg 216deg,
+        rgba(246, 235, 207, 0.15) 216deg 234deg,
+        transparent 234deg 288deg,
+        rgba(246, 235, 207, 0.18) 288deg 306deg,
+        transparent 306deg 360deg
+      );
+    animation: ${projectorSpin} calc(9s - (var(--scroll-speed, 0) * 4s)) linear infinite;
+  }
+`;
+
+const ProjectorHandle = styled.div<{ $compact: boolean }>`
+  position: absolute;
+  left: ${props => props.$compact ? '2px' : '6px'};
+  top: ${props => props.$compact ? '46px' : '56px'};
+  width: ${props => props.$compact ? '26px' : '32px'};
+  height: 2px;
+  background: rgba(246, 235, 207, 0.28);
+  transform-origin: right center;
+  transform: rotate(calc(18deg + (var(--scroll-velocity, 0) * 24deg)));
+
+  &::before {
+    content: "";
+    position: absolute;
+    right: -3px;
+    top: 50%;
+    width: ${props => props.$compact ? '8px' : '10px'};
+    height: ${props => props.$compact ? '8px' : '10px'};
+    border-radius: 999px;
+    border: 1px solid rgba(201, 154, 52, 0.4);
+    background: rgba(23, 18, 13, 0.96);
+    transform: translateY(-50%);
+  }
+`;
+
+const ProjectorLabel = styled.div<{ $compact: boolean }>`
+  position: absolute;
+  left: ${props => props.$compact ? '18px' : '26px'};
+  bottom: ${props => props.$compact ? '58px' : '72px'};
+  color: rgba(246, 235, 207, 0.56);
+  font-family: var(--font-bebas-neue), var(--font-inter), sans-serif;
+  font-size: ${props => props.$compact ? '0.58rem' : '0.72rem'};
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
 `;
 
 const Splash = styled.div<{ $hidden: boolean }>`
@@ -956,6 +1199,7 @@ export default function HomeClient() {
   const tone = 'dark';
   const isImmersiveMobile = isMobileViewport && Boolean(modalPhoto && isValidUrl(modalImage));
   const thumbnailSizes = isMobileViewport ? '38vw' : isTabletViewport ? '18vw' : '12vw';
+  const showProjectorAccent = isTabletViewport && mode === 'grid' && !isImmersiveMobile;
 
   useEffect(() => {
     const tick = () => {
@@ -1138,6 +1382,22 @@ export default function HomeClient() {
         {!isImmersiveMobile && (
           <FixedUi>
             <Cross />
+            {showProjectorAccent && (
+              <ProjectorAccent $compact={isMobileViewport} aria-hidden="true">
+                <ProjectorBeam $compact={isMobileViewport} />
+                <ProjectorMachine $compact={isMobileViewport}>
+                  <ProjectorLabel $compact={isMobileViewport}>Hand Crank Cinema</ProjectorLabel>
+                  <ProjectorReel $size={isMobileViewport ? 30 : 42} $left={isMobileViewport ? 12 : 16} $top={isMobileViewport ? 10 : 12} />
+                  <ProjectorReel $size={isMobileViewport ? 24 : 34} $left={isMobileViewport ? 48 : 64} $top={isMobileViewport ? 2 : 4} />
+                  <ProjectorHandle $compact={isMobileViewport} />
+                  <ProjectorBody $compact={isMobileViewport} />
+                  <ProjectorPanel $compact={isMobileViewport} />
+                  <ProjectorLeg $compact={isMobileViewport} $left={isMobileViewport ? 28 : 40} />
+                  <ProjectorLeg $compact={isMobileViewport} $left={isMobileViewport ? 54 : 74} />
+                  <ProjectorLeg $compact={isMobileViewport} $left={isMobileViewport ? 80 : 108} />
+                </ProjectorMachine>
+              </ProjectorAccent>
+            )}
             <ModeSwitch aria-label="Display mode">
               <ModeButton type="button" $active={mode === 'grid'} $variant="grid" onClick={() => switchMode('grid')} aria-label="Grid mode">
                 <span>{Array.from({ length: 9 }).map((_, index) => <i key={index} />)}</span>
