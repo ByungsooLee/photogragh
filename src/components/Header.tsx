@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styled from 'styled-components';
 
+const MOBILE_BREAKPOINT = 760;
+
 type HeaderProps = {
   variant?: 'light' | 'dark';
   workHref?: string;
@@ -24,11 +26,15 @@ const HeaderContainer = styled.header<{ $variant: 'light' | 'dark' }>`
   color: ${props => props.$variant === 'dark' ? '#f6ebcf' : 'var(--ink)'};
   pointer-events: none;
 
-  @media (max-width: 720px) {
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
     align-items: start;
-    padding: 14px 18px;
+    min-height: auto;
+    padding:
+      calc(env(safe-area-inset-top, 0px) + 12px)
+      16px
+      12px;
   }
 `;
 
@@ -52,7 +58,7 @@ const Brand = styled(Link)`
 
   small {
     font-family: var(--font-inter), sans-serif;
-    font-size: clamp(0.48rem, 0.72vw, 0.66rem);
+    font-size: clamp(0.58rem, 0.78vw, 0.72rem);
     font-weight: 700;
     letter-spacing: 0.28em;
     line-height: 1;
@@ -60,9 +66,15 @@ const Brand = styled(Link)`
     text-shadow: none;
   }
 
-  @media (max-width: 720px) {
-    font-size: clamp(2rem, 12vw, 3.4rem);
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
+    gap: 4px;
+    font-size: clamp(1.9rem, 10vw, 3.2rem);
     letter-spacing: 0.035em;
+
+    small {
+      font-size: 0.62rem;
+      letter-spacing: 0.22em;
+    }
   }
 `;
 
@@ -77,11 +89,14 @@ const Nav = styled.nav`
   text-transform: uppercase;
   pointer-events: auto;
 
-  @media (max-width: 720px) {
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
     justify-self: start;
     width: 100%;
-    overflow-x: auto;
-    padding-bottom: 2px;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    overflow: visible;
+    padding-bottom: 0;
+    font-size: clamp(0.98rem, 3.8vw, 1.18rem);
   }
 `;
 
@@ -99,11 +114,19 @@ const NavLink = styled(Link)<{ $active?: boolean }>`
     opacity: 1;
     border-color: currentColor;
   }
+
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
+    padding: 7px 12px 5px;
+  }
 `;
 
 const Comma = styled.span`
   color: var(--gold);
   opacity: 0.9;
+
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
+    display: none;
+  }
 `;
 
 const Header = ({ variant = 'light', workHref = '/gallery' }: HeaderProps) => {

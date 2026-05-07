@@ -30,9 +30,12 @@ type RandomPhoto = {
   originalSrc: string;
 };
 
+const MOBILE_BREAKPOINT = 760;
+const TABLET_BREAKPOINT = 1100;
+
 const referenceCategories = ['Interior', 'Landscape', 'Portrait'];
 const copies = [-1, 0, 1];
-const slotLayout = [
+const desktopSlotLayout = [
   { shift: 3, left: 46, top: 5, scale: 0.92, rotate: -0.8, shape: 'portrait', primary: false },
   { shift: 2, left: 57, top: 20, scale: 0.94, rotate: 0.6, shape: 'wide', primary: false },
   { shift: 1, left: 45, top: 35, scale: 0.94, rotate: -0.4, shape: 'square', primary: false },
@@ -40,6 +43,24 @@ const slotLayout = [
   { shift: -1, left: 43, top: 65, scale: 0.94, rotate: 0.9, shape: 'wide', primary: false },
   { shift: -2, left: 56, top: 80, scale: 0.94, rotate: -0.6, shape: 'square', primary: false },
   { shift: -3, left: 47, top: 95, scale: 0.92, rotate: 0.7, shape: 'wide', primary: false },
+] as const;
+const tabletSlotLayout = [
+  { shift: 3, left: 39, top: 8, scale: 0.88, rotate: -0.55, shape: 'portrait', primary: false },
+  { shift: 2, left: 63, top: 22, scale: 0.9, rotate: 0.45, shape: 'wide', primary: false },
+  { shift: 1, left: 38, top: 37, scale: 0.9, rotate: -0.3, shape: 'square', primary: false },
+  { shift: 0, left: 61, top: 52, scale: 0.94, rotate: 0.25, shape: 'portrait', primary: false },
+  { shift: -1, left: 38, top: 67, scale: 0.9, rotate: 0.55, shape: 'wide', primary: false },
+  { shift: -2, left: 62, top: 82, scale: 0.88, rotate: -0.4, shape: 'square', primary: false },
+  { shift: -3, left: 50, top: 95, scale: 0.86, rotate: 0.4, shape: 'wide', primary: false },
+] as const;
+const mobileSlotLayout = [
+  { shift: 3, left: 34, top: 8, scale: 0.84, rotate: -0.35, shape: 'portrait', primary: false },
+  { shift: 2, left: 66, top: 21, scale: 0.86, rotate: 0.28, shape: 'wide', primary: false },
+  { shift: 1, left: 34, top: 36, scale: 0.86, rotate: -0.18, shape: 'square', primary: false },
+  { shift: 0, left: 65, top: 52, scale: 0.9, rotate: 0.16, shape: 'portrait', primary: false },
+  { shift: -1, left: 35, top: 68, scale: 0.84, rotate: 0.24, shape: 'wide', primary: false },
+  { shift: -2, left: 64, top: 83, scale: 0.82, rotate: -0.2, shape: 'square', primary: false },
+  { shift: -3, left: 50, top: 96, scale: 0.8, rotate: 0.18, shape: 'wide', primary: false },
 ] as const;
 
 const splashReveal = keyframes`
@@ -68,7 +89,8 @@ const singeFlicker = keyframes`
 const Page = styled.main`
   position: fixed;
   inset: 0;
-  height: 100vh;
+  height: 100dvh;
+  min-height: 100svh;
   width: 100vw;
   overflow: hidden;
   background: var(--film-black);
@@ -109,6 +131,25 @@ const Stage = styled.section<{ $tone: 'light' | 'dark' }>`
     border: 1px solid rgba(246, 235, 207, 0.16);
     box-shadow: inset 0 0 0 1px rgba(201, 154, 52, 0.14);
   }
+
+  @media (max-width: ${TABLET_BREAKPOINT}px) {
+    &::before {
+      background:
+        radial-gradient(circle at 50% 42%, transparent 0 34%, rgba(0, 0, 0, 0.24) 68%, rgba(0, 0, 0, 0.62) 100%),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.52) 0 2vw, transparent 2vw calc(100% - 2vw), rgba(0, 0, 0, 0.52) calc(100% - 2vw));
+      opacity: 0.42;
+    }
+
+    &::after {
+      inset: 10px;
+    }
+  }
+
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
+    &::after {
+      inset: 7px;
+    }
+  }
 `;
 
 const VirtualCanvas = styled.div<{ $mode: Mode }>`
@@ -128,6 +169,16 @@ const CategorySection = styled.div<{ $baseX: number; $width: number; $active: bo
   transform: translate3d(calc(${props => props.$baseX}px - var(--scroll-offset, 0px)), 0, 0);
   will-change: transform;
   pointer-events: ${props => props.$active ? 'auto' : 'none'};
+
+  @media (max-width: ${TABLET_BREAKPOINT}px) {
+    top: clamp(126px, 14vh, 162px);
+    height: clamp(560px, 72dvh, 680px);
+  }
+
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
+    top: clamp(126px, 15vh, 176px);
+    height: clamp(430px, 58dvh, 560px);
+  }
 `;
 
 const PhotoSlot = styled.div<{
@@ -153,6 +204,22 @@ const PhotoSlot = styled.div<{
   &:hover,
   &:focus-within {
     z-index: 8;
+  }
+
+  @media (max-width: ${TABLET_BREAKPOINT}px) {
+    transform: translate3d(
+      calc(-50% + ${props => (props.$shift || 0) * -8}px * var(--scroll-velocity, 0)),
+      calc(-50% + ${props => (props.$shift || 0) * 22}px * var(--scroll-velocity, 0)),
+      0
+    ) rotate(${props => props.$rotate}deg) scale(${props => props.$scale * 0.96});
+  }
+
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
+    transform: translate3d(
+      calc(-50% + ${props => (props.$shift || 0) * -5}px * var(--scroll-velocity, 0)),
+      calc(-50% + ${props => (props.$shift || 0) * 14}px * var(--scroll-velocity, 0)),
+      0
+    ) rotate(${props => props.$rotate}deg) scale(${props => props.$scale * 0.9});
   }
 `;
 
@@ -288,11 +355,19 @@ const PhotoButton = styled.button<{
     transition: filter 220ms ease, opacity 220ms ease, transform 220ms ease;
   }
 
-  @media (max-width: 760px) {
+  @media (max-width: ${TABLET_BREAKPOINT}px) {
     width: ${props => {
-      if (props.$shape === 'wide') return '42vw';
-      if (props.$shape === 'portrait') return '26vw';
-      return '33vw';
+      if (props.$shape === 'wide') return 'clamp(152px, 19vw, 208px)';
+      if (props.$shape === 'portrait') return 'clamp(92px, 9vw, 122px)';
+      return 'clamp(118px, 13vw, 156px)';
+    }};
+  }
+
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
+    width: ${props => {
+      if (props.$shape === 'wide') return '38vw';
+      if (props.$shape === 'portrait') return '24vw';
+      return '30vw';
     }};
   }
 
@@ -335,7 +410,7 @@ const FullPanel = styled.button<{
   position: absolute;
   top: 0;
   left: 50%;
-  height: 100vh;
+  height: 100dvh;
   width: ${props => props.$width}px;
   border: 1px solid rgba(246, 235, 207, 0.18);
   background: #050403;
@@ -397,7 +472,7 @@ const FullPanel = styled.button<{
     will-change: transform;
   }
 
-  @media (max-width: 760px) {
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
     display: ${props => props.$side ? 'none' : 'block'};
     left: 0;
     top: 0;
@@ -434,11 +509,16 @@ const FixedUi = styled.div`
 
 const Cross = styled.div`
   position: absolute;
-  top: 3.2vh;
+  top: max(18px, calc(env(safe-area-inset-top, 0px) + 18px));
   left: 50%;
   width: 13px;
   height: 13px;
   transform: translateX(-50%);
+
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
+    width: 9px;
+    height: 9px;
+  }
 
   &::before,
   &::after {
@@ -461,19 +541,29 @@ const Cross = styled.div`
     width: 13px;
     height: 1px;
   }
+
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
+    &::before {
+      left: 4px;
+      height: 9px;
+    }
+
+    &::after {
+      top: 4px;
+      width: 9px;
+    }
+  }
 `;
 
 const ModeSwitch = styled.div`
   position: absolute;
-  right: 1.35vw;
-  bottom: 1.25vw;
+  right: max(16px, calc(env(safe-area-inset-right, 0px) + 16px));
+  bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 16px));
   display: flex;
   gap: 10px;
   pointer-events: auto;
 
-  @media (max-width: 760px) {
-    right: 2.2vw;
-    bottom: 2vh;
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
     gap: 8px;
   }
 `;
@@ -492,6 +582,12 @@ const ModeButton = styled.button<{ $active: boolean; $variant: Mode }>`
 
   &:hover {
     opacity: 1;
+  }
+
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
+    width: 46px;
+    height: 46px;
+    background: rgba(8, 6, 4, 0.72);
   }
 
   span {
@@ -540,11 +636,24 @@ const SplashImage = styled.div`
       filter: sepia(0.35) saturate(0.82) contrast(1.06);
     }
   }
+
+  @media (max-width: ${TABLET_BREAKPOINT}px) {
+    > div {
+      width: min(30vw, 240px);
+    }
+  }
+
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
+    > div {
+      width: min(42vw, 188px);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.34);
+    }
+  }
 `;
 
 const SplashTitle = styled.div`
   position: absolute;
-  top: 1.5vh;
+  top: max(10px, calc(env(safe-area-inset-top, 0px) + 10px));
   left: 50%;
   transform: translateX(-50%);
   overflow: hidden;
@@ -565,13 +674,23 @@ const SplashTitle = styled.div`
     animation: ${titleIn} 1100ms cubic-bezier(.32,.94,.6,1) forwards;
     animation-delay: 220ms;
   }
+
+  @media (max-width: ${TABLET_BREAKPOINT}px) {
+    font-size: clamp(74px, 16vw, 180px);
+  }
+
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
+    font-size: clamp(54px, 20vw, 112px);
+    letter-spacing: 0.02em;
+    line-height: 0.8;
+  }
 `;
 
 const SplashBottom = styled.div`
   position: absolute;
   left: 1.7vw;
   right: 1.7vw;
-  bottom: 1.4vw;
+  bottom: max(18px, calc(env(safe-area-inset-bottom, 0px) + 18px));
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   align-items: end;
@@ -598,15 +717,36 @@ const SplashBottom = styled.div`
     line-height: 0.78;
   }
 
-  @media (max-width: 760px) {
+  @media (max-width: ${TABLET_BREAKPOINT}px) {
+    left: 24px;
+    right: 24px;
+    gap: 14px;
+
+    p {
+      font-size: clamp(11px, 1.2vw, 14px);
+      line-height: 1.45;
+      letter-spacing: 0.08em;
+    }
+
+    strong {
+      font-size: clamp(40px, 7vw, 76px);
+    }
+  }
+
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
     grid-template-columns: 1fr;
-    left: 5vw;
-    right: 5vw;
+    left: 18px;
+    right: 18px;
+    gap: 10px;
 
     p,
     strong {
       grid-column: 1;
       justify-self: start;
+    }
+
+    p {
+      max-width: 19rem;
     }
   }
 `;
@@ -705,6 +845,13 @@ export default function HomeClient() {
   const [fullIndex, setFullIndex] = useState(0);
   const [viewport, setViewport] = useState<Viewport>({ width: 1440, height: 900 });
   const [modalPhoto, setModalPhoto] = useState<GalleryItem | null>(null);
+  const isMobileViewport = viewport.width < MOBILE_BREAKPOINT;
+  const isTabletViewport = viewport.width < TABLET_BREAKPOINT;
+  const currentSlotLayout = isMobileViewport
+    ? mobileSlotLayout
+    : isTabletViewport
+      ? tabletSlotLayout
+      : desktopSlotLayout;
 
   useEffect(() => {
     seedRef.current = Math.floor(Date.now() % 100000);
@@ -760,18 +907,20 @@ export default function HomeClient() {
       .filter((item): item is RandomPhoto => Boolean(item));
   }, [photos]);
 
-  const sectionWidth = viewport.width < 760
-    ? Math.max(138, viewport.width * 0.31)
-    : Math.min(Math.max(164, viewport.width * 0.17), 232);
-  const streamSectionCount = Math.max(18, Math.min(42, Math.ceil(Math.max(photoPool.length, 1) / slotLayout.length)));
+  const sectionWidth = isMobileViewport
+    ? Math.min(Math.max(168, viewport.width * 0.44), 216)
+    : isTabletViewport
+      ? Math.min(Math.max(196, viewport.width * 0.23), 272)
+      : Math.min(Math.max(164, viewport.width * 0.17), 232);
+  const streamSectionCount = Math.max(18, Math.min(42, Math.ceil(Math.max(photoPool.length, 1) / currentSlotLayout.length)));
   const loopWidth = sectionWidth * streamSectionCount;
   const randomSections = useMemo(() => {
     const recentIds = new Set<string>();
     const recentQueue: string[] = [];
-    const recentLimit = Math.max(slotLayout.length, Math.min(72, Math.floor(photoPool.length * 0.72)));
+    const recentLimit = Math.max(currentSlotLayout.length, Math.min(72, Math.floor(photoPool.length * 0.72)));
 
     return Array.from({ length: streamSectionCount }, (_, sectionIndex) => {
-      const photosForSection = slotLayout.map((_, slotIndex) => {
+      const photosForSection = currentSlotLayout.map((_, slotIndex) => {
         const preferredCategory = referenceCategories[(sectionIndex + slotIndex) % referenceCategories.length];
         const photo = pickRandomPhoto(
           photoPool,
@@ -795,7 +944,7 @@ export default function HomeClient() {
         photos: photosForSection,
       };
     });
-  }, [activeStreamSection, photoPool, streamSectionCount]);
+  }, [activeStreamSection, currentSlotLayout, photoPool, streamSectionCount]);
   const fullPhotos = useMemo(() => {
     const flattened = randomSections.flatMap((section) => section.photos).filter((photo): photo is RandomPhoto => Boolean(photo));
     return flattened.length ? flattened : photoPool;
@@ -805,7 +954,8 @@ export default function HomeClient() {
   const nextPhoto = getSectionPhoto(fullPhotos, fullIndex + 1);
   const modalImage = photoSrc(modalPhoto, 'original');
   const tone = 'dark';
-  const isImmersiveMobile = viewport.width < 760 && Boolean(modalPhoto && isValidUrl(modalImage));
+  const isImmersiveMobile = isMobileViewport && Boolean(modalPhoto && isValidUrl(modalImage));
+  const thumbnailSizes = isMobileViewport ? '38vw' : isTabletViewport ? '18vw' : '12vw';
 
   useEffect(() => {
     const tick = () => {
@@ -852,12 +1002,12 @@ export default function HomeClient() {
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault();
       const axis = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-      scrollTargetRef.current += axis * (viewport.width < 760 ? 1.45 : 1.18);
+      scrollTargetRef.current += axis * (isMobileViewport ? 1.32 : isTabletViewport ? 1.22 : 1.18);
     };
 
     node.addEventListener('wheel', handleWheel, { passive: false });
     return () => node.removeEventListener('wheel', handleWheel);
-  }, [viewport.width]);
+  }, [isMobileViewport, isTabletViewport]);
 
   const handlePointerDown = (event: React.PointerEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest('button, a')) return;
@@ -883,7 +1033,7 @@ export default function HomeClient() {
   const switchMode = (nextMode: Mode) => {
     if (nextMode === mode) return;
     setMode(nextMode);
-    scrollTargetRef.current += sectionWidth * (viewport.width < 760 ? 1.15 : 2.5);
+    scrollTargetRef.current += sectionWidth * (isMobileViewport ? 1.05 : isTabletViewport ? 1.7 : 2.5);
   };
 
   return (
@@ -914,7 +1064,7 @@ export default function HomeClient() {
                 $active={active}
                 aria-hidden={!active}
               >
-                {slotLayout.map((layout, slot) => {
+                {currentSlotLayout.map((layout, slot) => {
                       const photo = section.photos[slot];
                       if (!photo || !isValidUrl(photo.mediumSrc)) {
                         return (
@@ -949,7 +1099,7 @@ export default function HomeClient() {
                               src={photo.mediumSrc}
                               alt={photo.photo.title || ''}
                               fill
-                              sizes="(max-width: 760px) 32vw, 12vw"
+                              sizes={thumbnailSizes}
                               quality={70}
                               priority={copy === 0 && loopDistance <= 1 && slot < 2}
                             />
