@@ -1,461 +1,109 @@
 'use client';
 
+import Image from 'next/image';
 import styled from 'styled-components';
 import Header from '@/components/Header';
-import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 
-const AboutContainer = styled.div`
+const Page = styled.main`
   min-height: 100vh;
-  padding-top: 80px;
-  background: #1a1a1a;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  @media (max-width: 768px) {
-    padding: 0;
-    min-height: 100vh;
-    align-items: center;
-    justify-content: center;
-  }
+  background:
+    radial-gradient(circle at 88% 12%, rgba(14, 81, 84, 0.2), transparent 32vw),
+    linear-gradient(180deg, var(--paper-soft), var(--paper));
+`;
 
-  &::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: 
-      radial-gradient(ellipse at top, rgba(139, 0, 0, 0.1) 0%, transparent 50%),
-      linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
-    z-index: -2;
-  }
+const Content = styled.section`
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(280px, 0.5fr);
+  gap: clamp(32px, 8vw, 120px);
+  padding: clamp(42px, 8vw, 110px) clamp(18px, 4vw, 56px) clamp(56px, 10vw, 132px);
 
-  &::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(255, 255, 255, 0.01) 2px,
-      rgba(255, 255, 255, 0.01) 4px
-    );
-    pointer-events: none;
-    z-index: 100;
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
   }
 `;
 
-const TicketWrapper = styled.div`
-  position: fixed;
-  inset: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+const Text = styled.div`
+  align-self: end;
+`;
+
+const Title = styled.h1`
+  font-family: var(--font-bebas-neue), var(--font-inter), sans-serif;
+  font-size: clamp(5rem, 16vw, 15rem);
+  font-weight: 400;
+  letter-spacing: 0.035em;
+  line-height: 0.74;
+  margin-bottom: clamp(28px, 5vw, 64px);
+  text-transform: uppercase;
+  text-shadow: 0 4px 0 rgba(201, 154, 52, 0.34);
+`;
+
+const Copy = styled.div`
+  max-width: 660px;
+  color: var(--muted);
+  font-size: clamp(0.96rem, 1.4vw, 1.08rem);
+  line-height: 1.95;
+`;
+
+const Portrait = styled.div`
+  position: relative;
+  align-self: start;
+  aspect-ratio: 4 / 5;
+  background: var(--film-black);
   overflow: hidden;
-  z-index: 10;
-`;
+  border: 1px solid rgba(34, 23, 15, 0.24);
+  box-shadow: 0 22px 60px rgba(34, 23, 15, 0.22);
 
-const Ticket = styled.div<{ $isClicked: boolean }>`
-  display: flex;
-  flex-direction: row;
-  width: 500px;
-  height: 210px;
-  background: transparent;
-  border-radius: 28px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-  overflow: visible;
-  transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: ${props => props.$isClicked ? '0' : '1'};
-  perspective: 1000px;
-  position: relative;
-  @media (max-width: 600px) {
-    position: absolute;
-    left: 50vw;
-    top: 50vh;
-    transform: translate(-50%, -50%) rotate(90deg) translateY(-145px);
-    transform-origin: center center;
-    width: 500px;
-    height: 210px;
-    margin: 0;
-    border-radius: 18px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  img {
+    filter: sepia(0.22) saturate(0.78) contrast(1.05);
   }
 `;
 
-const CutLineWrapper = styled.div`
-  position: absolute;
-  left: 0;
-  margin-left: 90px;
-  top: 0;
-  bottom: 0;
-  width: 48px;
-  min-height: 120px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  cursor: pointer;
-`;
+const Meta = styled.dl`
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 18px;
+  margin-top: 34px;
+  color: var(--ink);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 
-const CutLine = styled.div`
-  width: 2px;
-  height: 100%;
-  border-left: 2px dashed #fff;
-  position: absolute;
-  left: 16px;
-  top: 0;
-  bottom: 0;
-  z-index: 41;
-`;
-
-const ScissorsIcon = styled.div`
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 42;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-`;
-
-const CutHint = styled.div`
-  position: absolute;
-  left: 50%;
-  top: -22px;
-  transform: translateX(-50%);
-  color: #222;
-  font-size: 1.05rem;
-  font-weight: 600;
-  background: none;
-  padding: 0;
-  border-radius: 0;
-  z-index: 50;
-  cursor: pointer;
-  user-select: none;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-`;
-
-const FilmPart = styled.div<{ $isCutting?: boolean }>`
-  background: #222;
-  width: 90px;
-  height: 100%;
-  border-radius: 16px 0 0 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  box-shadow: 2px 0 8px rgba(0,0,0,0.18);
-  z-index: 2;
-  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
-  ${({ $isCutting }) => $isCutting && `
-    transform: translateX(-120px) rotate(-8deg);
-    opacity: 0.7;
-  `}
-  @media (max-width: 600px) {
-    width: 90px;
-    border-radius: 16px 0 0 16px;
-  }
-`;
-const FilmHoles = styled.div`
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 18px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 90%;
-  z-index: 3;
-  @media (max-width: 600px) {
-    width: 18px;
-    height: 90%;
-    left: 0;
-    top: 0;
-    bottom: 0;
-  }
-`;
-const FilmHole = styled.div`
-  width: 14px;
-  height: 12px;
-  background: #fff;
-  border-radius: 4px;
-  margin: 2px 0;
-  @media (max-width: 600px) {
-    width: 14px;
-    height: 12px;
-    margin: 2px 0;
-  }
-`;
-const BarcodeArea = styled.div`
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-`;
-const BarcodeImg2 = styled.div`
-  width: 48px;
-  height: 80px;
-  background: repeating-linear-gradient(
-    to right,
-    #222 0 2px, #fff 2px 6px
-  );
-  border-radius: 4px;
-`;
-const MainPart = styled.div<{ $isCutting?: boolean }>`
-  flex: 1;
-  background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%);
-  border-radius: 0 20px 20px 0;
-  color: #fff;
-  padding: 32px 32px 36px 32px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-width: 0;
-  min-height: 200px;
-  overflow: visible;
-  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
-  ${({ $isCutting }) => $isCutting && `
-    transform: translateX(120px) rotate(8deg);
-    opacity: 0.7;
-  `}
-  @media (max-width: 600px) {
-    border-radius: 0 14px 14px 0;
-    padding: 18px 12px 22px 12px;
-    writing-mode: initial;
-    text-orientation: initial;
-    align-items: flex-start;
-    min-height: 140px;
-    > * {
-      transform: none;
-      margin: initial;
-      text-align: initial;
-      width: initial;
-      max-width: initial;
-      white-space: normal;
-      overflow: visible;
-    }
-  }
-`;
-const MainTitle = styled.div`
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 2.1rem;
-  font-weight: bold;
-  letter-spacing: 2px;
-  text-transform: lowercase;
-  span { font-size: 1.1rem; font-weight: normal; margin-left: 4px; }
-`;
-const MainSub = styled.div`
-  font-size: 1rem;
-  opacity: 0.7;
-  margin-bottom: 8px;
-`;
-const MainTime = styled.div`
-  font-size: 1.2rem;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-`;
-const PlayIcon = styled.span`
-  font-size: 1.1rem;
-  margin-right: 6px;
-`;
-const MainStars = styled.div`
-  color: #fffde7;
-  font-size: 1.1rem;
-  margin-bottom: 8px;
-`;
-const MainInfo = styled.div`
-  font-size: 1rem;
-  font-weight: bold;
-  letter-spacing: 1px;
-`;
-
-const PosterImg = styled.img`
-  width: 90vw;
-  max-width: 420px;
-  height: auto;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-  margin: 0 auto;
-  display: block;
-  animation: posterDrop 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  position: relative;
-  z-index: 2;
-
-  @keyframes posterDrop {
-    0% { 
-      opacity: 0;
-      transform: translateY(-100vh) rotate(-10deg);
-      filter: brightness(0.5) contrast(1.2);
-    }
-    60% {
-      opacity: 1;
-      transform: translateY(20px) rotate(5deg);
-      filter: brightness(1.2) contrast(1.1);
-    }
-    80% {
-      transform: translateY(-10px) rotate(-2deg);
-    }
-    100% { 
-      opacity: 1;
-      transform: translateY(0) rotate(0);
-      filter: brightness(1) contrast(1);
-    }
+  dt {
+    color: var(--blood-red);
+    font-weight: 700;
   }
 `;
 
-export default function About() {
-  const [isClicked, setIsClicked] = useState(false);
-  const [showPoster, setShowPoster] = useState(false);
-  const [isCutting, setIsCutting] = useState(false);
-  const ticketRef = useRef<HTMLDivElement>(null);
-  const [ticketStyle, setTicketStyle] = useState<React.CSSProperties>({});
-
-  useLayoutEffect(() => {
-    function updatePosition() {
-      if (window.innerWidth <= 600 && ticketRef.current) {
-        // ヘッダーの高さ（必要に応じて調整）
-        const headerHeight = 80;
-        const marginTop = 16; // ヘッダー下の余白
-        const ticketWidth = ticketRef.current.offsetWidth;
-        // 回転後の中心をウィンドウ中央に合わせる
-        const centerX = window.innerWidth / 2;
-        // ヘッダー下からチケットの中心までの距離
-        const centerY = headerHeight + marginTop + ticketWidth / 2;
-
-        setTicketStyle({
-          position: 'absolute',
-          left: `${centerX}px`,
-          top: `${centerY}px`,
-          transform: `translate(-50%, -50%) rotate(90deg)` ,
-          transformOrigin: 'center center',
-        });
-      } else {
-        setTicketStyle({});
-      }
-    }
-    updatePosition();
-    window.addEventListener('resize', updatePosition);
-    return () => window.removeEventListener('resize', updatePosition);
-  }, []);
-
-  // グローバル副作用リセット
-  useEffect(() => {
-    document.body.style.overflow = '';
-    document.documentElement.style.overflow = '';
-    document.body.style.display = '';
-    document.documentElement.style.display = '';
-    document.body.style.opacity = '';
-    document.documentElement.style.opacity = '';
-    document.body.style.visibility = '';
-    document.documentElement.style.visibility = '';
-    if (window.localStorage) localStorage.clear();
-    if (window.sessionStorage) sessionStorage.clear();
-    return () => {
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-      document.body.style.display = '';
-      document.documentElement.style.display = '';
-      document.body.style.opacity = '';
-      document.documentElement.style.opacity = '';
-      document.body.style.visibility = '';
-      document.documentElement.style.visibility = '';
-      if (window.localStorage) localStorage.clear();
-      if (window.sessionStorage) sessionStorage.clear();
-    };
-  }, []);
-
-  const handleCut = () => {
-    if (isClicked || showPoster || isCutting) return;
-    setIsCutting(true);
-    setTimeout(() => {
-      setIsClicked(true);
-      setTimeout(() => {
-        setShowPoster(true);
-      }, 400);
-    }, 350); // アニメーション後に切り替え
-  };
-
+export default function AboutPage() {
   return (
-    <AboutContainer>
+    <Page>
       <Header />
-      <TicketWrapper>
-        {!showPoster && (
-          <Ticket
-            ref={ticketRef}
-            style={{
-              ...ticketStyle,
-              cursor: isClicked ? 'default' : 'pointer',
-              transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
-            }}
-            $isClicked={isClicked}
-            onClick={handleCut}
-          >
-            {!isCutting && (
-              <CutLineWrapper>
-                <CutHint>Tap to cut</CutHint>
-                <CutLine />
-                <ScissorsIcon>
-                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="6" cy="6" r="2.2" stroke="#222" strokeWidth="1.5" fill="#fff"/>
-                    <circle cx="16" cy="16" r="2.2" stroke="#222" strokeWidth="1.5" fill="#fff"/>
-                    <path d="M7.5 7.5L14.5 14.5" stroke="#222" strokeWidth="1.5" strokeLinecap="round"/>
-                    <path d="M14.5 7.5L7.5 14.5" stroke="#222" strokeWidth="1.5" strokeLinecap="round"/>
-                    <path d="M2 11H20" stroke="#222" strokeWidth="1.2" strokeDasharray="2 2"/>
-                  </svg>
-                </ScissorsIcon>
-              </CutLineWrapper>
-            )}
-            {/* 黒いフィルム部分 */}
-            <FilmPart $isCutting={isCutting}>
-              <FilmHoles>
-                {[...Array(7)].map((_, i) => (
-                  <FilmHole key={i} />
-                ))}
-              </FilmHoles>
-              <BarcodeArea>
-                <BarcodeImg2 />
-              </BarcodeArea>
-            </FilmPart>
-            {/* 赤いメイン部分 */}
-            <MainPart $isCutting={isCutting}>
-              <MainTitle>cinema <span>ticket</span></MainTitle>
-              <MainSub>Lorem ipsum</MainSub>
-              <MainTime>
-                <PlayIcon>▶</PlayIcon> 21.00
-              </MainTime>
-              <MainStars>★ ★ ★ ★ ★</MainStars>
-              <MainInfo>THEATER 1 / SEAT 16</MainInfo>
-              <MainStars style={{opacity:0.2, fontSize:'2.5rem', position:'absolute', right:10, bottom:10}}>★</MainStars>
-            </MainPart>
-          </Ticket>
-        )}
-        {showPoster && (
-          <PosterImg 
-            src="/images/cinema-paradiso-poster.jpg" 
-            alt="Cinema Paradiso"
+      <Content>
+        <Text>
+          <Title>About</Title>
+          <Copy>
+            L.MARK is a Japan-based photography project focused on portraits, city fragments, and quiet personal records. The site is designed as a photographic index: simple navigation, generous margins, and images that stay in the foreground.
+          </Copy>
+          <Meta>
+            <dt>Base</dt>
+            <dd>Japan</dd>
+            <dt>Focus</dt>
+            <dd>Portrait / Personal Work</dd>
+            <dt>Archive</dt>
+            <dd>Ongoing</dd>
+          </Meta>
+        </Text>
+        <Portrait>
+          <Image
+            src="/images/logo_about_01.jpg"
+            alt="L.MARK portrait visual"
+            fill
+            sizes="(max-width: 860px) 100vw, 38vw"
+            style={{ objectFit: 'cover' }}
+            priority
           />
-        )}
-      </TicketWrapper>
-    </AboutContainer>
+        </Portrait>
+      </Content>
+    </Page>
   );
-} 
+}

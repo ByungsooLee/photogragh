@@ -1,237 +1,128 @@
 'use client';
 
-import styled from 'styled-components';
-import { useState, useEffect } from 'react';
-import { FaInstagram } from 'react-icons/fa';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import styled from 'styled-components';
 
-const HeaderContainer = styled.header`
-  position: fixed;
+type HeaderProps = {
+  variant?: 'light' | 'dark';
+  workHref?: string;
+};
+
+const HeaderContainer = styled.header<{ $variant: 'light' | 'dark' }>`
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: auto 1fr;
   align-items: center;
-  height: 80px;
+  gap: 24px;
+  width: 100%;
+  min-height: 76px;
+  padding: 16px clamp(18px, 4vw, 56px);
+  background: transparent;
+  color: ${props => props.$variant === 'dark' ? '#f6ebcf' : 'var(--ink)'};
+  pointer-events: none;
 
-  @media (max-width: 600px) {
-    height: 48px;
-    padding: 0.5rem 1rem;
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    align-items: start;
+    padding: 14px 18px;
   }
 `;
 
-const Logo = styled.h1`
-  font-family: 'Playfair Display', serif;
-  font-size: 1.5rem;
-  color: var(--dark-gold);
-  margin: 0;
-  text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
-  text-decoration: none !important;
-  border-bottom: none !important;
-  box-shadow: none !important;
-  background: none !important;
-  &::after {
-    display: none !important;
-    content: none !important;
+const Brand = styled(Link)`
+  justify-self: start;
+  display: grid;
+  gap: 3px;
+  color: inherit;
+  font-family: var(--font-bebas-neue), var(--font-inter), sans-serif;
+  font-size: clamp(2.1rem, 4.2vw, 4.6rem);
+  font-weight: 400;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  line-height: 0.78;
+  text-shadow: 0 2px 0 rgba(201, 154, 52, 0.32);
+  pointer-events: auto;
+
+  span {
+    display: block;
   }
 
-  @media (max-width: 600px) {
-    font-size: 1.1rem;
-  }
-`;
-
-const LogoLink = styled(Link)`
-  text-decoration: none !important;
-  border-bottom: none !important;
-  box-shadow: none !important;
-  background: none !important;
-  &::after {
-    display: none !important;
-    content: none !important;
-  }
-`;
-
-const MenuButton = styled.button<{ $isOpen: boolean }>`
-  background: none;
-  border: none;
-  color: var(--dark-gold);
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-
-  &:hover {
-    color: var(--light-gold);
+  small {
+    font-family: var(--font-inter), sans-serif;
+    font-size: clamp(0.48rem, 0.72vw, 0.66rem);
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    line-height: 1;
+    color: var(--gold);
+    text-shadow: none;
   }
 
-  @media (min-width: 1025px) {
-    display: none;
+  @media (max-width: 720px) {
+    font-size: clamp(2rem, 12vw, 3.4rem);
+    letter-spacing: 0.035em;
   }
 `;
 
 const Nav = styled.nav`
+  justify-self: end;
   display: flex;
   align-items: center;
-  gap: 2rem;
-  margin-left: auto;
-  position: relative;
-  z-index: 1002;
+  gap: clamp(10px, 1.7vw, 24px);
+  font-family: var(--font-bebas-neue), var(--font-inter), sans-serif;
+  font-size: clamp(1.05rem, 1.45vw, 1.45rem);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  pointer-events: auto;
 
-  @media (max-width: 1024px) {
-    display: none;
-  }
-`;
-
-const NavLink = styled(Link)`
-  color: var(--dark-gold);
-  text-decoration: none;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  position: relative;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  white-space: nowrap;
-  display: inline-block;
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 0;
-    height: 1px;
-    background: var(--dark-gold);
-    transition: width 0.3s ease;
-  }
-
-  &:hover {
-    color: var(--light-gold);
-    background: rgba(212, 175, 55, 0.1);
-    &::after {
-      width: 100%;
-    }
-  }
-`;
-
-const InstagramIcon = styled(FaInstagram)`
-  font-size: 2rem;
-  color: var(--dark-gold);
-  transition: all 0.3s ease;
-  padding: 0.5rem;
-  border-radius: 4px;
-  display: inline-block;
-
-  &:hover {
-    color: var(--light-gold);
-    transform: scale(1.1);
-    background: rgba(212, 175, 55, 0.1);
-  }
-`;
-
-const MobileMenu = styled.div<{ $isOpen: boolean }>`
-  display: none;
-
-  @media (max-width: 1024px) {
-    display: ${props => props.$isOpen ? 'flex' : 'none'};
-    position: fixed;
-    top: 0;
-    right: 0;
+  @media (max-width: 720px) {
+    justify-self: start;
     width: 100%;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.95);
-    backdrop-filter: blur(10px);
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 2rem;
-    z-index: 1001;
+    overflow-x: auto;
+    padding-bottom: 2px;
   }
 `;
 
-const CloseButton = styled.button`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  color: var(--dark-gold);
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 0.5rem;
+const NavLink = styled(Link)<{ $active?: boolean }>`
+  color: inherit;
+  opacity: ${props => props.$active ? 1 : 0.78};
+  border: 1px solid ${props => props.$active ? 'currentColor' : 'transparent'};
+  border-left-color: currentColor;
+  border-right-color: currentColor;
+  padding: 5px 10px 3px;
+  white-space: nowrap;
+  transition: color 180ms ease, border-color 180ms ease, opacity 180ms ease;
 
-  @media (min-width: 1025px) {
-    display: none;
+  &:hover {
+    opacity: 1;
+    border-color: currentColor;
   }
 `;
 
-const Header: React.FC = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+const Comma = styled.span`
+  color: var(--gold);
+  opacity: 0.9;
+`;
 
-  useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-  }, [isMenuOpen]);
+const Header = ({ variant = 'light', workHref = '/gallery' }: HeaderProps) => {
+  const pathname = usePathname();
+  const workActive = pathname === '/' || pathname === '/gallery';
 
   return (
-    <HeaderContainer>
-      <LogoLink href="/" passHref>
-        <Logo>L.MARK</Logo>
-      </LogoLink>
-      <Nav
-        role="navigation"
-        aria-label="メインナビゲーション"
-        aria-hidden={isMenuOpen}
-        tabIndex={isMenuOpen ? -1 : 0}
-      >
-        <NavLink href="/gallery">Gallery</NavLink>
-        <NavLink href="/about">About</NavLink>
-        <NavLink href="/contact">Contact</NavLink>
-        <NavLink href="/instagram">
-          Instagram
-        </NavLink>
+    <HeaderContainer $variant={variant}>
+      <Brand href="/" aria-label="L.MARK home">
+        <span>L.MARK</span>
+        <small>Photo Picture Archive</small>
+      </Brand>
+      <Nav aria-label="Main navigation">
+        <NavLink href={workHref} $active={workActive}>Work</NavLink>
+        <Comma>,</Comma>
+        <NavLink href="/about" $active={pathname === '/about'}>About</NavLink>
       </Nav>
-      <MenuButton 
-        onClick={() => setIsMenuOpen(true)}
-        aria-label="メニューを開く"
-        aria-expanded={isMenuOpen}
-        $isOpen={isMenuOpen}
-      >
-        ☰
-      </MenuButton>
-      <MobileMenu 
-        $isOpen={isMenuOpen}
-        aria-hidden={!isMenuOpen}
-        tabIndex={!isMenuOpen ? -1 : 0}
-        role="navigation"
-        aria-label="モバイルメニュー"
-      >
-        <CloseButton 
-          onClick={() => setIsMenuOpen(false)}
-          aria-label="メニューを閉じる"
-        >
-          ×
-        </CloseButton>
-        <NavLink href="/instagram" onClick={() => setIsMenuOpen(false)}>
-          <InstagramIcon />
-        </NavLink>
-        <NavLink href="/gallery" onClick={() => setIsMenuOpen(false)}>Gallery</NavLink>
-        <NavLink href="/about" onClick={() => setIsMenuOpen(false)}>About</NavLink>
-        <NavLink href="/contact" onClick={() => setIsMenuOpen(false)}>Contact</NavLink>
-      </MobileMenu>
     </HeaderContainer>
   );
 };
 
-export default Header; 
+export default Header;

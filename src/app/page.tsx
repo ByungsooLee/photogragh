@@ -1,5 +1,5 @@
-import HomeClient from '../components/HomeClient';
+import HomeClientNoSSR from '../components/HomeClientNoSSR';
 
 export default function Home() {
-  return <HomeClient />;
+  return <HomeClientNoSSR />;
 }
