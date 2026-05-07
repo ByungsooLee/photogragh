@@ -25,6 +25,9 @@ type Viewport = {
 type RandomPhoto = {
   photo: GalleryItem;
   category: string;
+  mediumSrc: string;
+  largeSrc: string;
+  originalSrc: string;
 };
 
 const referenceCategories = ['Interior', 'Landscape', 'Portrait'];
@@ -53,6 +56,13 @@ const titleIn = keyframes`
 const fadeUp = keyframes`
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
+`;
+
+const singeFlicker = keyframes`
+  0% { opacity: 0.14; transform: scale(1) translate3d(0, 0, 0); }
+  35% { opacity: 0.28; transform: scale(1.015) translate3d(1px, -1px, 0); }
+  60% { opacity: 0.2; transform: scale(1.025) translate3d(-1px, 1px, 0); }
+  100% { opacity: 0.3; transform: scale(1.03) translate3d(0, 0, 0); }
 `;
 
 const Page = styled.main`
@@ -109,13 +119,13 @@ const VirtualCanvas = styled.div<{ $mode: Mode }>`
   transition: opacity 420ms ease;
 `;
 
-const CategorySection = styled.div<{ $x: number; $width: number; $active: boolean; $velocity: number }>`
+const CategorySection = styled.div<{ $baseX: number; $width: number; $active: boolean }>`
   position: absolute;
-  top: clamp(56px, 7vh, 72px);
+  top: clamp(112px, 11.5vh, 138px);
   left: 0;
   width: ${props => props.$width}px;
-  height: clamp(590px, 87vh, 680px);
-  transform: translate3d(${props => props.$x}px, 0, 0);
+  height: clamp(660px, 89vh, 760px);
+  transform: translate3d(calc(${props => props.$baseX}px - var(--scroll-offset, 0px)), 0, 0);
   will-change: transform;
   pointer-events: ${props => props.$active ? 'auto' : 'none'};
 `;
@@ -126,7 +136,6 @@ const PhotoSlot = styled.div<{
   $top: number;
   $scale: number;
   $rotate: number;
-  $velocity?: number;
 }>`
   position: absolute;
   display: grid;
@@ -134,8 +143,8 @@ const PhotoSlot = styled.div<{
   left: ${props => props.$left}%;
   top: ${props => props.$top}%;
   transform: translate3d(
-    calc(-50% + ${props => (props.$shift || 0) * (props.$velocity || 0) * -12}px),
-    calc(-50% + ${props => (props.$shift || 0) * (props.$velocity || 0) * 34}px),
+    calc(-50% + ${props => (props.$shift || 0) * -12}px * var(--scroll-velocity, 0)),
+    calc(-50% + ${props => (props.$shift || 0) * 34}px * var(--scroll-velocity, 0)),
     0
   ) rotate(${props => props.$rotate}deg) scale(${props => props.$scale});
   transition: z-index 180ms ease, transform 180ms ease;
@@ -151,13 +160,12 @@ const PhotoButton = styled.button<{
   $active: boolean;
   $shape: 'square' | 'wide' | 'portrait';
   $primary: boolean;
-  $velocity: number;
 }>`
   position: relative;
   width: ${props => {
-    if (props.$shape === 'wide') return 'clamp(124px, 10.2vw, 166px)';
-    if (props.$shape === 'portrait') return 'clamp(72px, 5.8vw, 96px)';
-    return 'clamp(94px, 7.8vw, 126px)';
+    if (props.$shape === 'wide') return 'clamp(142px, 11.8vw, 188px)';
+    if (props.$shape === 'portrait') return 'clamp(82px, 6.8vw, 110px)';
+    return 'clamp(108px, 8.9vw, 144px)';
   }};
   aspect-ratio: ${props => {
     if (props.$shape === 'wide') return '16 / 9';
@@ -176,10 +184,10 @@ const PhotoButton = styled.button<{
     inset 0 0 0 5px rgba(246, 235, 207, 0.16),
     0 0 0 1px rgba(201, 154, 52, 0.22),
     0 10px 18px rgba(0, 0, 0, 0.34);
-  transform: ${props => {
-    const speed = Math.abs(props.$velocity);
-    return `translate3d(${props.$velocity * 10}px, 0, 0) skewY(${props.$velocity * -1.2}deg) scaleX(${1 + speed * 0.07}) scale(0.98)`;
-  }};
+  transform: translate3d(calc(var(--scroll-velocity, 0) * 10px), 0, 0)
+    skewY(calc(var(--scroll-velocity, 0) * -1.2deg))
+    scaleX(calc(1 + (var(--scroll-speed, 0) * 0.07)))
+    scale(0.98);
   transform-origin: 50% 50%;
   transition: opacity 180ms ease, filter 180ms ease, box-shadow 180ms ease;
   will-change: transform, opacity, filter;
@@ -231,6 +239,41 @@ const PhotoButton = styled.button<{
     ${props => props.$shape === 'wide' ? 'bottom: 4px;' : 'right: 4px;'}
   }
 
+  & > span::before {
+    content: "";
+    position: absolute;
+    inset: ${props => props.$shape === 'wide' ? '9px 8px' : '8px 10px'};
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    mix-blend-mode: screen;
+    background:
+      radial-gradient(circle at 50% 12%, rgba(255, 214, 120, 0.28) 0%, rgba(255, 162, 72, 0.18) 18%, rgba(0, 0, 0, 0) 42%),
+      radial-gradient(circle at 18% 50%, rgba(255, 120, 44, 0.14) 0%, rgba(0, 0, 0, 0) 34%),
+      radial-gradient(circle at 82% 50%, rgba(255, 120, 44, 0.14) 0%, rgba(0, 0, 0, 0) 34%),
+      linear-gradient(180deg, rgba(255, 220, 140, 0.06), rgba(33, 8, 0, 0.22) 66%, rgba(0, 0, 0, 0.4));
+    transition: opacity 220ms ease;
+  }
+
+  & > span::after {
+    content: "";
+    position: absolute;
+    inset: ${props => props.$shape === 'wide' ? '9px 8px' : '8px 10px'};
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    mix-blend-mode: screen;
+    background:
+      repeating-linear-gradient(
+        180deg,
+        rgba(255, 213, 133, 0.03) 0 2px,
+        rgba(72, 24, 4, 0.08) 2px 4px,
+        rgba(0, 0, 0, 0) 4px 7px
+      );
+    filter: blur(0.4px);
+    transition: opacity 220ms ease;
+  }
+
   img {
     object-fit: cover;
     opacity: 1;
@@ -238,20 +281,35 @@ const PhotoButton = styled.button<{
     width: ${props => props.$shape === 'wide' ? 'calc(100% - 16px)' : 'calc(100% - 20px)'} !important;
     height: ${props => props.$shape === 'wide' ? 'calc(100% - 18px)' : 'calc(100% - 16px)'} !important;
     border: 1px solid rgba(246, 235, 207, 0.18);
-    transform: ${props => {
-      const speed = Math.abs(props.$velocity);
-      return `translate3d(${props.$velocity * -12}px, 0, 0) scale(${1 + speed * 0.045})`;
-    }};
+    transform: translate3d(calc(var(--scroll-velocity, 0) * -12px), 0, 0)
+      scale(calc(1 + (var(--scroll-speed, 0) * 0.045)));
     transform-origin: center;
     will-change: transform;
+    transition: filter 220ms ease, opacity 220ms ease, transform 220ms ease;
   }
 
   @media (max-width: 760px) {
     width: ${props => {
-      if (props.$shape === 'wide') return '38vw';
-      if (props.$shape === 'portrait') return '23vw';
-      return '30vw';
+      if (props.$shape === 'wide') return '42vw';
+      if (props.$shape === 'portrait') return '26vw';
+      return '33vw';
     }};
+  }
+
+  &:hover,
+  &:focus-visible {
+    & > span::before,
+    & > span::after {
+      opacity: 1;
+    }
+
+    & > span::before {
+      animation: ${singeFlicker} 560ms ease-out forwards;
+    }
+
+    img {
+      filter: sepia(0.24) saturate(1.16) contrast(1.08) brightness(1.02);
+    }
   }
 `;
 
@@ -272,7 +330,6 @@ const FullPanel = styled.button<{
   $width: number;
   $active: boolean;
   $side: boolean;
-  $velocity: number;
 }>`
   position: absolute;
   top: 0;
@@ -288,13 +345,14 @@ const FullPanel = styled.button<{
   box-shadow:
     0 0 0 1px rgba(246, 235, 207, 0.22),
     0 26px 70px rgba(0, 0, 0, 0.45);
-  transform: ${props => {
-    const speed = Math.abs(props.$velocity);
-    const shift = props.$x + props.$velocity * (props.$active ? 30 : 15);
-    const skew = props.$velocity * (props.$active ? -1.65 : -0.72);
-    const baseScale = props.$active ? 1 : 0.98;
-    return `translate3d(calc(-50% + ${shift}px), 0, 0) skewY(${skew}deg) scaleX(${1 + speed * (props.$active ? 0.065 : 0.032)}) scale(${baseScale})`;
-  }};
+  transform: translate3d(
+      calc(-50% + ${props => props.$x}px + (var(--scroll-velocity, 0) * ${props => props.$active ? 30 : 15}px)),
+      0,
+      0
+    )
+    skewY(calc(var(--scroll-velocity, 0) * ${props => props.$active ? -1.65 : -0.72}deg))
+    scaleX(calc(1 + (var(--scroll-speed, 0) * ${props => props.$active ? 0.065 : 0.032})))
+    scale(${props => props.$active ? 1 : 0.98});
   transform-origin: 50% 50%;
   transition: opacity 420ms ease, filter 420ms ease;
   will-change: transform;
@@ -332,10 +390,8 @@ const FullPanel = styled.button<{
     width: ${props => props.$active ? 'calc(100% - 48px)' : 'calc(100% - 36px)'} !important;
     height: ${props => props.$active ? 'calc(100% - 40px)' : 'calc(100% - 28px)'} !important;
     border: 1px solid rgba(246, 235, 207, 0.16);
-    transform: ${props => {
-      const speed = Math.abs(props.$velocity);
-      return `translate3d(${props.$velocity * (props.$active ? -22 : -10)}px, 0, 0) scale(${1 + speed * (props.$active ? 0.055 : 0.025)})`;
-    }};
+    transform: translate3d(calc(var(--scroll-velocity, 0) * ${props => props.$active ? -22 : -10}px), 0, 0)
+      scale(calc(1 + (var(--scroll-speed, 0) * ${props => props.$active ? 0.055 : 0.025})));
     transform-origin: center;
     will-change: transform;
   }
@@ -586,7 +642,7 @@ function getLoopIndex(scroll: number, sectionWidth: number, groupCount: number) 
   return positiveModulo(Math.round(positiveModulo(scroll, loopWidth) / sectionWidth), groupCount);
 }
 
-function getSectionPhoto(photos: GalleryItem[], index: number) {
+function getSectionPhoto<T>(photos: T[], index: number) {
   if (!photos.length) return null;
   return photos[index % photos.length];
 }
@@ -605,7 +661,7 @@ function pickRandomPhoto(pool: RandomPhoto[], seed: number, recentIds: Set<strin
   const freshCandidates = pool.filter((item) => !recentIds.has(item.photo.id));
   const candidates = categoryCandidates.length ? categoryCandidates : freshCandidates.length ? freshCandidates : pool;
   const index = Math.floor(seededRandom(seed) * candidates.length);
-  return candidates[index]?.photo || null;
+  return candidates[index] || null;
 }
 
 export default function HomeClient() {
@@ -615,6 +671,7 @@ export default function HomeClient() {
   const scrollCurrentRef = useRef(0);
   const seedRef = useRef(12437);
   const activeStreamSectionRef = useRef(0);
+  const fullIndexRef = useRef(0);
   const touchStartRef = useRef<{ x: number; y: number; scroll: number } | null>(null);
 
   const [photos, setPhotos] = useState<GalleryItem[]>([]);
@@ -622,7 +679,7 @@ export default function HomeClient() {
   const [showSplash, setShowSplash] = useState(true);
   const [mode, setMode] = useState<Mode>('grid');
   const [activeStreamSection, setActiveStreamSection] = useState(0);
-  const [scrollFrame, setScrollFrame] = useState({ current: 0, velocity: 0 });
+  const [fullIndex, setFullIndex] = useState(0);
   const [viewport, setViewport] = useState<Viewport>({ width: 1440, height: 900 });
   const [modalPhoto, setModalPhoto] = useState<GalleryItem | null>(null);
 
@@ -665,9 +722,17 @@ export default function HomeClient() {
       .map((photo) => {
         const src = photoSrc(photo, 'medium');
         if (!isValidUrl(src)) return null;
+        const largeSrc = photoSrc(photo, 'large');
+        const originalSrc = photoSrc(photo, 'original');
         const category = normalizeCategory(photo);
         const fallback = referenceCategories.includes(category) ? category : referenceCategories[0];
-        return { photo, category: fallback };
+        return {
+          photo,
+          category: fallback,
+          mediumSrc: src,
+          largeSrc: isValidUrl(largeSrc) ? largeSrc : src,
+          originalSrc: isValidUrl(originalSrc) ? originalSrc : largeSrc || src,
+        };
       })
       .filter((item): item is RandomPhoto => Boolean(item));
   }, [photos]);
@@ -677,8 +742,6 @@ export default function HomeClient() {
     : Math.min(Math.max(164, viewport.width * 0.17), 232);
   const streamSectionCount = Math.max(18, Math.min(42, Math.ceil(Math.max(photoPool.length, 1) / slotLayout.length)));
   const loopWidth = sectionWidth * streamSectionCount;
-  const wrappedScroll = positiveModulo(scrollFrame.current, loopWidth);
-  const easedVelocity = Math.max(-1, Math.min(1, scrollFrame.velocity / 38));
   const randomSections = useMemo(() => {
     const recentIds = new Set<string>();
     const recentQueue: string[] = [];
@@ -694,8 +757,8 @@ export default function HomeClient() {
           preferredCategory
         );
         if (photo) {
-          recentIds.add(photo.id);
-          recentQueue.push(photo.id);
+          recentIds.add(photo.photo.id);
+          recentQueue.push(photo.photo.id);
           if (recentQueue.length > recentLimit) {
             const expired = recentQueue.shift();
             if (expired) recentIds.delete(expired);
@@ -711,10 +774,9 @@ export default function HomeClient() {
     });
   }, [activeStreamSection, photoPool, streamSectionCount]);
   const fullPhotos = useMemo(() => {
-    const flattened = randomSections.flatMap((section) => section.photos).filter((photo): photo is GalleryItem => Boolean(photo));
-    return flattened.length ? flattened : photoPool.map((item) => item.photo);
+    const flattened = randomSections.flatMap((section) => section.photos).filter((photo): photo is RandomPhoto => Boolean(photo));
+    return flattened.length ? flattened : photoPool;
   }, [photoPool, randomSections]);
-  const fullIndex = getLoopIndex(scrollFrame.current, sectionWidth, Math.max(fullPhotos.length, 1));
   const currentPhoto = getSectionPhoto(fullPhotos, fullIndex);
   const prevPhoto = getSectionPhoto(fullPhotos, fullIndex - 1 + Math.max(fullPhotos.length, 1));
   const nextPhoto = getSectionPhoto(fullPhotos, fullIndex + 1);
@@ -727,16 +789,29 @@ export default function HomeClient() {
       const target = scrollTargetRef.current;
       const next = current + (target - current) * 0.16;
       const velocity = next - current;
+      const wrappedScroll = positiveModulo(next, loopWidth);
+      const easedVelocity = Math.max(-1, Math.min(1, velocity / 38));
 
       scrollCurrentRef.current = Math.abs(velocity) < 0.001 ? target : next;
+      if (pageRef.current) {
+        pageRef.current.style.setProperty('--scroll-offset', `${wrappedScroll}px`);
+        pageRef.current.style.setProperty('--scroll-velocity', `${easedVelocity}`);
+        pageRef.current.style.setProperty('--scroll-speed', `${Math.abs(easedVelocity)}`);
+      }
+
       const streamSection = Math.floor(scrollCurrentRef.current / Math.max(sectionWidth, 1));
+      const nextFullIndex = getLoopIndex(scrollCurrentRef.current, sectionWidth, Math.max(fullPhotos.length, 1));
 
       if (streamSection !== activeStreamSectionRef.current) {
         activeStreamSectionRef.current = streamSection;
         setActiveStreamSection(streamSection);
       }
 
-      setScrollFrame({ current: scrollCurrentRef.current, velocity });
+      if (nextFullIndex !== fullIndexRef.current) {
+        fullIndexRef.current = nextFullIndex;
+        setFullIndex(nextFullIndex);
+      }
+
       rafRef.current = window.requestAnimationFrame(tick);
     };
 
@@ -744,7 +819,7 @@ export default function HomeClient() {
     return () => {
       if (rafRef.current !== null) window.cancelAnimationFrame(rafRef.current);
     };
-  }, [sectionWidth]);
+  }, [fullPhotos.length, loopWidth, sectionWidth]);
 
   useEffect(() => {
     const node = pageRef.current;
@@ -799,9 +874,10 @@ export default function HomeClient() {
       <Stage $tone={tone}>
         <VirtualCanvas $mode={mode}>
           {copies.map((copy) => randomSections.map((section, sectionIndex) => {
-            const x = viewport.width / 2 - sectionWidth / 2 + copy * loopWidth + sectionIndex * sectionWidth - wrappedScroll;
+            const x = viewport.width / 2 - sectionWidth / 2 + copy * loopWidth + sectionIndex * sectionWidth;
+            const visibleX = x - positiveModulo(scrollCurrentRef.current, loopWidth);
             const renderMargin = sectionWidth * 2;
-            if (x < -renderMargin || x > viewport.width + renderMargin) return null;
+            if (visibleX < -renderMargin || visibleX > viewport.width + renderMargin) return null;
             const activeIndex = positiveModulo(activeStreamSection, streamSectionCount);
             const distance = Math.abs(sectionIndex - activeIndex);
             const loopDistance = Math.min(distance, streamSectionCount - distance);
@@ -809,16 +885,14 @@ export default function HomeClient() {
             return (
               <CategorySection
                 key={`${copy}-${section.key}`}
-                $x={x}
+                $baseX={x}
                 $width={sectionWidth}
                 $active={active}
-                $velocity={easedVelocity}
                 aria-hidden={!active}
               >
                 {slotLayout.map((layout, slot) => {
                       const photo = section.photos[slot];
-                      const src = photoSrc(photo, 'medium');
-                      if (!photo || !isValidUrl(src)) {
+                      if (!photo || !isValidUrl(photo.mediumSrc)) {
                         return (
                           <PhotoSlot
                             key={slot}
@@ -827,32 +901,29 @@ export default function HomeClient() {
                             $top={layout.top}
                             $scale={layout.scale}
                             $rotate={layout.rotate}
-                            $velocity={easedVelocity}
                           />
                         );
                       }
                       return (
                         <PhotoSlot
-                          key={`${photo.id}-${slot}`}
+                          key={`${photo.photo.id}-${slot}`}
                           $shift={layout.shift}
                           $left={layout.left}
                           $top={layout.top}
                           $scale={layout.scale}
                           $rotate={layout.rotate}
-                          $velocity={easedVelocity}
                         >
                           <PhotoButton
                             type="button"
                             $active={active}
                             $shape={layout.shape}
                             $primary={false}
-                            $velocity={easedVelocity}
-                            onClick={() => openPhoto(photo)}
-                            aria-label={`${photo.title || 'Photo'}を表示`}
+                            onClick={() => openPhoto(photo.photo)}
+                            aria-label={`${photo.photo.title || 'Photo'}を表示`}
                           >
                             <Image
-                              src={src}
-                              alt={photo.title || ''}
+                              src={photo.mediumSrc}
+                              alt={photo.photo.title || ''}
                               fill
                               sizes="(max-width: 760px) 32vw, 12vw"
                               quality={70}
@@ -870,23 +941,21 @@ export default function HomeClient() {
         <FullLayer $mode={mode}>
           {[
             { photo: prevPhoto, x: -viewport.width * 0.54, active: false, label: 'Previous photo' },
-            { photo: currentPhoto, x: 0, active: true, label: `${currentPhoto?.title || 'Photo'}を表示` },
+            { photo: currentPhoto, x: 0, active: true, label: `${currentPhoto?.photo.title || 'Photo'}を表示` },
             { photo: nextPhoto, x: viewport.width * 0.54, active: false, label: 'Next photo' },
           ].map((panel) => {
-            const src = photoSrc(panel.photo, 'large');
-            if (!panel.photo || !isValidUrl(src)) return null;
+            if (!panel.photo || !isValidUrl(panel.photo.largeSrc)) return null;
             return (
               <FullPanel
-                key={`${panel.photo.id}-${panel.x}`}
+                key={`${panel.photo.photo.id}-${panel.x}`}
                 $x={panel.x}
                 $width={panel.active ? Math.min(viewport.width * 0.58, 920) : Math.min(viewport.width * 0.48, 760)}
                 $active={panel.active}
                 $side={!panel.active}
-                $velocity={easedVelocity}
-                onClick={() => panel.active ? openPhoto(panel.photo) : (scrollTargetRef.current += panel.x > 0 ? sectionWidth : -sectionWidth)}
+                onClick={() => panel.active ? openPhoto(panel.photo?.photo) : (scrollTargetRef.current += panel.x > 0 ? sectionWidth : -sectionWidth)}
                 aria-label={panel.label}
               >
-                <Image src={src} alt={panel.active ? panel.photo.title || '' : ''} fill sizes={panel.active ? '60vw' : '40vw'} quality={90} priority={panel.active} />
+                <Image src={panel.photo.largeSrc} alt={panel.active ? panel.photo.photo.title || '' : ''} fill sizes={panel.active ? '60vw' : '40vw'} quality={90} priority={panel.active} />
               </FullPanel>
             );
           })}
