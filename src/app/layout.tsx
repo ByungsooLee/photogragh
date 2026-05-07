@@ -1,27 +1,13 @@
 import type { Metadata } from 'next';
+import '@fontsource/noto-serif-jp/300.css';
+import '@fontsource/noto-serif-jp/400.css';
+import '@fontsource/noto-serif-jp/700.css';
+import '@fontsource/bebas-neue/400.css';
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/700.css';
 import './globals.css';
 import { GlobalStyle } from '@/lib/styled-components';
 import StyledComponentsRegistry from '@/lib/registry';
-import { Noto_Serif_JP, Bebas_Neue, Inter } from 'next/font/google';
-
-const notoSerifJP = Noto_Serif_JP({
-  subsets: ['latin'],
-  weight: ['300', '400', '700'],
-  display: 'swap',
-  variable: '--font-noto-serif-jp',
-});
-const bebasNeue = Bebas_Neue({
-  subsets: ['latin'],
-  weight: '400',
-  display: 'swap',
-  variable: '--font-bebas-neue',
-});
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['400', '700'],
-  display: 'swap',
-  variable: '--font-inter',
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.bml-studio.com'),
@@ -78,7 +64,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja" className={`${notoSerifJP.variable} ${bebasNeue.variable} ${inter.variable}`}>
+    <html lang="ja">
       <body>
         <StyledComponentsRegistry>
           <GlobalStyle />

@@ -316,6 +316,7 @@ const PhotoButton = styled.button<{
 const FullLayer = styled.div<{ $mode: Mode }>`
   position: absolute;
   inset: 0;
+  z-index: 20;
   display: flex;
   align-items: stretch;
   justify-content: center;
@@ -398,7 +399,29 @@ const FullPanel = styled.button<{
 
   @media (max-width: 760px) {
     display: ${props => props.$side ? 'none' : 'block'};
+    left: 0;
+    top: 0;
     width: 100vw;
+    height: 100dvh;
+    border: none;
+    box-shadow: none;
+    opacity: 1;
+    filter: none;
+    transform: none;
+
+    &::before,
+    &::after {
+      display: none;
+    }
+
+    img {
+      object-fit: contain;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      border: none;
+      transform: none;
+    }
   }
 `;
 
@@ -406,7 +429,7 @@ const FixedUi = styled.div`
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 15;
+  z-index: 30;
 `;
 
 const Cross = styled.div`
@@ -782,6 +805,7 @@ export default function HomeClient() {
   const nextPhoto = getSectionPhoto(fullPhotos, fullIndex + 1);
   const modalImage = photoSrc(modalPhoto, 'original');
   const tone = 'dark';
+  const isImmersiveMobile = viewport.width < 760 && Boolean(modalPhoto && isValidUrl(modalImage));
 
   useEffect(() => {
     const tick = () => {
@@ -870,7 +894,7 @@ export default function HomeClient() {
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
     >
-      <Header variant={tone} workHref="/" />
+      {!isImmersiveMobile && <Header variant={tone} workHref="/" />}
       <Stage $tone={tone}>
         <VirtualCanvas $mode={mode}>
           {copies.map((copy) => randomSections.map((section, sectionIndex) => {
@@ -961,17 +985,19 @@ export default function HomeClient() {
           })}
         </FullLayer>
 
-        <FixedUi>
-          <Cross />
-          <ModeSwitch aria-label="Display mode">
-            <ModeButton type="button" $active={mode === 'grid'} $variant="grid" onClick={() => switchMode('grid')} aria-label="Grid mode">
-              <span>{Array.from({ length: 9 }).map((_, index) => <i key={index} />)}</span>
-            </ModeButton>
-            <ModeButton type="button" $active={mode === 'full'} $variant="full" onClick={() => switchMode('full')} aria-label="Full mode">
-              <span><i /><i /><i /></span>
-            </ModeButton>
-          </ModeSwitch>
-        </FixedUi>
+        {!isImmersiveMobile && (
+          <FixedUi>
+            <Cross />
+            <ModeSwitch aria-label="Display mode">
+              <ModeButton type="button" $active={mode === 'grid'} $variant="grid" onClick={() => switchMode('grid')} aria-label="Grid mode">
+                <span>{Array.from({ length: 9 }).map((_, index) => <i key={index} />)}</span>
+              </ModeButton>
+              <ModeButton type="button" $active={mode === 'full'} $variant="full" onClick={() => switchMode('full')} aria-label="Full mode">
+                <span><i /><i /><i /></span>
+              </ModeButton>
+            </ModeSwitch>
+          </FixedUi>
+        )}
       </Stage>
 
       <Splash $hidden={!showSplash && !isLoading}>

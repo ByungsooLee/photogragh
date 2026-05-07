@@ -4,6 +4,9 @@ import { createGlobalStyle } from 'styled-components';
 
 export const GlobalStyle = createGlobalStyle`
   :root {
+    --font-noto-serif-jp: 'Noto Serif JP';
+    --font-bebas-neue: 'Bebas Neue';
+    --font-inter: 'Inter';
     --ink: #22170f;
     --muted: #796b55;
     --paper: #efe1bf;
