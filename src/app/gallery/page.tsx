@@ -18,8 +18,9 @@ type ImageSet = {
 const Page = styled.main`
   min-height: 100vh;
   background:
-    radial-gradient(circle at 18% 0%, rgba(201, 154, 52, 0.2), transparent 34vw),
-    linear-gradient(180deg, var(--paper-soft), var(--paper));
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.08), transparent 32vw),
+    radial-gradient(circle at 84% 12%, rgba(92, 106, 118, 0.16), transparent 28vw),
+    linear-gradient(180deg, #111216 0%, var(--paper) 64%, #020203 100%);
 `;
 
 const Toolbar = styled.section`
@@ -31,9 +32,9 @@ const Toolbar = styled.section`
   align-items: end;
   gap: 20px;
   padding: 22px clamp(18px, 4vw, 56px);
-  background: rgba(239, 225, 191, 0.88);
+  background: rgba(8, 9, 11, 0.86);
   border-bottom: 1px solid var(--line);
-  backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px) saturate(1.05);
 
   @media (max-width: 760px) {
     top: 103px;
@@ -47,7 +48,7 @@ const TitleBlock = styled.div`
 `;
 
 const Eyebrow = styled.div`
-  color: var(--blood-red);
+  color: rgba(248, 245, 239, 0.58);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.22em;
@@ -63,7 +64,7 @@ const Title = styled.h1`
   line-height: 0.82;
   text-transform: uppercase;
   color: var(--ink);
-  text-shadow: 0 3px 0 rgba(201, 154, 52, 0.32);
+  text-shadow: 0 18px 42px rgba(0, 0, 0, 0.58);
 `;
 
 const Filters = styled.div`
@@ -82,7 +83,7 @@ const FilterButton = styled.button<{ $active?: boolean }>`
   border: 1px solid ${props => props.$active ? 'var(--ink)' : 'var(--line)'};
   border-left-color: var(--ink);
   border-right-color: var(--ink);
-  background: ${props => props.$active ? 'rgba(201, 154, 52, 0.16)' : 'transparent'};
+  background: ${props => props.$active ? 'rgba(248, 245, 239, 0.12)' : 'transparent'};
   color: ${props => props.$active ? 'var(--ink)' : 'var(--muted)'};
   cursor: pointer;
   padding: 6px 10px 5px;
@@ -116,8 +117,8 @@ const WorkItem = styled.button<{ $wide?: boolean; $tall?: boolean }>`
   grid-column: span ${props => props.$wide ? 6 : 4};
   position: relative;
   aspect-ratio: ${props => props.$tall ? '3 / 4' : props.$wide ? '16 / 10' : '4 / 3'};
-  border: 1px solid rgba(34, 23, 15, 0.2);
-  background: #1b130d;
+  border: 1px solid rgba(248, 245, 239, 0.14);
+  background: #050506;
   cursor: zoom-in;
   overflow: hidden;
 
@@ -130,14 +131,14 @@ const WorkItem = styled.button<{ $wide?: boolean; $tall?: boolean }>`
   }
 
   img {
-    filter: sepia(0.16) saturate(0.86) contrast(1.04);
+    filter: saturate(0.9) contrast(1.05) brightness(0.94);
     transition: transform 700ms ease, filter 700ms ease;
   }
 
   &:hover img,
   &:focus-visible img {
     transform: scale(1.035);
-    filter: sepia(0.08) saturate(1) contrast(1.08);
+    filter: saturate(1.02) contrast(1.08) brightness(1.02);
   }
 
   &:focus-visible {
@@ -154,7 +155,7 @@ const Overlay = styled.span`
   padding: 36px 14px 14px;
   color: #fff;
   text-align: left;
-  background: linear-gradient(180deg, transparent, rgba(23, 18, 13, 0.78));
+  background: linear-gradient(180deg, transparent, rgba(2, 2, 3, 0.84));
   opacity: 0;
   transition: opacity 220ms ease;
 
@@ -174,7 +175,7 @@ const WorkTitle = styled.span`
 
 const WorkMeta = styled.span`
   opacity: 0.78;
-  color: var(--gold);
+  color: rgba(248, 245, 239, 0.7);
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;

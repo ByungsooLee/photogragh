@@ -278,7 +278,7 @@ const Caption = styled.p`
 
 const BottomSwipeHint = styled.div`
   margin-top: 8px;
-  color: #ffe9a7;
+  color: #f8f5ef;
   font-size: 1.08rem;
   background: rgba(10,10,10,0.7);
   padding: 8px 20px;

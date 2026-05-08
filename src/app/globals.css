@@ -7,21 +7,21 @@
 }
 
 html {
-  background: #efe1bf;
-  color: #22170f;
+  background: #050506;
+  color: #f4efe6;
   scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
-  background: #efe1bf;
-  color: #22170f;
+  background: #050506;
+  color: #f4efe6;
   font-family: var(--font-inter), var(--font-noto-serif-jp), serif;
 }
 
 ::selection {
-  background: #8f271d;
-  color: #f6ebcf;
+  background: #f4efe6;
+  color: #050506;
 }
 
 img {

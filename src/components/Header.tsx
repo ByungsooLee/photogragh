@@ -36,16 +36,16 @@ const HeaderContainer = styled.header<{ $variant: 'light' | 'dark'; $fixed: bool
   background: ${props =>
     props.$fixed
       ? props.$variant === 'dark'
-        ? 'color-mix(in srgb, #080604 88%, transparent)'
-        : 'color-mix(in srgb, var(--paper-soft) 92%, transparent)'
+        ? 'color-mix(in srgb, #050506 88%, transparent)'
+        : 'color-mix(in srgb, #08090b 86%, transparent)'
       : 'transparent'};
   backdrop-filter: ${props => (props.$fixed ? 'blur(14px) saturate(1.05)' : 'none')};
   -webkit-backdrop-filter: ${props => (props.$fixed ? 'blur(14px) saturate(1.05)' : 'none')};
   border-bottom: ${props =>
-    props.$fixed ? (props.$variant === 'dark' ? '1px solid rgba(246, 235, 207, 0.12)' : '1px solid var(--line)') : 'none'};
+    props.$fixed ? (props.$variant === 'dark' ? '1px solid rgba(248, 245, 239, 0.12)' : '1px solid var(--line)') : 'none'};
   box-shadow: ${props =>
-    props.$fixed && props.$variant === 'light' ? '0 1px 0 rgba(34, 23, 15, 0.06)' : 'none'};
-  color: ${props => props.$variant === 'dark' ? '#f6ebcf' : 'var(--ink)'};
+    props.$fixed && props.$variant === 'light' ? '0 18px 42px rgba(0, 0, 0, 0.24)' : 'none'};
+  color: ${props => props.$variant === 'dark' ? '#f8f5ef' : 'var(--ink)'};
   pointer-events: none;
 
   @media (max-width: ${MOBILE_BREAKPOINT}px) {
@@ -71,7 +71,7 @@ const Brand = styled(Link)`
   letter-spacing: 0.045em;
   text-transform: uppercase;
   line-height: 0.78;
-  text-shadow: 0 2px 0 rgba(201, 154, 52, 0.32);
+  text-shadow: 0 12px 30px rgba(0, 0, 0, 0.62);
   pointer-events: auto;
 
   span {
@@ -84,7 +84,7 @@ const Brand = styled(Link)`
     font-weight: 700;
     letter-spacing: 0.28em;
     line-height: 1;
-    color: var(--gold);
+    color: rgba(248, 245, 239, 0.62);
     text-shadow: none;
   }
 
@@ -143,8 +143,8 @@ const NavLink = styled(Link)<{ $active?: boolean }>`
 `;
 
 const Comma = styled.span`
-  color: var(--gold);
-  opacity: 0.9;
+  color: rgba(248, 245, 239, 0.54);
+  opacity: 0.8;
 
   @media (max-width: ${MOBILE_BREAKPOINT}px) {
     display: none;

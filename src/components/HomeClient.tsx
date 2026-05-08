@@ -52,6 +52,11 @@ const desktopSlotLayout = [
   { shift: 4, left: 12, top: 79, scale: 1.16, rotate: -2.4, shape: 'wide', primary: false },
   { shift: -3, left: 45, top: 78, scale: 0.98, rotate: 4.8, shape: 'square', primary: false },
   { shift: 2, left: 72, top: 82, scale: 1.22, rotate: -4.2, shape: 'wide', primary: true },
+  { shift: -5, left: 8, top: 39, scale: 0.92, rotate: 5.6, shape: 'portrait', primary: false },
+  { shift: 5, left: 38, top: 58, scale: 1.02, rotate: -5.4, shape: 'wide', primary: false },
+  { shift: -2, left: 63, top: 63, scale: 0.94, rotate: 3.6, shape: 'square', primary: false },
+  { shift: 3, left: 92, top: 72, scale: 0.98, rotate: -6.2, shape: 'portrait', primary: false },
+  { shift: -4, left: 27, top: 93, scale: 0.9, rotate: 2.8, shape: 'square', primary: false },
 ] as const;
 const tabletSlotLayout = [
   { shift: 4, left: 12, top: 15, scale: 1.04, rotate: -5.8, shape: 'portrait', primary: false },
@@ -76,19 +81,25 @@ const mobileSlotLayout = [
 ] as const;
 
 const splashReveal = keyframes`
-  0% { clip-path: inset(28vh 42vw 28vh 42vw); opacity: 1; }
-  45% { clip-path: inset(20vh 38vw 20vh 38vw); opacity: 1; }
-  100% { clip-path: inset(0 0 0 0); opacity: 0; }
+  0% { opacity: 1; transform: scale(0.982); filter: brightness(0.58) blur(8px); }
+  52% { opacity: 1; transform: scale(1); filter: brightness(0.9) blur(0); }
+  100% { opacity: 0; transform: scale(1.018); filter: brightness(0.76) blur(12px); }
 `;
 
 const titleIn = keyframes`
-  from { transform: translateY(1.1em); }
-  to { transform: translateY(0); }
+  from { opacity: 0; transform: translateY(0.72em); }
+  to { opacity: 1; transform: translateY(0); }
 `;
 
 const fadeUp = keyframes`
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
+`;
+
+const screenLine = keyframes`
+  0% { transform: scaleX(0); opacity: 0; }
+  38% { opacity: 0.88; }
+  100% { transform: scaleX(1); opacity: 0.2; }
 `;
 
 const projectorDrift = keyframes`
@@ -130,7 +141,7 @@ const Stage = styled.section<{ $tone: 'light' | 'dark' }>`
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: radial-gradient(circle at 50% 42%, #2a2219 0%, #17120d 48%, #080604 100%);
+  background: radial-gradient(circle at 50% 42%, #181a1e 0%, #090a0c 52%, #020203 100%);
   color: var(--paper-soft);
   transition: background 520ms ease;
 
@@ -156,8 +167,8 @@ const Stage = styled.section<{ $tone: 'light' | 'dark' }>`
 
   &::after {
     inset: 1.2vw;
-    border: 1px solid rgba(246, 235, 207, 0.16);
-    box-shadow: inset 0 0 0 1px rgba(201, 154, 52, 0.14);
+    border: 1px solid rgba(248, 245, 239, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
   }
 
   @media (max-width: ${TABLET_BREAKPOINT}px) {
@@ -270,17 +281,17 @@ const PhotoButton = styled.button<{
     if (props.$shape === 'portrait') return '2 / 3';
     return '1 / 1';
   }};
-  border: 1px solid rgba(226, 190, 103, 0.34);
+  border: 1px solid rgba(248, 245, 239, 0.18);
   background:
-    linear-gradient(135deg, #0a0705 0%, #24180f 50%, #050403 100%);
+    linear-gradient(135deg, #050506 0%, #14161a 50%, #020203 100%);
   cursor: zoom-in;
   overflow: hidden;
   opacity: ${props => props.$active ? 0.98 : 0.18};
-  filter: ${props => props.$active ? 'sepia(0.12) saturate(0.95) contrast(1.03)' : 'grayscale(0.86) sepia(0.24) brightness(0.74)'};
+  filter: ${props => props.$active ? 'saturate(0.92) contrast(1.06)' : 'grayscale(0.9) saturate(0.72) brightness(0.66)'};
   box-shadow:
-    inset 0 0 0 4px #050403,
-    inset 0 0 0 5px rgba(246, 235, 207, 0.16),
-    0 0 0 1px rgba(201, 154, 52, 0.22),
+    inset 0 0 0 4px #020203,
+    inset 0 0 0 5px rgba(248, 245, 239, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.12),
     0 10px 18px rgba(0, 0, 0, 0.34);
   transform: translate3d(calc(var(--scroll-velocity, 0) * 10px), 0, 0)
     skewY(calc(var(--scroll-velocity, 0) * -1.2deg))
@@ -293,11 +304,11 @@ const PhotoButton = styled.button<{
   &:hover,
   &:focus-visible {
     opacity: 1;
-    filter: sepia(0.08) saturate(1.12) contrast(1.08) brightness(1.2);
+    filter: saturate(1.02) contrast(1.1) brightness(1.12);
     box-shadow:
-      inset 0 0 0 6px #050403,
-      inset 0 0 0 7px rgba(246, 235, 207, 0.24),
-      0 0 0 1px rgba(246, 235, 207, 0.64),
+      inset 0 0 0 6px #020203,
+      inset 0 0 0 7px rgba(248, 245, 239, 0.22),
+      0 0 0 1px rgba(248, 245, 239, 0.58),
       0 14px 24px rgba(0, 0, 0, 0.46);
   }
 
@@ -346,10 +357,10 @@ const PhotoButton = styled.button<{
     opacity: 0;
     mix-blend-mode: screen;
     background:
-      radial-gradient(circle at 50% 12%, rgba(255, 214, 120, 0.28) 0%, rgba(255, 162, 72, 0.18) 18%, rgba(0, 0, 0, 0) 42%),
-      radial-gradient(circle at 18% 50%, rgba(255, 120, 44, 0.14) 0%, rgba(0, 0, 0, 0) 34%),
-      radial-gradient(circle at 82% 50%, rgba(255, 120, 44, 0.14) 0%, rgba(0, 0, 0, 0) 34%),
-      linear-gradient(180deg, rgba(255, 220, 140, 0.06), rgba(33, 8, 0, 0.22) 66%, rgba(0, 0, 0, 0.4));
+      radial-gradient(circle at 50% 12%, rgba(248, 245, 239, 0.2) 0%, rgba(205, 212, 220, 0.12) 18%, rgba(0, 0, 0, 0) 42%),
+      radial-gradient(circle at 18% 50%, rgba(180, 190, 198, 0.1) 0%, rgba(0, 0, 0, 0) 34%),
+      radial-gradient(circle at 82% 50%, rgba(180, 190, 198, 0.1) 0%, rgba(0, 0, 0, 0) 34%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(8, 10, 12, 0.24) 66%, rgba(0, 0, 0, 0.42));
     transition: opacity 220ms ease;
   }
 
@@ -364,8 +375,8 @@ const PhotoButton = styled.button<{
     background:
       repeating-linear-gradient(
         180deg,
-        rgba(255, 213, 133, 0.03) 0 2px,
-        rgba(72, 24, 4, 0.08) 2px 4px,
+        rgba(255, 255, 255, 0.026) 0 2px,
+        rgba(96, 108, 118, 0.06) 2px 4px,
         rgba(0, 0, 0, 0) 4px 7px
       );
     filter: blur(0.4px);
@@ -420,7 +431,7 @@ const PhotoButton = styled.button<{
     }
 
     img {
-      filter: sepia(0.24) saturate(1.16) contrast(1.08) brightness(1.02);
+      filter: saturate(1.04) contrast(1.1) brightness(1.02);
     }
   }
 `;
@@ -432,7 +443,7 @@ const FullLayer = styled.div<{ $mode: Mode }>`
   display: flex;
   align-items: stretch;
   justify-content: center;
-  background: radial-gradient(circle at center, #2f2118 0%, #120e0a 72%);
+  background: radial-gradient(circle at center, #17191d 0%, #050506 72%);
   opacity: ${props => props.$mode === 'full' ? 1 : 0};
   pointer-events: ${props => props.$mode === 'full' ? 'auto' : 'none'};
   transition: opacity 520ms ease;
@@ -450,11 +461,11 @@ const FullPanel = styled.button<{
   height: 100dvh;
   width: ${props => props.$width}px;
   border: 1px solid rgba(246, 235, 207, 0.18);
-  background: #050403;
+  background: #020203;
   overflow: hidden;
   cursor: ${props => props.$active ? 'zoom-in' : 'pointer'};
   opacity: ${props => props.$active ? 1 : 0.24};
-  filter: ${props => props.$active ? 'sepia(0.12) saturate(0.95)' : 'grayscale(1) sepia(0.3) brightness(0.68)'};
+  filter: ${props => props.$active ? 'saturate(0.94) contrast(1.04)' : 'grayscale(1) saturate(0.7) brightness(0.62)'};
   box-shadow:
     0 0 0 1px rgba(246, 235, 207, 0.22),
     0 26px 70px rgba(0, 0, 0, 0.45);
@@ -562,7 +573,7 @@ const Cross = styled.div`
   &::after {
     content: "";
     position: absolute;
-    background: var(--gold);
+    background: rgba(248, 245, 239, 0.84);
     opacity: 0.86;
   }
 
@@ -666,7 +677,8 @@ const ProjectorAccent = styled.div<{ $compact: boolean; $dragging: boolean }>`
   }
 
   @media (min-width: ${TABLET_BREAKPOINT + 1}px) {
-    display: none;
+    left: clamp(48px, 5vw, 92px);
+    bottom: max(32px, calc(env(safe-area-inset-bottom, 0px) + 32px));
   }
 
   @media (max-width: ${MOBILE_BREAKPOINT}px) {
@@ -702,7 +714,7 @@ const ProjectorBeam = styled.div<{ $compact: boolean }>`
     clip-path: polygon(0 47%, 100% 0, 100% 100%);
     background:
       linear-gradient(90deg, rgba(246, 235, 207, 0.22) 0%, rgba(246, 235, 207, 0.11) 42%, rgba(246, 235, 207, 0) 100%),
-      radial-gradient(circle at 0% 50%, rgba(255, 222, 153, 0.28), rgba(255, 222, 153, 0) 34%);
+      radial-gradient(circle at 0% 50%, rgba(232, 238, 244, 0.24), rgba(232, 238, 244, 0) 34%);
   }
 
   &::after {
@@ -735,8 +747,8 @@ const ProjectorBody = styled.div<{ $compact: boolean }>`
   border: 1px solid rgba(246, 235, 207, 0.32);
   border-radius: 10px;
   background:
-    linear-gradient(180deg, rgba(43, 33, 21, 0.96), rgba(17, 12, 8, 0.96)),
-    linear-gradient(90deg, rgba(201, 154, 52, 0.08), rgba(0, 0, 0, 0));
+    linear-gradient(180deg, rgba(28, 30, 34, 0.96), rgba(8, 9, 11, 0.96)),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0));
   box-shadow:
     inset 0 0 0 1px rgba(246, 235, 207, 0.08),
     0 8px 18px rgba(0, 0, 0, 0.28);
@@ -771,7 +783,7 @@ const ProjectorPanel = styled.div<{ $compact: boolean }>`
   bottom: ${props => props.$compact ? '33px' : '40px'};
   width: ${props => props.$compact ? '38px' : '44px'};
   height: ${props => props.$compact ? '16px' : '18px'};
-  border: 1px solid rgba(201, 154, 52, 0.3);
+  border: 1px solid rgba(248, 245, 239, 0.22);
   border-radius: 7px;
   background: rgba(8, 6, 4, 0.5);
 
@@ -793,7 +805,7 @@ const ProjectorLeg = styled.div<{ $left: number; $compact: boolean }>`
   bottom: 0;
   width: 2px;
   height: ${props => props.$compact ? '24px' : '30px'};
-  background: linear-gradient(180deg, rgba(246, 235, 207, 0.24), rgba(78, 56, 35, 0.72));
+  background: linear-gradient(180deg, rgba(248, 245, 239, 0.24), rgba(88, 94, 102, 0.62));
   transform-origin: top center;
   transform: rotate(${props => props.$left < 40 ? '-18deg' : props.$left > 70 ? '18deg' : '0deg'});
 `;
@@ -853,7 +865,7 @@ const ProjectorHandle = styled.div<{ $compact: boolean; $dragging: boolean }>`
   width: ${props => props.$compact ? '48px' : '54px'};
   height: ${props => props.$compact ? '48px' : '54px'};
   border-radius: 999px;
-  border: 3px solid ${props => props.$dragging ? 'rgba(246, 235, 207, 0.96)' : 'rgba(201, 154, 52, 0.82)'};
+  border: 3px solid ${props => props.$dragging ? 'rgba(248, 245, 239, 0.96)' : 'rgba(200, 204, 210, 0.78)'};
   background:
     radial-gradient(circle at center, rgba(246, 235, 207, 0.72) 0 9%, rgba(8, 6, 4, 0.92) 10% 18%, transparent 19%),
     conic-gradient(
@@ -873,7 +885,7 @@ const ProjectorHandle = styled.div<{ $compact: boolean; $dragging: boolean }>`
     rgba(12, 9, 6, 0.94);
   box-shadow:
     0 0 0 1px rgba(8, 6, 4, 0.58),
-    0 0 18px rgba(201, 154, 52, 0.32),
+    0 0 18px rgba(232, 238, 244, 0.18),
     inset 0 0 0 2px rgba(8, 6, 4, 0.62);
   transform-origin: center;
   transform: rotate(calc(var(--projector-handle-angle, 18deg) + (var(--scroll-velocity, 0) * 14deg)));
@@ -888,7 +900,7 @@ const ProjectorHandle = styled.div<{ $compact: boolean; $dragging: boolean }>`
     height: 50%;
     border-radius: 999px;
     background:
-      linear-gradient(180deg, rgba(246, 235, 207, 0.88), rgba(201, 154, 52, 0.42));
+      linear-gradient(180deg, rgba(248, 245, 239, 0.88), rgba(200, 204, 210, 0.38));
     transform: translate(-50%, -100%);
     transform-origin: center bottom;
   }
@@ -901,9 +913,9 @@ const ProjectorHandle = styled.div<{ $compact: boolean; $dragging: boolean }>`
     width: ${props => props.$compact ? '18px' : '21px'};
     height: ${props => props.$compact ? '18px' : '21px'};
     border-radius: 999px;
-    border: 2px solid ${props => props.$dragging ? 'rgba(246, 235, 207, 0.98)' : 'rgba(201, 154, 52, 0.82)'};
+    border: 2px solid ${props => props.$dragging ? 'rgba(248, 245, 239, 0.98)' : 'rgba(200, 204, 210, 0.78)'};
     background:
-      radial-gradient(circle at 35% 35%, rgba(246, 235, 207, 0.92), rgba(201, 154, 52, 0.32) 38%, rgba(23, 18, 13, 0.96) 70%);
+      radial-gradient(circle at 35% 35%, rgba(248, 245, 239, 0.92), rgba(200, 204, 210, 0.28) 38%, rgba(10, 11, 13, 0.96) 70%);
     box-shadow:
       inset 0 0 0 2px rgba(8, 6, 4, 0.72),
       0 5px 12px rgba(0, 0, 0, 0.42);
@@ -929,10 +941,31 @@ const Splash = styled.div<{ $hidden: boolean }>`
   z-index: 80;
   display: ${props => props.$hidden ? 'none' : 'block'};
   background:
-    radial-gradient(circle at 50% 45%, #48301e 0%, #17120d 72%),
-    var(--film-black);
+    radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.12) 0 1px, transparent 2px),
+    radial-gradient(circle at 50% 45%, rgba(95, 103, 112, 0.24) 0%, rgba(10, 11, 13, 0.92) 42%, #020203 82%),
+    linear-gradient(180deg, #0c0d10, #020203 76%);
   color: var(--paper-soft);
   pointer-events: none;
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    left: 8vw;
+    right: 8vw;
+    top: 50%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(248, 245, 239, 0.72), transparent);
+    transform-origin: center;
+    animation: ${screenLine} 1800ms cubic-bezier(.32,.94,.6,1) 180ms forwards;
+    opacity: 0;
+  }
+
+  &::after {
+    top: calc(50% + clamp(84px, 13vw, 180px));
+    animation-delay: 360ms;
+    opacity: 0;
+  }
 `;
 
 const SplashImage = styled.div`
@@ -944,51 +977,66 @@ const SplashImage = styled.div`
 
   > div {
     position: relative;
-    width: min(22vw, 280px);
-    aspect-ratio: 1 / 1;
+    width: min(48vw, 620px);
+    aspect-ratio: 21 / 9;
     overflow: hidden;
-    border: 1px solid rgba(246, 235, 207, 0.32);
-    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+    border: 1px solid rgba(248, 245, 239, 0.2);
+    background: #030304;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.04),
+      0 32px 90px rgba(0, 0, 0, 0.58),
+      0 0 70px rgba(210, 218, 224, 0.1);
 
     img {
-      filter: sepia(0.35) saturate(0.82) contrast(1.06);
+      filter: grayscale(0.24) saturate(0.72) contrast(1.08) brightness(0.72);
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 50%, transparent 0 42%, rgba(0, 0, 0, 0.5) 100%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 34%, rgba(0, 0, 0, 0.4));
+      pointer-events: none;
     }
   }
 
   @media (max-width: ${TABLET_BREAKPOINT}px) {
     > div {
-      width: min(30vw, 240px);
+      width: min(68vw, 520px);
     }
   }
 
   @media (max-width: ${MOBILE_BREAKPOINT}px) {
     > div {
-      width: min(42vw, 188px);
-      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.34);
+      width: min(82vw, 360px);
+      box-shadow: 0 24px 56px rgba(0, 0, 0, 0.52);
     }
   }
 `;
 
 const SplashTitle = styled.div`
   position: absolute;
-  top: max(10px, calc(env(safe-area-inset-top, 0px) + 10px));
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   overflow: hidden;
   font-family: var(--font-bebas-neue), var(--font-inter), sans-serif;
-  font-size: clamp(86px, 18vw, 320px);
+  font-size: clamp(68px, 12vw, 220px);
   font-weight: 400;
-  letter-spacing: 0.03em;
-  line-height: 0.72;
+  letter-spacing: 0.08em;
+  line-height: 0.84;
   text-transform: uppercase;
-  color: var(--gold);
+  color: rgba(248, 245, 239, 0.94);
   text-shadow:
-    0 3px 0 var(--blood-red),
-    0 14px 34px rgba(0, 0, 0, 0.42);
+    0 18px 52px rgba(0, 0, 0, 0.72),
+    0 0 44px rgba(255, 255, 255, 0.12);
 
   span {
     display: inline-block;
-    transform: translateY(1.1em);
+    opacity: 0;
+    transform: translateY(0.72em);
     animation: ${titleIn} 1100ms cubic-bezier(.32,.94,.6,1) forwards;
     animation-delay: 220ms;
   }
@@ -1006,9 +1054,9 @@ const SplashTitle = styled.div`
 
 const SplashBottom = styled.div`
   position: absolute;
-  left: 1.7vw;
-  right: 1.7vw;
-  bottom: max(18px, calc(env(safe-area-inset-bottom, 0px) + 18px));
+  left: clamp(18px, 4vw, 56px);
+  right: clamp(18px, 4vw, 56px);
+  bottom: max(22px, calc(env(safe-area-inset-bottom, 0px) + 22px));
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   align-items: end;
@@ -1018,21 +1066,23 @@ const SplashBottom = styled.div`
 
   p {
     grid-column: 2;
-    color: rgba(246, 235, 207, 0.8);
+    color: rgba(248, 245, 239, 0.66);
     font-size: clamp(12px, 0.82vw, 15px);
     line-height: 1.55;
-    letter-spacing: 0.1em;
-    text-align: left;
+    letter-spacing: 0.14em;
+    text-align: center;
     text-transform: uppercase;
   }
 
   strong {
     justify-self: end;
-    color: var(--gold);
+    color: rgba(248, 245, 239, 0.86);
     font-family: var(--font-bebas-neue), var(--font-inter), sans-serif;
-    font-size: clamp(46px, 5.4vw, 96px);
+    font-size: clamp(22px, 2.2vw, 38px);
     font-weight: 400;
-    line-height: 0.78;
+    letter-spacing: 0.18em;
+    line-height: 1;
+    text-transform: uppercase;
   }
 
   @media (max-width: ${TABLET_BREAKPOINT}px) {
@@ -1304,7 +1354,7 @@ export default function HomeClient() {
   const tone = 'dark';
   const isImmersiveMobile = isMobileViewport && isModalOpen;
   const thumbnailSizes = isMobileViewport ? '38vw' : isTabletViewport ? '18vw' : '12vw';
-  const showProjectorAccent = isTabletViewport && mode === 'grid' && !isImmersiveMobile;
+  const showProjectorAccent = mode === 'grid' && !isImmersiveMobile;
 
   useEffect(() => {
     const tick = () => {
@@ -1362,7 +1412,7 @@ export default function HomeClient() {
 
   const handleProjectorPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (isModalOpen || mode !== 'grid' || !isTabletViewport) return;
+      if (isModalOpen || mode !== 'grid') return;
       if (event.pointerType === 'mouse' && event.button !== 0) return;
 
       event.preventDefault();
@@ -1377,7 +1427,7 @@ export default function HomeClient() {
       setIsProjectorDragging(true);
       event.currentTarget.setPointerCapture(event.pointerId);
     },
-    [isMobileViewport, isModalOpen, isTabletViewport, mode]
+    [isMobileViewport, isModalOpen, mode]
   );
 
   const handleProjectorPointerMove = useCallback(
@@ -1419,7 +1469,7 @@ export default function HomeClient() {
 
   const handleProjectorKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLDivElement>) => {
-      if (isModalOpen || mode !== 'grid' || !isTabletViewport) return;
+      if (isModalOpen || mode !== 'grid') return;
       const direction = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
       if (direction === 0) return;
 
@@ -1428,7 +1478,7 @@ export default function HomeClient() {
       setProjectorHandleAngle((angle) => angle + angleDelta);
       scrollTargetRef.current += angleDelta * PROJECTOR_HANDLE_SCROLL_PER_DEGREE;
     },
-    [isModalOpen, isTabletViewport, mode]
+    [isModalOpen, mode]
   );
 
   const handleFullMobileActivePointerDown = useCallback(
@@ -1697,8 +1747,8 @@ export default function HomeClient() {
           <span>L.MARK</span>
         </SplashTitle>
         <SplashBottom>
-          <p>Original motion picture stills, portraits, and city fragments from the L.MARK archive.</p>
-          <strong>{isLoading ? '0' : '100'}</strong>
+          <p>Lights down. A quiet passage into the L.MARK archive.</p>
+          <strong>{isLoading ? 'Opening' : 'Now Showing'}</strong>
         </SplashBottom>
       </Splash>
 

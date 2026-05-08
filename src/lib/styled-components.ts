@@ -7,19 +7,20 @@ export const GlobalStyle = createGlobalStyle`
     --font-noto-serif-jp: 'Noto Serif JP';
     --font-bebas-neue: 'Bebas Neue';
     --font-inter: 'Inter';
-    --ink: #22170f;
-    --muted: #796b55;
-    --paper: #efe1bf;
-    --paper-soft: #f6ebcf;
-    --line: rgba(34, 23, 15, 0.22);
-    --gold: #c99a34;
-    --dark-gold: #8f641f;
-    --blood-red: #8f271d;
-    --teal-shadow: #0e5154;
-    --film-black: #17120d;
-    --bg-dark: #17120d;
-    --bg-medium: #2b2118;
-    --film-bg: #2a1c12;
+    --ink: #f4efe6;
+    --muted: #9e988e;
+    --paper: #050506;
+    --paper-soft: #f7f2e8;
+    --line: rgba(247, 242, 232, 0.16);
+    --gold: #c8ccd2;
+    --dark-gold: #767f8a;
+    --light-gold: #f8f5ef;
+    --blood-red: #6f2623;
+    --teal-shadow: #253d42;
+    --film-black: #050506;
+    --bg-dark: #050506;
+    --bg-medium: #101114;
+    --film-bg: #0a0b0d;
   }
 
   * {
@@ -44,9 +45,9 @@ export const GlobalStyle = createGlobalStyle`
   body {
     min-height: 100vh;
     background:
-      radial-gradient(circle at 20% 0%, rgba(201, 154, 52, 0.18), transparent 34vw),
-      radial-gradient(circle at 90% 18%, rgba(14, 81, 84, 0.16), transparent 28vw),
-      linear-gradient(180deg, var(--paper-soft), var(--paper));
+      radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.08), transparent 32vw),
+      radial-gradient(circle at 88% 16%, rgba(93, 110, 122, 0.18), transparent 30vw),
+      linear-gradient(180deg, #111216 0%, var(--paper) 58%, #020203 100%);
   }
 
   body::before {
@@ -58,11 +59,11 @@ export const GlobalStyle = createGlobalStyle`
     z-index: 2147483646;
     pointer-events: none;
     background:
-      radial-gradient(circle at center, transparent 48%, rgba(23, 18, 13, 0.18) 100%),
-      repeating-linear-gradient(90deg, rgba(34, 23, 15, 0.025) 0 1px, transparent 1px 5px),
-      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 4px);
-    mix-blend-mode: multiply;
-    opacity: 0.52;
+      radial-gradient(circle at center, transparent 42%, rgba(0, 0, 0, 0.44) 100%),
+      repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.024) 0 1px, transparent 1px 5px),
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 4px);
+    mix-blend-mode: screen;
+    opacity: 0.34;
   }
 
   a {

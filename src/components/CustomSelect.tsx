@@ -78,15 +78,15 @@ const ArrowIcon = styled.span<{ $isOpen: boolean }>`
     height: 1.2em;
     fill: var(--gold);
     display: block;
-    filter: drop-shadow(0 0 2px #d4af37);
+    filter: drop-shadow(0 0 2px rgba(248, 245, 239, 0.36));
   }
   ${props => props.$isOpen && 'transform: rotate(180deg);'}
   @media (max-width: 600px) {
     svg {
       width: 1.5em;
       height: 1.5em;
-      fill: #ffe9a7;
-      filter: drop-shadow(0 0 4px #d4af37);
+      fill: #f8f5ef;
+      filter: drop-shadow(0 0 4px rgba(248, 245, 239, 0.32));
     }
   }
 `;

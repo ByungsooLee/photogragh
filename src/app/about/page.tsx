@@ -7,8 +7,8 @@ import Header from '@/components/Header';
 const Page = styled.main`
   min-height: 100vh;
   background:
-    radial-gradient(circle at 88% 12%, rgba(14, 81, 84, 0.2), transparent 32vw),
-    linear-gradient(180deg, var(--paper-soft), var(--paper));
+    radial-gradient(circle at 88% 12%, rgba(92, 106, 118, 0.16), transparent 32vw),
+    linear-gradient(180deg, #111216 0%, var(--paper) 64%, #020203 100%);
 `;
 
 const Content = styled.section`
@@ -34,7 +34,7 @@ const Title = styled.h1`
   line-height: 0.74;
   margin-bottom: clamp(28px, 5vw, 64px);
   text-transform: uppercase;
-  text-shadow: 0 4px 0 rgba(201, 154, 52, 0.34);
+  text-shadow: 0 18px 42px rgba(0, 0, 0, 0.58);
 `;
 
 const Copy = styled.div`
@@ -50,11 +50,11 @@ const Portrait = styled.div`
   aspect-ratio: 4 / 5;
   background: var(--film-black);
   overflow: hidden;
-  border: 1px solid rgba(34, 23, 15, 0.24);
-  box-shadow: 0 22px 60px rgba(34, 23, 15, 0.22);
+  border: 1px solid rgba(248, 245, 239, 0.14);
+  box-shadow: 0 28px 72px rgba(0, 0, 0, 0.48);
 
   img {
-    filter: sepia(0.22) saturate(0.78) contrast(1.05);
+    filter: saturate(0.9) contrast(1.06) brightness(0.92);
   }
 `;
 
@@ -69,7 +69,7 @@ const Meta = styled.dl`
   text-transform: uppercase;
 
   dt {
-    color: var(--blood-red);
+    color: rgba(248, 245, 239, 0.62);
     font-weight: 700;
   }
 `;

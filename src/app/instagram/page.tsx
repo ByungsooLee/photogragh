@@ -7,8 +7,8 @@ import Header from '@/components/Header';
 const Page = styled.main`
   min-height: 100vh;
   background:
-    radial-gradient(circle at 88% 12%, rgba(143, 39, 29, 0.14), transparent 30vw),
-    linear-gradient(180deg, var(--paper-soft), var(--paper));
+    radial-gradient(circle at 88% 12%, rgba(92, 106, 118, 0.14), transparent 30vw),
+    linear-gradient(180deg, #111216 0%, var(--paper) 64%, #020203 100%);
 `;
 
 const Content = styled.section`
@@ -29,7 +29,7 @@ const Title = styled.h1`
   letter-spacing: 0.035em;
   line-height: 0.75;
   text-transform: uppercase;
-  text-shadow: 0 4px 0 rgba(201, 154, 52, 0.34);
+  text-shadow: 0 18px 42px rgba(0, 0, 0, 0.58);
 `;
 
 const Copy = styled.div`
