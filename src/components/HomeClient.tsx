@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import styled, { css, keyframes } from 'styled-components';
+import { useHomeCanvasPointerScroll } from '@/hooks/useHomeCanvasPointerScroll';
+import { MOBILE_BREAKPOINT, TABLET_BREAKPOINT } from '@/lib/breakpoints';
 import Header from './Header';
 import Modal from './Modal';
 import { getAllGallery, type GalleryItem } from '../lib/microcms';
@@ -29,9 +31,6 @@ type RandomPhoto = {
   largeSrc: string;
   originalSrc: string;
 };
-
-const MOBILE_BREAKPOINT = 760;
-const TABLET_BREAKPOINT = 1100;
 
 const referenceCategories = ['Interior', 'Landscape', 'Portrait'];
 const copies = [-1, 0, 1];
@@ -1078,7 +1077,6 @@ export default function HomeClient() {
   const seedRef = useRef(12437);
   const activeStreamSectionRef = useRef(0);
   const fullIndexRef = useRef(0);
-  const touchStartRef = useRef<{ x: number; y: number; scroll: number } | null>(null);
 
   const [photos, setPhotos] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -1088,6 +1086,7 @@ export default function HomeClient() {
   const [fullIndex, setFullIndex] = useState(0);
   const [viewport, setViewport] = useState<Viewport>({ width: 1440, height: 900 });
   const [modalPhoto, setModalPhoto] = useState<GalleryItem | null>(null);
+  const [modalSession, setModalSession] = useState(0);
   const isMobileViewport = viewport.width < MOBILE_BREAKPOINT;
   const isTabletViewport = viewport.width < TABLET_BREAKPOINT;
   const currentSlotLayout = isMobileViewport
@@ -1196,8 +1195,9 @@ export default function HomeClient() {
   const prevPhoto = getSectionPhoto(fullPhotos, fullIndex - 1 + Math.max(fullPhotos.length, 1));
   const nextPhoto = getSectionPhoto(fullPhotos, fullIndex + 1);
   const modalImage = photoSrc(modalPhoto, 'original');
+  const isModalOpen = Boolean(modalPhoto && isValidUrl(modalImage));
   const tone = 'dark';
-  const isImmersiveMobile = isMobileViewport && Boolean(modalPhoto && isValidUrl(modalImage));
+  const isImmersiveMobile = isMobileViewport && isModalOpen;
   const thumbnailSizes = isMobileViewport ? '38vw' : isTabletViewport ? '18vw' : '12vw';
   const showProjectorAccent = isTabletViewport && mode === 'grid' && !isImmersiveMobile;
 
@@ -1239,39 +1239,18 @@ export default function HomeClient() {
     };
   }, [fullPhotos.length, loopWidth, sectionWidth]);
 
-  useEffect(() => {
-    const node = pageRef.current;
-    if (!node) return;
-
-    const handleWheel = (event: WheelEvent) => {
-      event.preventDefault();
-      const axis = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-      scrollTargetRef.current += axis * (isMobileViewport ? 1.32 : isTabletViewport ? 1.22 : 1.18);
-    };
-
-    node.addEventListener('wheel', handleWheel, { passive: false });
-    return () => node.removeEventListener('wheel', handleWheel);
-  }, [isMobileViewport, isTabletViewport]);
-
-  const handlePointerDown = (event: React.PointerEvent<HTMLElement>) => {
-    if ((event.target as HTMLElement).closest('button, a')) return;
-    touchStartRef.current = { x: event.clientX, y: event.clientY, scroll: scrollTargetRef.current };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-
-  const handlePointerMove = (event: React.PointerEvent<HTMLElement>) => {
-    if (!touchStartRef.current) return;
-    const dx = touchStartRef.current.x - event.clientX;
-    const dy = touchStartRef.current.y - event.clientY;
-    scrollTargetRef.current = touchStartRef.current.scroll + (Math.abs(dx) > Math.abs(dy) ? dx : dy) * 1.65;
-  };
-
-  const handlePointerUp = () => {
-    touchStartRef.current = null;
-  };
+  const { handlePointerDown, handlePointerMove, handlePointerUp } = useHomeCanvasPointerScroll({
+    pageRef,
+    isModalOpen,
+    isMobileViewport,
+    isTabletViewport,
+    scrollTargetRef,
+  });
 
   const openPhoto = (photo?: GalleryItem | null) => {
-    if (photo) setModalPhoto(photo);
+    if (!photo) return;
+    setModalSession((session) => session + 1);
+    setModalPhoto(photo);
   };
 
   const switchMode = (nextMode: Mode) => {
@@ -1432,13 +1411,16 @@ export default function HomeClient() {
         </SplashBottom>
       </Splash>
 
-      <Modal
-        isOpen={Boolean(modalPhoto && isValidUrl(modalImage))}
-        onClose={() => setModalPhoto(null)}
-        imageUrl={modalImage}
-        title={modalPhoto?.title || ''}
-        caption={modalPhoto?.description || ''}
-      />
+      {isModalOpen && (
+        <Modal
+          key={`home-modal-${modalSession}`}
+          isOpen
+          onClose={() => setModalPhoto(null)}
+          imageUrl={modalImage}
+          title={modalPhoto?.title || ''}
+          caption={modalPhoto?.description || ''}
+        />
+      )}
     </Page>
   );
 }

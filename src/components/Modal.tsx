@@ -1,7 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import styled, { keyframes } from 'styled-components';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal, flushSync } from 'react-dom';
+import styled, { css, keyframes } from 'styled-components';
+import { useIsMaxWidth } from '@/hooks/useIsMaxWidth';
+import { DESKTOP_MIN_WIDTH, MOBILE_BREAKPOINT, TABLET_BREAKPOINT } from '@/lib/breakpoints';
 
 interface ModalProps {
   isOpen: boolean;
@@ -23,6 +26,15 @@ const fadeIn = keyframes`
   }
 `;
 
+const overlayFade = keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+`;
+
 const slideIn = keyframes`
   from {
     transform: translateY(100%);
@@ -34,51 +46,66 @@ const slideIn = keyframes`
 
 const ModalOverlay = styled.div<{ $isOpen: boolean; $isDragging: boolean }>`
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.9);
   display: ${props => props.$isOpen ? 'flex' : 'none'};
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  /* GlobalStyle の body::before より手前。ポインターはモーダル側で受ける */
+  z-index: 2147483647;
   backdrop-filter: blur(10px);
-  animation: ${fadeIn} 0.25s cubic-bezier(0.4,0,0.2,1);
+  ${css`
+    animation: ${overlayFade} 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  `}
   touch-action: none;
   user-select: none;
   cursor: ${props => props.$isDragging ? 'grabbing' : 'grab'};
-  will-change: transform, opacity;
-  role: "dialog";
-  aria-modal: "true";
-  aria-label: "画像モーダル";
+  will-change: opacity;
+  overflow: hidden;
 `;
 
-const ModalContent = styled.div<{ 
+const ModalMotionShell = styled.div<{ 
   $sourcePosition?: { x: number; y: number };
-  $dragOffset: { x: number; y: number };
-  $isDragging: boolean;
+  $disableMotion?: boolean;
 }>`
   position: relative;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   background: none;
   border-radius: 0;
   box-shadow: none;
-  animation: ${fadeIn} 0.25s cubic-bezier(0.4,0,0.2,1);
-  transform-origin: ${props => props.$sourcePosition ? `${props.$sourcePosition.x}px ${props.$sourcePosition.y}px` : 'center'};
-  transform: translate(${props => props.$dragOffset.x}px, ${props => props.$dragOffset.y}px);
-  transition: ${props => props.$isDragging ? 'none' : 'transform 0.18s cubic-bezier(0.4,0,0.2,1), opacity 0.18s cubic-bezier(0.4,0,0.2,1)'};
-  will-change: transform, opacity;
+  ${props => props.$disableMotion
+    ? css`
+        animation: none;
+      `
+    : css`
+        animation: ${fadeIn} 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      `}
+  transform-origin: ${props => props.$disableMotion ? 'center center' : props.$sourcePosition ? `${props.$sourcePosition.x}px ${props.$sourcePosition.y}px` : 'center'};
+  transform: translate3d(0, 0, 0);
+  pointer-events: none;
+`;
+
+const ModalContent = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
   pointer-events: none;
 `;
 
 const ImageWrapper = styled.div`
   position: relative;
   width: 100%;
+  min-width: 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -109,7 +136,7 @@ const ImageWrapper = styled.div`
   &::before { top: 6px; }
   &::after { bottom: 6px; }
 
-  @media (max-width: 1024px) {
+  @media (max-width: ${TABLET_BREAKPOINT}px) {
     border-radius: 10px;
     margin: 0 2vw;
     border-width: 1.5px;
@@ -120,12 +147,12 @@ const ImageWrapper = styled.div`
     &::before { top: 3px; }
     &::after { bottom: 3px; }
   }
-  @media (max-width: 768px) {
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
     border-radius: 0;
     margin: 0;
     border-width: 0.5px;
     box-shadow: 0 1px 8px 0 rgba(80,100,160,0.10), 0 0 0 1px #23272f inset;
-    height: 60vh;
+    height: 60dvh;
     &::before, &::after {
       left: 2px; right: 2px; height: 2px; border-radius: 1px;
     }
@@ -139,9 +166,9 @@ const ModalCard = styled.div<{ $isLandscape: boolean }>`
   border-radius: 20px;
   box-shadow: 0 8px 40px 0 rgba(0,0,0,0.45), 0 1.5px 8px 0 rgba(80,100,160,0.10);
   padding: 16px 0;
-  width: 96vw;
+  width: 96%;
   max-width: ${props => props.$isLandscape ? '1200px' : '800px'};
-  max-height: 94vh;
+  max-height: 94dvh;
   min-height: ${props => props.$isLandscape ? '600px' : '700px'};
   display: flex;
   flex-direction: column;
@@ -151,45 +178,47 @@ const ModalCard = styled.div<{ $isLandscape: boolean }>`
   border: 1.5px solid rgba(80,100,160,0.18);
   position: relative;
   overflow: visible;
+  min-width: 0;
 
-  @media (max-width: 1024px) {
+  @media (max-width: ${TABLET_BREAKPOINT}px) {
     padding: 8px 0;
-    max-width: 98vw;
+    max-width: 98%;
     min-height: 0;
-    max-height: 98vh;
+    max-height: 98dvh;
     border-radius: 14px;
   }
-  @media (max-width: 768px) {
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
     padding: 0;
-    max-width: 100vw;
-    width: 100vw;
-    max-height: 100vh;
+    max-width: 100%;
+    width: 100%;
+    max-height: 100%;
     min-height: 0;
-    height: 100vh;
+    height: 100%;
     border-radius: 0;
     box-shadow: none;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    overflow: hidden;
   }
 `;
 
 const ModalImage = styled.img`
   max-width: 100%;
-  max-height: 80vh;
+  max-height: 80dvh;
   border-radius: 12px;
   object-fit: contain;
   box-shadow: 0 0 0 1.5px #23272f inset;
   background: #181818;
   z-index: 3;
 
-  @media (max-width: 1024px) {
-    max-height: 70vh;
+  @media (max-width: ${TABLET_BREAKPOINT}px) {
+    max-height: 70dvh;
     border-radius: 8px;
   }
-  @media (max-width: 768px) {
-    max-width: 100vw;
-    max-height: 60vh;
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
+    max-width: 100%;
+    max-height: 60dvh;
     border-radius: 0;
     margin: auto;
     display: block;
@@ -212,17 +241,17 @@ const InfoPanel = styled.div`
   background: none;
   padding: 40px 20px 20px;
   color: var(--gold);
-  transform: translateY(100%);
-  transition: transform 0.18s cubic-bezier(0.4,0,0.2,1);
-  animation: ${slideIn} 0.25s cubic-bezier(0.4,0,0.2,1) forwards;
-  animation-delay: 0.15s;
+  /* slideIn のみで transform を管理（transition / 初期 transform と二重にしない） */
+  ${css`
+    animation: ${slideIn} 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.15s;
+  `}
 
-  @media (max-width: 768px) {
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
     padding: 30px 15px 15px;
     background: none;
   }
-  /* タブレット専用: 769px〜1024px */
-  @media (min-width: 769px) and (max-width: 1024px) {
+  @media (min-width: ${MOBILE_BREAKPOINT + 1}px) and (max-width: ${TABLET_BREAKPOINT}px) {
     position: static;
     flex-shrink: 0;
     width: 100%;
@@ -240,7 +269,7 @@ const Caption = styled.p`
   line-height: 1.6;
   color: #fff;
 
-  @media (max-width: 768px) {
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
     font-size: 1rem;
     line-height: 1.4;
     opacity: 0.9;
@@ -257,7 +286,7 @@ const BottomSwipeHint = styled.div`
   text-align: center;
   letter-spacing: 0.05em;
   font-family: 'Bebas Neue', 'Noto Serif JP', serif;
-  @media (min-width: 1025px) {
+  @media (min-width: ${DESKTOP_MIN_WIDTH}px) {
     display: none;
   }
 `;
@@ -300,6 +329,70 @@ const OverlayCloseButton = styled.button`
   }
 `;
 
+const MobileModalCard = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  background: linear-gradient(135deg, #181818 60%, #232323 100%);
+  overflow: hidden;
+  pointer-events: auto;
+`;
+
+const MobileModalHeader = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 8px;
+`;
+
+const MobileImageStage = styled.div`
+  position: relative;
+  min-height: 0;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(120deg, #181c22 60%, #23272f 100%);
+  overflow: hidden;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    height: 2px;
+    border-radius: 1px;
+    background: repeating-linear-gradient(
+      to right,
+      transparent 0 8px,
+      #fff 8px 12px,
+      transparent 12px 24px
+    );
+    opacity: 0.1;
+    z-index: 2;
+  }
+
+  &::before { top: 1px; }
+  &::after { bottom: 1px; }
+`;
+
+const MobileModalImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  background: #181818;
+`;
+
+const MobileBottomArea = styled.div`
+  display: grid;
+  gap: 10px;
+  padding: 10px 14px calc(env(safe-area-inset-bottom, 0px) + 14px);
+  background: linear-gradient(180deg, rgba(24, 24, 24, 0.96), rgba(35, 35, 35, 0.98));
+`;
+
 const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
@@ -308,21 +401,51 @@ const Modal: React.FC<ModalProps> = ({
   caption,
   sourcePosition
 }) => {
-  console.log('Modal: Render', { isOpen, imageUrl, title });
-  
-  const modalRef = useRef<HTMLDivElement>(null);
+  const startRef = useRef({ x: 0, y: 0 });
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
+  const [isMounted, setIsMounted] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [startY, setStartY] = useState(0);
-  const [startX, setStartX] = useState(0);
+  const isMobileViewport = useIsMaxWidth(MOBILE_BREAKPOINT);
   const [isLandscape, setIsLandscape] = useState(false);
+  const imageAlt = title || 'モーダル画像';
+  const closeButtonLabel = 'モーダルを閉じる';
+  const swipeHintLabel = '上または左右にスワイプして閉じる';
+  const captionText = caption.trim() || 'キャプションはありません。';
+
+  const resetDragState = useCallback(() => {
+    setIsDragging(false);
+    dragOffsetRef.current = { x: 0, y: 0 };
+    startRef.current = { x: 0, y: 0 };
+  }, []);
+
+  const handleClose = useCallback(() => {
+    flushSync(() => {
+      resetDragState();
+    });
+    onClose();
+  }, [onClose, resetDragState]);
+
+  useLayoutEffect(() => {
+    resetDragState();
+  }, [imageUrl, isOpen, resetDragState]);
+
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        handleClose();
       }
     };
+
+    resetDragState();
+
+    if (!isOpen) return;
+
+    const previousBodyOverflow = document.body.style.overflow;
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
@@ -331,9 +454,9 @@ const Modal: React.FC<ModalProps> = ({
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = previousBodyOverflow;
     };
-  }, [isOpen, onClose]);
+  }, [handleClose, isOpen, resetDragState]);
 
   useEffect(() => {
     const img = new Image();
@@ -344,81 +467,145 @@ const Modal: React.FC<ModalProps> = ({
   }, [imageUrl]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
-    setStartY(e.touches[0].clientY);
-    setStartX(e.touches[0].clientX);
+    startRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
+    e.preventDefault();
+    e.stopPropagation();
     
     const currentY = e.touches[0].clientY;
     const currentX = e.touches[0].clientX;
-    const deltaY = currentY - startY;
-    const deltaX = currentX - startX;
-    
-    setDragOffset({ x: deltaX, y: deltaY });
+    dragOffsetRef.current = {
+      x: currentX - startRef.current.x,
+      y: currentY - startRef.current.y,
+    };
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
     if (!isDragging) return;
+    e.preventDefault();
+    e.stopPropagation();
 
     const threshold = 50;
     if (
-      Math.abs(dragOffset.y) > threshold || 
-      Math.abs(dragOffset.x) > threshold
+      Math.abs(dragOffsetRef.current.y) > threshold || 
+      Math.abs(dragOffsetRef.current.x) > threshold
     ) {
-      onClose();
+      window.requestAnimationFrame(() => {
+        handleClose();
+      });
     } else {
-      setDragOffset({ x: 0, y: 0 });
+      resetDragState();
     }
-    
-    setIsDragging(false);
   };
 
-  if (!isOpen) return null;
+  const handleTouchCancel = (e: React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    resetDragState();
+  };
 
-  return (
+  const stopPointerPropagation = (e: React.PointerEvent) => {
+    e.stopPropagation();
+  };
+
+  if (!isOpen || !isMounted) return null;
+
+  return createPortal(
     <ModalOverlay 
       $isOpen={isOpen} 
-      onClick={onClose}
+      onClick={handleClose}
+      onPointerDown={stopPointerPropagation}
+      onPointerMove={stopPointerPropagation}
+      onPointerUp={stopPointerPropagation}
+      onPointerCancel={stopPointerPropagation}
       $isDragging={isDragging}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
       role="dialog"
       aria-modal="true"
       aria-label="画像モーダル"
     >
-      <ModalContent
-        ref={modalRef}
+      <ModalMotionShell
         $sourcePosition={sourcePosition}
-        $dragOffset={dragOffset}
-        $isDragging={isDragging}
+        $disableMotion={isMobileViewport}
       >
-        <ModalCard $isLandscape={isLandscape}>
-          <ModalHeader>
-            <OverlayTitle>{title}</OverlayTitle>
-            <OverlayCloseButton 
-              onClick={onClose} 
-              aria-label="モーダルを閉じる"
+        <ModalContent>
+          {isMobileViewport ? (
+            <MobileModalCard
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={stopPointerPropagation}
+              onPointerMove={stopPointerPropagation}
+              onPointerUp={stopPointerPropagation}
+              onPointerCancel={stopPointerPropagation}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
             >
-              ×
-            </OverlayCloseButton>
-          </ModalHeader>
-          <ImageWrapper>
-            <ModalImage 
-              src={imageUrl} 
-              alt={title || "モーダル画像"} 
-            />
-          </ImageWrapper>
-          <BottomSwipeHint>Swipe up or sideways to close</BottomSwipeHint>
-          <InfoPanel>
-            <Caption>{caption}</Caption>
-          </InfoPanel>
-        </ModalCard>
-      </ModalContent>
-    </ModalOverlay>
+              <MobileModalHeader>
+                <OverlayCloseButton 
+                  onClick={handleClose} 
+                  aria-label={closeButtonLabel}
+                >
+                  ×
+                </OverlayCloseButton>
+              </MobileModalHeader>
+              <MobileImageStage>
+                <MobileModalImage
+                  src={imageUrl}
+                  alt={imageAlt}
+                />
+              </MobileImageStage>
+              <MobileBottomArea>
+                <BottomSwipeHint>{swipeHintLabel}</BottomSwipeHint>
+                <Caption>{captionText}</Caption>
+              </MobileBottomArea>
+            </MobileModalCard>
+          ) : (
+            <ModalCard
+              $isLandscape={isLandscape}
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={stopPointerPropagation}
+              onPointerMove={stopPointerPropagation}
+              onPointerUp={stopPointerPropagation}
+              onPointerCancel={stopPointerPropagation}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
+            >
+              <ModalHeader>
+                <OverlayTitle>{title}</OverlayTitle>
+                <OverlayCloseButton 
+                  onClick={handleClose} 
+                  aria-label={closeButtonLabel}
+                >
+                  ×
+                </OverlayCloseButton>
+              </ModalHeader>
+              <ImageWrapper>
+                <ModalImage 
+                  src={imageUrl} 
+                  alt={imageAlt} 
+                />
+              </ImageWrapper>
+              <BottomSwipeHint>{swipeHintLabel}</BottomSwipeHint>
+              <InfoPanel>
+                <Caption>{captionText}</Caption>
+              </InfoPanel>
+            </ModalCard>
+          )}
+        </ModalContent>
+      </ModalMotionShell>
+    </ModalOverlay>,
+    document.body
   );
 };
 

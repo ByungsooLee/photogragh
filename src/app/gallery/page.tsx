@@ -225,6 +225,7 @@ export default function Gallery() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [modalPhoto, setModalPhoto] = useState<GalleryItem | null>(null);
+  const [modalSession, setModalSession] = useState(0);
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -264,6 +265,12 @@ export default function Gallery() {
 
   const modalUrls = parseImageUrls(modalPhoto?.imageUrls);
   const modalImage = modalUrls.original || modalUrls.large || modalUrls.medium || '';
+  const isModalOpen = Boolean(modalPhoto && isValidUrl(modalImage));
+
+  const openPhoto = (photo: GalleryItem) => {
+    setModalSession((session) => session + 1);
+    setModalPhoto(photo);
+  };
 
   return (
     <Page>
@@ -305,7 +312,7 @@ export default function Gallery() {
             <WorkItem
               key={photo.id}
               type="button"
-              onClick={() => setModalPhoto(photo)}
+              onClick={() => openPhoto(photo)}
               $wide={index % 9 === 0 || index % 9 === 5}
               $tall={index % 7 === 2 || index % 7 === 4}
               aria-label={`${photo.title}を表示`}
@@ -328,13 +335,16 @@ export default function Gallery() {
         })}
       </Grid>
 
-      <Modal
-        isOpen={Boolean(modalPhoto && isValidUrl(modalImage))}
-        onClose={() => setModalPhoto(null)}
-        imageUrl={modalImage}
-        title={modalPhoto?.title || ''}
-        caption={modalPhoto?.description || ''}
-      />
+      {isModalOpen && (
+        <Modal
+          key={`gallery-modal-${modalSession}`}
+          isOpen
+          onClose={() => setModalPhoto(null)}
+          imageUrl={modalImage}
+          title={modalPhoto?.title || ''}
+          caption={modalPhoto?.description || ''}
+        />
+      )}
     </Page>
   );
 }

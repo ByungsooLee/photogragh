@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styled from 'styled-components';
-
-const MOBILE_BREAKPOINT = 760;
+import { MOBILE_BREAKPOINT } from '@/lib/breakpoints';
 
 type HeaderProps = {
   variant?: 'light' | 'dark';

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "node --require ./scripts/dev-webstorage-shim.js ./node_modules/.bin/next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -22,7 +22,7 @@
     "critters": "^0.0.23",
     "framer-motion": "^12.15.0",
     "microcms-js-sdk": "^3.2.0",
-    "next": "15.3.8",
+    "next": "^15.3.8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
@@ -37,7 +37,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.3.3",
+    "eslint-config-next": "^15.3.8",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
