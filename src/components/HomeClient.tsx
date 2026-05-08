@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import Image from 'next/image';
 import styled, { css, keyframes } from 'styled-components';
 import { useHomeCanvasPointerScroll } from '@/hooks/useHomeCanvasPointerScroll';
@@ -33,6 +34,11 @@ type RandomPhoto = {
 };
 
 const referenceCategories = ['Interior', 'Landscape', 'Portrait'];
+
+/** これ未満はタップ扱い（スクロールを戻し、クリックでモーダル可） */
+const FULL_MOBILE_TAP_MAX_PX = 14;
+/** フリック判定（scrollTarget / ms）。大きいほど次／前へ寄りやすい */
+const FULL_MOBILE_FLING_PX_PER_MS = 0.38;
 const copies = [-1, 0, 1];
 const desktopSlotLayout = [
   { shift: 3, left: 46, top: 5, scale: 0.92, rotate: -0.8, shape: 'portrait', primary: false },
@@ -498,6 +504,7 @@ const FullPanel = styled.button<{
     opacity: 1;
     filter: none;
     transform: none;
+    touch-action: ${props => (props.$active ? 'none' : 'auto')};
 
     &::before,
     &::after {
@@ -1077,6 +1084,17 @@ export default function HomeClient() {
   const seedRef = useRef(12437);
   const activeStreamSectionRef = useRef(0);
   const fullIndexRef = useRef(0);
+  const fullMobileGestureRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startScrollTarget: number;
+    lastTime: number;
+    lastScrollTarget: number;
+    velocity: number;
+    maxAbsDelta: number;
+  } | null>(null);
+  const suppressFullCenterClickRef = useRef(false);
 
   const [photos, setPhotos] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -1239,6 +1257,11 @@ export default function HomeClient() {
     };
   }, [fullPhotos.length, loopWidth, sectionWidth]);
 
+  useEffect(() => {
+    if (!isModalOpen) return;
+    fullMobileGestureRef.current = null;
+  }, [isModalOpen]);
+
   const { handlePointerDown, handlePointerMove, handlePointerUp } = useHomeCanvasPointerScroll({
     pageRef,
     isModalOpen,
@@ -1246,6 +1269,80 @@ export default function HomeClient() {
     isTabletViewport,
     scrollTargetRef,
   });
+
+  const handleFullMobileActivePointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (isModalOpen || !isMobileViewport || mode !== 'full') return;
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+      const startScrollTarget = scrollTargetRef.current;
+      const now = performance.now();
+      fullMobileGestureRef.current = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        startScrollTarget,
+        lastTime: now,
+        lastScrollTarget: startScrollTarget,
+        velocity: 0,
+        maxAbsDelta: 0,
+      };
+      event.currentTarget.setPointerCapture(event.pointerId);
+    },
+    [isModalOpen, isMobileViewport, mode]
+  );
+
+  const handleFullMobileActivePointerMove = useCallback((event: ReactPointerEvent<HTMLButtonElement>) => {
+    const g = fullMobileGestureRef.current;
+    if (!g || event.pointerId !== g.pointerId) return;
+
+    const dx = g.startX - event.clientX;
+    const dy = g.startY - event.clientY;
+    g.maxAbsDelta = Math.max(g.maxAbsDelta, Math.hypot(dx, dy));
+
+    const axisDelta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
+    const nextTarget = g.startScrollTarget + axisDelta * 1.65;
+    const now = performance.now();
+    const dt = now - g.lastTime;
+    if (dt > 0) {
+      g.velocity = (nextTarget - g.lastScrollTarget) / dt;
+    }
+    g.lastTime = now;
+    g.lastScrollTarget = nextTarget;
+    scrollTargetRef.current = nextTarget;
+  }, []);
+
+  const handleFullMobileActivePointerEnd = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      const g = fullMobileGestureRef.current;
+      if (!g || event.pointerId !== g.pointerId) return;
+
+      const { maxAbsDelta, velocity, startScrollTarget } = g;
+      fullMobileGestureRef.current = null;
+      try {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      } catch {
+        /* capture 済みでない環境向け */
+      }
+
+      const w = sectionWidth;
+      if (maxAbsDelta <= FULL_MOBILE_TAP_MAX_PX) {
+        scrollTargetRef.current = startScrollTarget;
+        return;
+      }
+
+      suppressFullCenterClickRef.current = true;
+      if (w <= 0) return;
+
+      const r = scrollTargetRef.current / w;
+      let n: number;
+      if (velocity > FULL_MOBILE_FLING_PX_PER_MS) n = Math.ceil(r - 1e-6);
+      else if (velocity < -FULL_MOBILE_FLING_PX_PER_MS) n = Math.floor(r + 1e-6);
+      else n = Math.round(r);
+      scrollTargetRef.current = n * w;
+    },
+    [sectionWidth]
+  );
 
   const openPhoto = (photo?: GalleryItem | null) => {
     if (!photo) return;
@@ -1349,7 +1446,21 @@ export default function HomeClient() {
                 $width={panel.active ? Math.min(viewport.width * 0.58, 920) : Math.min(viewport.width * 0.48, 760)}
                 $active={panel.active}
                 $side={!panel.active}
-                onClick={() => panel.active ? openPhoto(panel.photo?.photo) : (scrollTargetRef.current += panel.x > 0 ? sectionWidth : -sectionWidth)}
+                onPointerDown={panel.active && isMobileViewport && mode === 'full' ? handleFullMobileActivePointerDown : undefined}
+                onPointerMove={panel.active && isMobileViewport && mode === 'full' ? handleFullMobileActivePointerMove : undefined}
+                onPointerUp={panel.active && isMobileViewport && mode === 'full' ? handleFullMobileActivePointerEnd : undefined}
+                onPointerCancel={panel.active && isMobileViewport && mode === 'full' ? handleFullMobileActivePointerEnd : undefined}
+                onClick={() => {
+                  if (!panel.active) {
+                    scrollTargetRef.current += panel.x > 0 ? sectionWidth : -sectionWidth;
+                    return;
+                  }
+                  if (isMobileViewport && mode === 'full' && suppressFullCenterClickRef.current) {
+                    suppressFullCenterClickRef.current = false;
+                    return;
+                  }
+                  openPhoto(panel.photo?.photo);
+                }}
                 aria-label={panel.label}
               >
                 <Image src={panel.photo.largeSrc} alt={panel.active ? panel.photo.photo.title || '' : ''} fill sizes={panel.active ? '60vw' : '40vw'} quality={90} priority={panel.active} />
