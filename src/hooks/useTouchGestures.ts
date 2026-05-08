@@ -30,7 +30,7 @@ export const useTouchGestures = ({
       touchStartX.current = touchEvent.touches[0].clientX;
       touchStartY.current = touchEvent.touches[0].clientY;
       
-      // ピンチジェスチャーの検出
+      // Detect pinch gestures.
       if (touchEvent.touches.length === 2) {
         isPinching.current = true;
         initialDistance.current = Math.hypot(
@@ -46,10 +46,10 @@ export const useTouchGestures = ({
       touchEndX.current = touchEvent.touches[0].clientX;
       touchEndY.current = touchEvent.touches[0].clientY;
       
-      // ピンチジェスチャーの処理
+      // Handle pinch gestures.
       if (isPinching.current && touchEvent.touches.length === 2) {
-        // ピンチの状態に応じた処理をここに追加
-        // 現在は未使用のため、currentDistanceの計算を削除
+        // Add handling based on pinch state here.
+        // Currently unused, so currentDistance calculation was removed.
       }
     };
     
@@ -58,7 +58,7 @@ export const useTouchGestures = ({
       const swipeDistanceY = touchStartY.current - touchEndY.current;
       const minSwipeDistance = 50;
       
-      // 水平方向のスワイプ
+      // Horizontal swipe
       if (Math.abs(swipeDistanceX) > minSwipeDistance) {
         if (swipeDistanceX > 0) {
           onSwipeLeft?.();
@@ -67,7 +67,7 @@ export const useTouchGestures = ({
         }
       }
       
-      // 垂直方向のスワイプ
+      // Vertical swipe
       if (Math.abs(swipeDistanceY) > minSwipeDistance) {
         if (swipeDistanceY > 0) {
           onSwipeUp?.();
@@ -76,7 +76,7 @@ export const useTouchGestures = ({
         }
       }
       
-      // ピンチジェスチャーの終了
+      // End pinch gesture
       if (isPinching.current) {
         isPinching.current = false;
         onPinchEnd?.();

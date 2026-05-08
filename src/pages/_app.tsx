@@ -5,7 +5,7 @@ import '@/styles/globals.css';
 
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
-    // パフォーマンスモニタリングの初期化
+    // Initialize performance monitoring.
     if (process.env.NODE_ENV === 'development') {
       console.log('Performance monitoring initialized');
     }

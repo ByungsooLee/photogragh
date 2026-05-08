@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 
 /**
- * `(max-width: maxWidthPx px)` を matchMedia で購読する。
- * SSR 初回は false（クライアントで同期後に更新）。
+ * Subscribe to `(max-width: maxWidthPx px)` with matchMedia.
+ * The first SSR pass returns false, then syncs on the client.
  */
 export function useIsMaxWidth(maxWidthPx: number): boolean {
   const query = `(max-width: ${maxWidthPx}px)`;

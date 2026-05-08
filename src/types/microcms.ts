@@ -40,5 +40,5 @@ export interface YourContentType {
   updatedAt: string;
   publishedAt: string;
   image: ImageData;
-  // 他のフィールドは必要に応じて追加
+  // Add other fields as needed.
 } 

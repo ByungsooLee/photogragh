@@ -5,7 +5,7 @@ import Image from 'next/image';
 import styled from 'styled-components';
 import dynamic from 'next/dynamic';
 
-// Modalを遅延読み込み
+// Lazy-load the modal.
 const Modal = dynamic(() => import('./Modal'), {
   loading: () => <div>Loading...</div>,
   ssr: false
@@ -113,7 +113,7 @@ const FilmType = styled.span`
 `;
 
 const getOptimalImageQuality = () => {
-  // ネットワーク状態に基づく品質設定の最適化
+  // Optimize quality based on network conditions.
   if (typeof navigator !== 'undefined' && 'connection' in navigator) {
     const connection = (navigator as NavigatorWithNetwork).connection;
     if (connection?.effectiveType === '4g') return 80;
@@ -130,7 +130,7 @@ const GalleryItem = memo(({ image, onHover, onClick, priority }: GalleryItemProp
   const [imageQuality, setImageQuality] = useState(getOptimalImageQuality());
   const imageRef = useRef<HTMLDivElement>(null);
   
-  // ネットワーク状態の監視
+  // Watch network conditions.
   useEffect(() => {
     if (typeof navigator !== 'undefined' && 'connection' in navigator) {
       const connection = (navigator as NavigatorWithNetwork).connection;
@@ -166,7 +166,7 @@ const GalleryItem = memo(({ image, onHover, onClick, priority }: GalleryItemProp
 
   const handleImageLoad = useCallback(() => {
     setIsLoaded(true);
-    // プログレッシブローディングの完了を通知
+    // Mark progressive loading as complete.
     setTimeout(() => {
       setIsProgressiveLoaded(true);
     }, 100);
@@ -185,7 +185,7 @@ const GalleryItem = memo(({ image, onHover, onClick, priority }: GalleryItemProp
             {!isProgressiveLoaded && image.placeholder && (
               <Image
                 src={image.placeholder}
-                alt={`${image.alt} (プレビュー)`}
+                alt={`${image.alt} (preview)`}
                 fill
                 quality={10}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -240,7 +240,7 @@ const OptimizedGallery = ({ images }: OptimizedGalleryProps) => {
   }, []);
 
   const handleImageHover = useCallback(() => {
-    // ホバー時に次の画像をプリロード
+    // Preload the next image on hover.
     const currentIndex = images.findIndex(img => img.src === selectedImage?.src);
     if (currentIndex !== -1) {
       const nextImage = images[currentIndex + 1];
@@ -249,7 +249,7 @@ const OptimizedGallery = ({ images }: OptimizedGalleryProps) => {
   }, [images, selectedImage, preloadImage]);
 
   useEffect(() => {
-    // 最初の4枚の画像をプリロード
+    // Preload the first four images.
     images.slice(0, 4).forEach(image => {
       preloadImage(image.src);
     });
@@ -264,7 +264,7 @@ const OptimizedGallery = ({ images }: OptimizedGalleryProps) => {
             image={image}
             onHover={() => handleImageHover()}
             onClick={() => setSelectedImage(image)}
-            priority={index < 4} // 最初の4枚を優先的に読み込む
+            priority={index < 4} // Prioritize the first four images.
           />
         ))}
       </GalleryGrid>

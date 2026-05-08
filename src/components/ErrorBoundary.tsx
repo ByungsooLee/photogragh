@@ -70,12 +70,12 @@ class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <ErrorContainer>
-          <ErrorTitle>申し訳ございません</ErrorTitle>
+          <ErrorTitle>Something went wrong</ErrorTitle>
           <ErrorMessage>
-            エラーが発生しました。ページを再読み込みしてください。
+            An unexpected error occurred. Please reload the page and try again.
           </ErrorMessage>
           <ReloadButton onClick={() => window.location.reload()}>
-            再読み込み
+            Reload
           </ReloadButton>
         </ErrorContainer>
       );

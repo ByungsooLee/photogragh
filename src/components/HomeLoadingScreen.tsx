@@ -103,7 +103,7 @@ const HomeLoadingScreen: React.FC<HomeLoadingScreenProps> = ({ onLoadingComplete
     if (img.dataset.priority === 'true') {
       console.log('[HomeLoadingScreen] Priority image loaded:', img.src);
       loadedImagesRef.current.add(img.src);
-      // イベントリスナーを削除
+      // Remove event listeners.
       const listener = imageLoadListenersRef.current.get(img.src);
       if (listener) {
         img.removeEventListener('load', listener);
@@ -126,7 +126,7 @@ const HomeLoadingScreen: React.FC<HomeLoadingScreenProps> = ({ onLoadingComplete
     const images = Array.from(document.querySelectorAll('img[data-priority="true"]')) as HTMLImageElement[];
     console.log('[HomeLoadingScreen] Priority images found:', images.length);
     
-    // 新しい画像にイベントリスナーを追加
+    // Add event listeners to new images.
     images.forEach(img => {
       if (!loadedImagesRef.current.has(img.src)) {
         addImageLoadListener(img);
@@ -136,10 +136,10 @@ const HomeLoadingScreen: React.FC<HomeLoadingScreenProps> = ({ onLoadingComplete
     const total = images.length || 1;
     const loaded = images.filter(img => img.complete || loadedImagesRef.current.has(img.src)).length;
     
-    // 画像読み込みの進捗（最大90%）
+    // Image loading progress (up to 90%).
     const imageProgress = Math.round((loaded / total) * 90);
     
-    // 時間ベースの進捗（残り10%）
+    // Time-based progress (remaining 10%).
     const elapsed = Date.now() - startTimeRef.current;
     const timeProgress = Math.min(Math.round((elapsed / 1000) * 10), 10);
     
@@ -175,7 +175,7 @@ const HomeLoadingScreen: React.FC<HomeLoadingScreenProps> = ({ onLoadingComplete
     mountedRef.current = true;
     console.log('[HomeLoadingScreen] Component mounted');
 
-    // DOMの変更を監視して新しい画像を検出
+    // Observe DOM changes to detect new images.
     observerRef.current = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
@@ -200,7 +200,7 @@ const HomeLoadingScreen: React.FC<HomeLoadingScreenProps> = ({ onLoadingComplete
       subtree: true
     });
 
-    // 初期進捗更新を最大10回リトライ
+    // Retry the initial progress update up to 10 times.
     function tryUpdateProgress() {
       updateProgress();
       retryCountRef.current++;
@@ -212,7 +212,7 @@ const HomeLoadingScreen: React.FC<HomeLoadingScreenProps> = ({ onLoadingComplete
 
     const currentListeners = imageLoadListenersRef.current;
     
-    // イベントリスナーの設定
+    // Set up event listeners.
     currentListeners.forEach((listener) => {
       window.addEventListener('load', listener);
     });
@@ -221,7 +221,7 @@ const HomeLoadingScreen: React.FC<HomeLoadingScreenProps> = ({ onLoadingComplete
       console.log('[HomeLoadingScreen] Component unmounting');
       mountedRef.current = false;
       
-      // クリーンアップ時に保存したリスナーを使用
+      // Use the saved listeners during cleanup.
       currentListeners.forEach((listener) => {
         window.removeEventListener('load', listener);
       });

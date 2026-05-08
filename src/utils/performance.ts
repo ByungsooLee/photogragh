@@ -94,8 +94,8 @@ export const measurePerformance = () => {
     const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
     
     console.log({
-      'DOM読み込み時間': navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
-      'ページ読み込み時間': navigation.loadEventEnd - navigation.loadEventStart,
+      'DOM content loaded time': navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
+      'Page load time': navigation.loadEventEnd - navigation.loadEventStart,
       'First Contentful Paint': performance.getEntriesByName('first-contentful-paint')[0]?.startTime
     });
   }

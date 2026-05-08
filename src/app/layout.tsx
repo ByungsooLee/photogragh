@@ -12,13 +12,13 @@ import StyledComponentsRegistry from '@/lib/registry';
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.bml-studio.com'),
   title: 'L.MARK Photography - Professional Photography Studio',
-  description: 'プロフェッショナルな写真撮影スタジオ。ポートレート、商品撮影、イベント撮影など幅広く対応',
+  description: 'A professional photography studio and visual archive for portraits, commercial work, events, and personal projects.',
   authors: [{ name: 'L.MARK Photography' }],
   openGraph: {
     type: 'website',
     url: 'https://www.bml-studio.com/',
     title: 'L.MARK Photography',
-    description: 'プロフェッショナルな写真撮影スタジオ。あなたの大切な瞬間を美しく記録します。',
+    description: 'Professional photography and visual storytelling for meaningful moments, projects, and archives.',
     images: [
       {
         url: '/images/ogp-image.jpg',
@@ -28,12 +28,12 @@ export const metadata: Metadata = {
       }
     ],
     siteName: 'L.MARK Photography',
-    locale: 'ja_JP'
+    locale: 'en_US'
   },
   twitter: {
     card: 'summary_large_image',
     title: 'L.MARK Photography',
-    description: 'プロフェッショナルな写真撮影スタジオ。あなたの大切な瞬間を美しく記録します。',
+    description: 'Professional photography and visual storytelling for meaningful moments, projects, and archives.',
     images: ['/images/ogp-image.jpg']
   },
   icons: {
@@ -64,7 +64,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja">
+    <html lang="en">
       <body>
         <StyledComponentsRegistry>
           <GlobalStyle />

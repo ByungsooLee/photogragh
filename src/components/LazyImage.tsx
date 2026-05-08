@@ -13,7 +13,7 @@ export const LazyImage = ({ imageData, alt, className }: LazyImageProps) => {
 
   return (
     <div className={`relative ${className}`}>
-      {/* ローディングプレースホルダー */}
+      {/* Loading placeholder */}
       {!isLoaded && (
         <div className="absolute inset-0 bg-gray-200 animate-pulse" />
       )}

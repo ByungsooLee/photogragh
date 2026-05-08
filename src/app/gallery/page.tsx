@@ -317,7 +317,7 @@ export default function Gallery() {
               onClick={() => openPhoto(photo)}
               $wide={index % 9 === 0 || index % 9 === 5}
               $tall={index % 7 === 2 || index % 7 === 4}
-              aria-label={`${photo.title}を表示`}
+              aria-label={`View ${photo.title || 'photo'}`}
             >
               <Image
                 src={src}

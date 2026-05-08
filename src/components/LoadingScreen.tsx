@@ -96,7 +96,7 @@ const LoadingScreen = () => {
       }
     };
 
-    // 画像の読み込みイベントを監視
+    // Watch image loading events.
     document.addEventListener('load', handleImageLoad, true);
     const interval = setInterval(updateProgress, 100);
 

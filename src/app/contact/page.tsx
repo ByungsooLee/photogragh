@@ -60,7 +60,7 @@ export default function ContactPage() {
       <Content>
         <Title>Contact</Title>
         <Copy>
-          撮影のご相談、作品利用、展示やコラボレーションについてはこちらからお問い合わせください。
+          For photography inquiries, image licensing, exhibitions, collaborations, or project consultations, please get in touch.
           <br />
           <MailLink href="mailto:hello@example.com">hello@example.com</MailLink>
         </Copy>

@@ -51,7 +51,7 @@ const ModalOverlay = styled.div<{ $isOpen: boolean; $isDragging: boolean }>`
   display: ${props => props.$isOpen ? 'flex' : 'none'};
   justify-content: center;
   align-items: center;
-  /* GlobalStyle の body::before より手前。ポインターはモーダル側で受ける */
+  /* Keep this above GlobalStyle body::before; pointer events are handled by the modal. */
   z-index: 2147483647;
   backdrop-filter: blur(10px);
   ${css`
@@ -117,7 +117,7 @@ const ImageWrapper = styled.div`
   margin: 0 8px;
   height: auto;
 
-  /* フィルム穴（全デバイスで表示） */
+  /* Film perforations, visible on every device. */
   &::before, &::after {
     content: '';
     position: absolute;
@@ -241,7 +241,7 @@ const InfoPanel = styled.div`
   background: none;
   padding: 40px 20px 20px;
   color: var(--gold);
-  /* slideIn のみで transform を管理（transition / 初期 transform と二重にしない） */
+  /* Let slideIn own transform so it does not fight transitions or initial transforms. */
   ${css`
     animation: ${slideIn} 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     animation-delay: 0.15s;
@@ -407,10 +407,10 @@ const Modal: React.FC<ModalProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const isMobileViewport = useIsMaxWidth(MOBILE_BREAKPOINT);
   const [isLandscape, setIsLandscape] = useState(false);
-  const imageAlt = title || 'モーダル画像';
-  const closeButtonLabel = 'モーダルを閉じる';
-  const swipeHintLabel = '上または左右にスワイプして閉じる';
-  const captionText = caption.trim() || 'キャプションはありません。';
+  const imageAlt = title || 'Modal image';
+  const closeButtonLabel = 'Close modal';
+  const swipeHintLabel = 'Swipe up or sideways to close';
+  const captionText = caption.trim() || 'No caption available.';
 
   const resetDragState = useCallback(() => {
     setIsDragging(false);
@@ -530,7 +530,7 @@ const Modal: React.FC<ModalProps> = ({
       $isDragging={isDragging}
       role="dialog"
       aria-modal="true"
-      aria-label="画像モーダル"
+      aria-label="Image modal"
     >
       <ModalMotionShell
         $sourcePosition={sourcePosition}

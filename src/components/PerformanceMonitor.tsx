@@ -25,25 +25,25 @@ const PerformanceMonitor = () => {
         rating: rating as 'good' | 'needs-improvement' | 'poor',
       });
 
-      // 開発環境でのみコンソールに出力
+      // Log only in development.
       if (process.env.NODE_ENV === 'development') {
         logPerformanceMetrics(metrics);
       }
 
-      // 本番環境ではアナリティクスに送信
+      // Send to analytics in production.
       if (process.env.NODE_ENV === 'production') {
         sendToAnalytics(metric);
       }
     };
 
-    // Web Vitalsの計測を開始
+    // Start measuring Web Vitals.
     onCLS(handleMetric);
     onLCP(handleMetric);
     onFCP(handleMetric);
     onTTFB(handleMetric);
-    onINP(handleMetric); // FIDの代わりにINPを使用
+    onINP(handleMetric); // Use INP instead of FID.
 
-    // パフォーマンスエントリの監視
+    // Observe performance entries.
     if (typeof window !== 'undefined' && window.performance) {
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {

@@ -8,7 +8,7 @@ import { MOBILE_BREAKPOINT } from '@/lib/breakpoints';
 type HeaderProps = {
   variant?: 'light' | 'dark';
   workHref?: string;
-  /** 長いスクロールページ用: ビューポート上部に固定し、背後にブラーを敷く */
+  /** For long scrolling pages: pin to the viewport top with a blurred backdrop. */
   fixed?: boolean;
 };
 
@@ -151,7 +151,7 @@ const Comma = styled.span`
   }
 `;
 
-/** `fixed` ヘッダー用。高さは Toolbar の `top` と揃える */
+/** Spacer for `fixed` header usage. Keep this aligned with Toolbar's `top`. */
 export const HEADER_FLOW_SPACER_HEIGHT = { desktop: 76, mobile: 103 } as const;
 
 export const HeaderFlowSpacer = styled.div`

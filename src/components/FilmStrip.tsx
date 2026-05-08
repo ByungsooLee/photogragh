@@ -90,7 +90,7 @@ const StripWrapper = styled.div<StripWrapperProps>`
   }
 
   @media (max-width: 600px) {
-    /* モバイルでは縦ストリップはcenterのみ表示 */
+    /* On mobile, only the center vertical strip is shown. */
     display: ${props => {
       if (props.$isVertical && props.position !== 'center') {
         return 'none';
@@ -264,13 +264,13 @@ const StripWrapper = styled.div<StripWrapperProps>`
   }
 `;
 
-// 縦方向のアニメーション
+// Vertical animation
 const verticalScroll = keyframes`
   0% { transform: translateY(0); }
   100% { transform: translateY(-50%); }
 `;
 
-// 横方向のアニメーション
+// Horizontal animation
 const horizontalScroll = keyframes`
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
@@ -475,18 +475,18 @@ const Spotlight = styled.div<{ x: number; y: number }>`
   transition: opacity 0.3s ease;
 `;
 
-// シードベースのランダム数生成
+// Seed-based random number generator
 const seededRandom = (seed: number) => {
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 };
 
-// 列IDと写真IDを組み合わせてユニークなシードを生成
+// Build a unique seed from the strip ID and photo ID.
 const generateSeed = (stripId: string, photoId: string, isMobileOrTablet: boolean): number => {
   const deviceType = isMobileOrTablet ? 'mobile' : 'desktop';
   const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
   const deviceCategory = screenWidth <= 480 ? 'mobile' : screenWidth <= 768 ? 'tablet' : 'desktop';
-  // リロードごとに変わる乱数を加える
+  // Add a random value that changes on each reload.
   const randomValue = Math.floor(Math.random() * 1000000);
   const combinedString = `${stripId}-${photoId}-${deviceType}-${deviceCategory}-${randomValue}`;
   let hash = 0;
@@ -498,7 +498,7 @@ const generateSeed = (stripId: string, photoId: string, isMobileOrTablet: boolea
   return hash;
 };
 
-// 各サイズの画像URLを取得する関数
+// Get image URLs for each size.
 function getImageUrls(imageUrls: string | string[] | undefined) {
   if (!imageUrls) return {};
   if (Array.isArray(imageUrls)) return getImageUrls(imageUrls[0]);
@@ -510,7 +510,7 @@ function getImageUrls(imageUrls: string | string[] | undefined) {
   }
 }
 
-// URLバリデーション関数を追加
+// URL validation helper
 function isValidUrl(url: string | undefined): boolean {
   if (!url) return false;
   try {
@@ -539,14 +539,14 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   const tapThreshold = isMobileOrTablet ? 400 : 300;
   const isLogoFrame = useRef(false);
 
-  // ロゴの表示位置を決定する関数
+  // Choose where the logo frame appears.
   const getLogoPosition = () => {
     const seed = generateSeed(stripId, 'logo', isMobileOrTablet);
     return Math.floor(seededRandom(seed) * photos.length);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    // タッチ移動中は何もしない（スクロールを防ぐため）
+    // Prevent native scrolling during touch movement.
     e.preventDefault();
   };
 
@@ -579,7 +579,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
       isLogoFrame: isLogoFrame.current 
     });
     
-    // ロゴフレームの場合
+    // Logo frame
     if (isLogoFrame.current && link) {
       e.preventDefault();
       e.stopPropagation();
@@ -588,7 +588,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
       return;
     }
     
-    // 通常の画像の場合
+    // Regular image frame
     if (touchDuration <= tapThreshold && deltaX <= touchThreshold && deltaY <= touchThreshold) {
       console.log('FilmStrip: Valid touch detected, calling onPhotoClick');
       e.preventDefault();
@@ -638,11 +638,11 @@ const FilmStrip: React.FC<FilmStripProps> = ({
   };
 
   useEffect(() => {
-    // 完全ランダムなシャッフル
+    // Fully random shuffle
     const shuffledPhotos = [...photos].sort(() => Math.random() - 0.5);
-    // 画像を2回繰り返して途切れないようにする
+    // Duplicate images so the strip loops without a gap.
     const duplicatedPhotos = [...shuffledPhotos, ...shuffledPhotos];
-    // ランダムな開始位置を決定
+    // Pick a random starting position.
     const startIndex = Math.floor(Math.random() * shuffledPhotos.length);
     const rotatedPhotos = duplicatedPhotos.slice(startIndex).concat(duplicatedPhotos.slice(0, startIndex));
     setDisplayedPhotos(rotatedPhotos);
@@ -678,10 +678,10 @@ const FilmStrip: React.FC<FilmStripProps> = ({
           {displayedPhotos.map((photo, index) => {
             const logoPosition = getLogoPosition();
             const galleryLogos = [
-              { src: '/images/logo_gallery_01.jpg', alt: 'ギャラリーへ', link: '/gallery' },
-              { src: '/images/logo_gallery_02.jpg', alt: 'ギャラリーへ', link: '/gallery' }
+              { src: '/images/logo_gallery_01.jpg', alt: 'Go to gallery', link: '/gallery' },
+              { src: '/images/logo_gallery_02.jpg', alt: 'Go to gallery', link: '/gallery' }
             ];
-            const aboutLogo = { src: '/images/logo_about_01.jpg', alt: 'Aboutへ', link: '/about' };
+            const aboutLogo = { src: '/images/logo_about_01.jpg', alt: 'Go to about', link: '/about' };
             const randomGalleryLogo = galleryLogos[Math.floor(Math.random() * galleryLogos.length)];
             const logoImages = [randomGalleryLogo, aboutLogo];
             const urls = getImageUrls(photo.imageUrls);
@@ -690,7 +690,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
             const mediumUrl = urls['中サイズ'] || '';
             if (!isValidUrl(originalUrl)) return null;
 
-            // ロゴの表示位置の場合のみロゴを表示
+            // Show a logo only at the selected logo position.
             if (index === logoPosition && showLogo) {
               const logo = logoImages[0];
               return (
@@ -739,7 +739,7 @@ const FilmStrip: React.FC<FilmStripProps> = ({
                 onKeyDown={(e) => handleKeyDown(e, photo)}
                 role="button"
                 tabIndex={0}
-                aria-label={`${photo.title}を表示`}
+                aria-label={`View ${photo.title || 'photo'}`}
               >
                 <Perforations side="left" />
                 <Perforations side="right" />

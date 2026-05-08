@@ -13,8 +13,8 @@ type Options = {
 };
 
 /**
- * トップの横スクロールキャンバス用: モーダル表示中は wheel / pointer によるスクロールを無効化する。
- * Portal 越しにイベントが親へ伝播するケースを想定し、isModalOpen で明示的にガードする。
+ * Horizontal scroll canvas for the home page. Disable wheel / pointer scrolling while the modal is open.
+ * Guard explicitly with isModalOpen in case events bubble through a portal.
  */
 export function useHomeCanvasPointerScroll({
   pageRef,

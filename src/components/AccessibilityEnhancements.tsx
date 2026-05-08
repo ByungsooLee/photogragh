@@ -47,7 +47,7 @@ interface SkipLinkProps {
 
 export const SkipLink = ({ 
   targetId = 'main-content',
-  label = 'メインコンテンツへスキップ'
+  label = 'Skip to main content'
 }: SkipLinkProps) => (
   <StyledSkipLink href={`#${targetId}`}>
     {label}
@@ -70,7 +70,7 @@ const StyledSkipLink = styled.a`
   }
 `;
 
-// スクリーンリーダー用のテキスト
+// Text for screen readers
 export const VisuallyHidden = styled.span`
   position: absolute;
   width: 1px;
@@ -83,7 +83,7 @@ export const VisuallyHidden = styled.span`
   border: 0;
 `;
 
-// キーボードフォーカスインジケーター
+// Keyboard focus indicator
 export const FocusOutline = styled.div`
   &:focus-visible {
     outline: 2px solid #007AFF;
@@ -91,7 +91,7 @@ export const FocusOutline = styled.div`
   }
 `;
 
-// アクセシビリティラベル
+// Accessibility label
 interface A11yLabelProps {
   id: string;
   label: string;

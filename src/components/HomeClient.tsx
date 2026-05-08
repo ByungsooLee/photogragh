@@ -35,9 +35,9 @@ type RandomPhoto = {
 
 const referenceCategories = ['Interior', 'Landscape', 'Portrait'];
 
-/** これ未満はタップ扱い（スクロールを戻し、クリックでモーダル可） */
+/** Treat movement below this threshold as a tap, restoring scroll so the modal can open. */
 const FULL_MOBILE_TAP_MAX_PX = 14;
-/** フリック判定（scrollTarget / ms）。大きいほど次／前へ寄りやすい */
+/** Fling threshold (scrollTarget / ms). Higher values make next/previous snapping less eager. */
 const FULL_MOBILE_FLING_PX_PER_MS = 0.38;
 const PROJECTOR_HANDLE_SCROLL_PER_DEGREE = 5.2;
 const copies = [-1, 0, 1];
@@ -116,6 +116,40 @@ const projectorFlicker = keyframes`
   0%, 100% { opacity: 0.16; }
   45% { opacity: 0.24; }
   65% { opacity: 0.19; }
+`;
+
+const projectorHandleGlow = keyframes`
+  0%, 100% {
+    border-color: rgba(200, 204, 210, 0.78);
+    box-shadow:
+      0 0 0 1px rgba(8, 6, 4, 0.58),
+      0 0 14px rgba(232, 238, 244, 0.16),
+      inset 0 0 0 2px rgba(8, 6, 4, 0.62);
+    filter: brightness(1);
+  }
+  45% {
+    border-color: rgba(246, 235, 207, 0.98);
+    box-shadow:
+      0 0 0 1px rgba(8, 6, 4, 0.58),
+      0 0 26px rgba(246, 235, 207, 0.42),
+      0 0 42px rgba(201, 154, 52, 0.18),
+      inset 0 0 0 2px rgba(8, 6, 4, 0.62);
+    filter: brightness(1.18);
+  }
+`;
+
+const projectorGripGlow = keyframes`
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 2px rgba(8, 6, 4, 0.72),
+      0 5px 12px rgba(0, 0, 0, 0.42);
+  }
+  45% {
+    box-shadow:
+      inset 0 0 0 2px rgba(8, 6, 4, 0.72),
+      0 0 14px rgba(246, 235, 207, 0.62),
+      0 5px 12px rgba(0, 0, 0, 0.42);
+  }
 `;
 
 const singeFlicker = keyframes`
@@ -891,6 +925,10 @@ const ProjectorHandle = styled.div<{ $compact: boolean; $dragging: boolean }>`
   transform: rotate(calc(var(--projector-handle-angle, 18deg) + (var(--scroll-velocity, 0) * 14deg)));
   transition: border-color 160ms ease, box-shadow 160ms ease;
 
+  ${props => !props.$dragging && css`
+    animation: ${projectorHandleGlow} 2.8s ease-in-out infinite;
+  `}
+
   &::before {
     content: "";
     position: absolute;
@@ -920,6 +958,10 @@ const ProjectorHandle = styled.div<{ $compact: boolean; $dragging: boolean }>`
       inset 0 0 0 2px rgba(8, 6, 4, 0.72),
       0 5px 12px rgba(0, 0, 0, 0.42);
     transform: translateX(-50%);
+
+    ${props => !props.$dragging && css`
+      animation: ${projectorGripGlow} 2.8s ease-in-out infinite;
+    `}
   }
 `;
 
@@ -1443,7 +1485,7 @@ export default function HomeClient() {
       const elapsed = Math.max(now - gesture.lastMoveTime, 16);
 
       scrollTargetRef.current += delta * PROJECTOR_HANDLE_SCROLL_PER_DEGREE * (isMobileViewport ? 0.86 : 1);
-      // 速く回したときだけ少し慣性を足し、手回し感を出す。
+      // Add a little inertia only on fast turns so the crank feels mechanical.
       scrollTargetRef.current += (delta / elapsed) * sectionWidth * 0.18;
       gesture.lastAngle = nextAngle;
       gesture.lastMoveTime = now;
@@ -1463,7 +1505,7 @@ export default function HomeClient() {
     try {
       event.currentTarget.releasePointerCapture(event.pointerId);
     } catch {
-      /* capture 済みでない環境向け */
+      /* Some environments may not have an active capture. */
     }
   }, []);
 
@@ -1533,7 +1575,7 @@ export default function HomeClient() {
       try {
         event.currentTarget.releasePointerCapture(event.pointerId);
       } catch {
-        /* capture 済みでない環境向け */
+        /* Some environments may not have an active capture. */
       }
 
       const w = sectionWidth;
@@ -1628,7 +1670,7 @@ export default function HomeClient() {
                             $shape={layout.shape}
                             $primary={layout.primary}
                             onClick={() => openPhoto(photo.photo)}
-                            aria-label={`${photo.photo.title || 'Photo'}を表示`}
+                            aria-label={`View ${photo.photo.title || 'photo'}`}
                           >
                             <Image
                               src={photo.mediumSrc}
@@ -1650,7 +1692,7 @@ export default function HomeClient() {
         <FullLayer $mode={mode}>
           {[
             { photo: prevPhoto, x: -viewport.width * 0.54, active: false, label: 'Previous photo' },
-            { photo: currentPhoto, x: 0, active: true, label: `${currentPhoto?.photo.title || 'Photo'}を表示` },
+            { photo: currentPhoto, x: 0, active: true, label: `View ${currentPhoto?.photo.title || 'photo'}` },
             { photo: nextPhoto, x: viewport.width * 0.54, active: false, label: 'Next photo' },
           ].map((panel) => {
             if (!panel.photo || !isValidUrl(panel.photo.largeSrc)) return null;
@@ -1691,7 +1733,7 @@ export default function HomeClient() {
               <ProjectorAccent
                 $compact={isMobileViewport}
                 $dragging={isProjectorDragging}
-                aria-label="射影機ハンドルを回して写真を送る"
+                aria-label="Turn the projector handle to move through photos"
                 aria-valuemax={180}
                 aria-valuemin={-180}
                 aria-valuenow={Math.round(projectorHandleAngle)}

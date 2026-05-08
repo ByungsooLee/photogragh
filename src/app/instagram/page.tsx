@@ -60,7 +60,7 @@ export default function InstagramPage() {
       <Content>
         <Title>Instagram</Title>
         <Copy>
-          日々の写真、撮影の記録、展示のお知らせをまとめています。
+          Daily photographs, behind-the-scenes notes, exhibition updates, and fragments from ongoing work are collected here.
           <br />
           <TextLink href="https://www.instagram.com/" target="_blank" rel="noreferrer">
             Open Instagram

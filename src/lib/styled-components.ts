@@ -54,8 +54,8 @@ export const GlobalStyle = createGlobalStyle`
     content: "";
     position: fixed;
     inset: 0;
-    /* 質感用の最前面レイヤー。pointer-events: none のためクリックは下へ通る。
-       フルスクリーンのモーダル等はこの値より大きい z-index を使うこと */
+    /* Foreground texture layer. pointer-events: none lets clicks pass through.
+       Fullscreen modals and similar overlays should use a larger z-index. */
     z-index: 2147483646;
     pointer-events: none;
     background:
