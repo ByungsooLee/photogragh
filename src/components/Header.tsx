@@ -2,17 +2,29 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { MOBILE_BREAKPOINT } from '@/lib/breakpoints';
 
 type HeaderProps = {
   variant?: 'light' | 'dark';
   workHref?: string;
+  /** 長いスクロールページ用: ビューポート上部に固定し、背後にブラーを敷く */
+  fixed?: boolean;
 };
 
-const HeaderContainer = styled.header<{ $variant: 'light' | 'dark' }>`
-  position: sticky;
-  top: 0;
+const HeaderContainer = styled.header<{ $variant: 'light' | 'dark'; $fixed: boolean }>`
+  ${props =>
+    props.$fixed
+      ? css`
+          position: fixed;
+          left: 0;
+          right: 0;
+          top: 0;
+        `
+      : css`
+          position: sticky;
+          top: 0;
+        `}
   z-index: 40;
   display: grid;
   grid-template-columns: auto 1fr;
@@ -21,7 +33,18 @@ const HeaderContainer = styled.header<{ $variant: 'light' | 'dark' }>`
   width: 100%;
   min-height: 76px;
   padding: 16px clamp(18px, 4vw, 56px);
-  background: transparent;
+  background: ${props =>
+    props.$fixed
+      ? props.$variant === 'dark'
+        ? 'color-mix(in srgb, #080604 88%, transparent)'
+        : 'color-mix(in srgb, var(--paper-soft) 92%, transparent)'
+      : 'transparent'};
+  backdrop-filter: ${props => (props.$fixed ? 'blur(14px) saturate(1.05)' : 'none')};
+  -webkit-backdrop-filter: ${props => (props.$fixed ? 'blur(14px) saturate(1.05)' : 'none')};
+  border-bottom: ${props =>
+    props.$fixed ? (props.$variant === 'dark' ? '1px solid rgba(246, 235, 207, 0.12)' : '1px solid var(--line)') : 'none'};
+  box-shadow: ${props =>
+    props.$fixed && props.$variant === 'light' ? '0 1px 0 rgba(34, 23, 15, 0.06)' : 'none'};
   color: ${props => props.$variant === 'dark' ? '#f6ebcf' : 'var(--ink)'};
   pointer-events: none;
 
@@ -128,12 +151,24 @@ const Comma = styled.span`
   }
 `;
 
-const Header = ({ variant = 'light', workHref = '/gallery' }: HeaderProps) => {
+/** `fixed` ヘッダー用。高さは Toolbar の `top` と揃える */
+export const HEADER_FLOW_SPACER_HEIGHT = { desktop: 76, mobile: 103 } as const;
+
+export const HeaderFlowSpacer = styled.div`
+  height: ${HEADER_FLOW_SPACER_HEIGHT.desktop}px;
+  flex-shrink: 0;
+
+  @media (max-width: ${MOBILE_BREAKPOINT}px) {
+    height: ${HEADER_FLOW_SPACER_HEIGHT.mobile}px;
+  }
+`;
+
+const Header = ({ variant = 'light', workHref = '/gallery', fixed = false }: HeaderProps) => {
   const pathname = usePathname();
   const workActive = pathname === '/' || pathname === '/gallery';
 
   return (
-    <HeaderContainer $variant={variant}>
+    <HeaderContainer $variant={variant} $fixed={fixed}>
       <Brand href="/" aria-label="L.MARK home">
         <span>L.MARK</span>
         <small>Photo Picture Archive</small>

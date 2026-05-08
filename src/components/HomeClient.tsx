@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { PointerEvent as ReactPointerEvent } from 'react';
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import Image from 'next/image';
 import styled, { css, keyframes } from 'styled-components';
 import { useHomeCanvasPointerScroll } from '@/hooks/useHomeCanvasPointerScroll';
@@ -39,33 +39,40 @@ const referenceCategories = ['Interior', 'Landscape', 'Portrait'];
 const FULL_MOBILE_TAP_MAX_PX = 14;
 /** フリック判定（scrollTarget / ms）。大きいほど次／前へ寄りやすい */
 const FULL_MOBILE_FLING_PX_PER_MS = 0.38;
+const PROJECTOR_HANDLE_SCROLL_PER_DEGREE = 5.2;
 const copies = [-1, 0, 1];
 const desktopSlotLayout = [
-  { shift: 3, left: 46, top: 5, scale: 0.92, rotate: -0.8, shape: 'portrait', primary: false },
-  { shift: 2, left: 57, top: 20, scale: 0.94, rotate: 0.6, shape: 'wide', primary: false },
-  { shift: 1, left: 45, top: 35, scale: 0.94, rotate: -0.4, shape: 'square', primary: false },
-  { shift: 0, left: 54, top: 50, scale: 0.98, rotate: 0.3, shape: 'portrait', primary: false },
-  { shift: -1, left: 43, top: 65, scale: 0.94, rotate: 0.9, shape: 'wide', primary: false },
-  { shift: -2, left: 56, top: 80, scale: 0.94, rotate: -0.6, shape: 'square', primary: false },
-  { shift: -3, left: 47, top: 95, scale: 0.92, rotate: 0.7, shape: 'wide', primary: false },
+  { shift: 4, left: 14, top: 16, scale: 1.04, rotate: -5.2, shape: 'portrait', primary: false },
+  { shift: 2, left: 36, top: 9, scale: 1.28, rotate: 2.6, shape: 'wide', primary: true },
+  { shift: -2, left: 63, top: 18, scale: 0.96, rotate: -2.8, shape: 'square', primary: false },
+  { shift: 3, left: 84, top: 11, scale: 1.08, rotate: 4.4, shape: 'portrait', primary: false },
+  { shift: -4, left: 24, top: 47, scale: 1.08, rotate: 3.8, shape: 'square', primary: false },
+  { shift: 1, left: 54, top: 43, scale: 1.34, rotate: -3.2, shape: 'portrait', primary: true },
+  { shift: -1, left: 80, top: 52, scale: 1.1, rotate: 2.2, shape: 'wide', primary: false },
+  { shift: 4, left: 12, top: 79, scale: 1.16, rotate: -2.4, shape: 'wide', primary: false },
+  { shift: -3, left: 45, top: 78, scale: 0.98, rotate: 4.8, shape: 'square', primary: false },
+  { shift: 2, left: 72, top: 82, scale: 1.22, rotate: -4.2, shape: 'wide', primary: true },
 ] as const;
 const tabletSlotLayout = [
-  { shift: 3, left: 39, top: 8, scale: 0.88, rotate: -0.55, shape: 'portrait', primary: false },
-  { shift: 2, left: 63, top: 22, scale: 0.9, rotate: 0.45, shape: 'wide', primary: false },
-  { shift: 1, left: 38, top: 37, scale: 0.9, rotate: -0.3, shape: 'square', primary: false },
-  { shift: 0, left: 61, top: 52, scale: 0.94, rotate: 0.25, shape: 'portrait', primary: false },
-  { shift: -1, left: 38, top: 67, scale: 0.9, rotate: 0.55, shape: 'wide', primary: false },
-  { shift: -2, left: 62, top: 82, scale: 0.88, rotate: -0.4, shape: 'square', primary: false },
-  { shift: -3, left: 50, top: 95, scale: 0.86, rotate: 0.4, shape: 'wide', primary: false },
+  { shift: 4, left: 12, top: 15, scale: 1.04, rotate: -5.8, shape: 'portrait', primary: false },
+  { shift: 1, left: 43, top: 12, scale: 1.26, rotate: 2.8, shape: 'wide', primary: true },
+  { shift: -3, left: 78, top: 19, scale: 1.06, rotate: -3.8, shape: 'square', primary: false },
+  { shift: 3, left: 24, top: 44, scale: 1.18, rotate: 4.2, shape: 'wide', primary: false },
+  { shift: -1, left: 58, top: 44, scale: 1.28, rotate: -2.6, shape: 'portrait', primary: true },
+  { shift: 2, left: 87, top: 50, scale: 0.98, rotate: 5.2, shape: 'portrait', primary: false },
+  { shift: -4, left: 15, top: 76, scale: 1.08, rotate: -2.2, shape: 'square', primary: false },
+  { shift: 1, left: 48, top: 78, scale: 1.2, rotate: 4.8, shape: 'wide', primary: true },
+  { shift: -2, left: 78, top: 80, scale: 1.02, rotate: -4.4, shape: 'square', primary: false },
 ] as const;
 const mobileSlotLayout = [
-  { shift: 3, left: 34, top: 8, scale: 0.84, rotate: -0.35, shape: 'portrait', primary: false },
-  { shift: 2, left: 66, top: 21, scale: 0.86, rotate: 0.28, shape: 'wide', primary: false },
-  { shift: 1, left: 34, top: 36, scale: 0.86, rotate: -0.18, shape: 'square', primary: false },
-  { shift: 0, left: 65, top: 52, scale: 0.9, rotate: 0.16, shape: 'portrait', primary: false },
-  { shift: -1, left: 35, top: 68, scale: 0.84, rotate: 0.24, shape: 'wide', primary: false },
-  { shift: -2, left: 64, top: 83, scale: 0.82, rotate: -0.2, shape: 'square', primary: false },
-  { shift: -3, left: 50, top: 96, scale: 0.8, rotate: 0.18, shape: 'wide', primary: false },
+  { shift: 4, left: 14, top: 12, scale: 1.08, rotate: -6.4, shape: 'portrait', primary: false },
+  { shift: -2, left: 52, top: 15, scale: 1.22, rotate: 3.8, shape: 'wide', primary: true },
+  { shift: 3, left: 82, top: 27, scale: 1.02, rotate: -4.6, shape: 'square', primary: false },
+  { shift: -4, left: 25, top: 43, scale: 1.1, rotate: 4.8, shape: 'square', primary: false },
+  { shift: 1, left: 62, top: 48, scale: 1.22, rotate: -3.4, shape: 'portrait', primary: true },
+  { shift: 2, left: 86, top: 60, scale: 1.06, rotate: 5.4, shape: 'portrait', primary: false },
+  { shift: -1, left: 17, top: 75, scale: 1.1, rotate: -3.2, shape: 'wide', primary: false },
+  { shift: 4, left: 57, top: 81, scale: 1.2, rotate: 4.6, shape: 'wide', primary: true },
 ] as const;
 
 const splashReveal = keyframes`
@@ -183,22 +190,22 @@ const VirtualCanvas = styled.div<{ $mode: Mode }>`
 
 const CategorySection = styled.div<{ $baseX: number; $width: number; $active: boolean }>`
   position: absolute;
-  top: clamp(112px, 11.5vh, 138px);
+  top: clamp(92px, 10vh, 124px);
   left: 0;
   width: ${props => props.$width}px;
-  height: clamp(660px, 89vh, 760px);
+  height: clamp(610px, 78dvh, 780px);
   transform: translate3d(calc(${props => props.$baseX}px - var(--scroll-offset, 0px)), 0, 0);
   will-change: transform;
   pointer-events: ${props => props.$active ? 'auto' : 'none'};
 
   @media (max-width: ${TABLET_BREAKPOINT}px) {
-    top: clamp(126px, 14vh, 162px);
-    height: clamp(560px, 72dvh, 680px);
+    top: clamp(116px, 13vh, 150px);
+    height: clamp(520px, 70dvh, 680px);
   }
 
   @media (max-width: ${MOBILE_BREAKPOINT}px) {
-    top: clamp(126px, 15vh, 176px);
-    height: clamp(430px, 58dvh, 560px);
+    top: clamp(118px, 14vh, 154px);
+    height: clamp(430px, 64dvh, 580px);
   }
 `;
 
@@ -229,16 +236,16 @@ const PhotoSlot = styled.div<{
 
   @media (max-width: ${TABLET_BREAKPOINT}px) {
     transform: translate3d(
-      calc(-50% + ${props => (props.$shift || 0) * -8}px * var(--scroll-velocity, 0)),
-      calc(-50% + ${props => (props.$shift || 0) * 22}px * var(--scroll-velocity, 0)),
+      calc(-50% + ${props => (props.$shift || 0) * -10}px * var(--scroll-velocity, 0)),
+      calc(-50% + ${props => (props.$shift || 0) * 26}px * var(--scroll-velocity, 0)),
       0
     ) rotate(${props => props.$rotate}deg) scale(${props => props.$scale * 0.96});
   }
 
   @media (max-width: ${MOBILE_BREAKPOINT}px) {
     transform: translate3d(
-      calc(-50% + ${props => (props.$shift || 0) * -5}px * var(--scroll-velocity, 0)),
-      calc(-50% + ${props => (props.$shift || 0) * 14}px * var(--scroll-velocity, 0)),
+      calc(-50% + ${props => (props.$shift || 0) * -8}px * var(--scroll-velocity, 0)),
+      calc(-50% + ${props => (props.$shift || 0) * 18}px * var(--scroll-velocity, 0)),
       0
     ) rotate(${props => props.$rotate}deg) scale(${props => props.$scale * 0.9});
   }
@@ -251,9 +258,12 @@ const PhotoButton = styled.button<{
 }>`
   position: relative;
   width: ${props => {
-    if (props.$shape === 'wide') return 'clamp(142px, 11.8vw, 188px)';
-    if (props.$shape === 'portrait') return 'clamp(82px, 6.8vw, 110px)';
-    return 'clamp(108px, 8.9vw, 144px)';
+    if (props.$primary && props.$shape === 'wide') return 'clamp(210px, 19vw, 320px)';
+    if (props.$primary && props.$shape === 'portrait') return 'clamp(132px, 11vw, 188px)';
+    if (props.$primary) return 'clamp(156px, 13vw, 220px)';
+    if (props.$shape === 'wide') return 'clamp(166px, 14vw, 236px)';
+    if (props.$shape === 'portrait') return 'clamp(96px, 8vw, 140px)';
+    return 'clamp(124px, 10vw, 176px)';
   }};
   aspect-ratio: ${props => {
     if (props.$shape === 'wide') return '16 / 9';
@@ -378,17 +388,23 @@ const PhotoButton = styled.button<{
 
   @media (max-width: ${TABLET_BREAKPOINT}px) {
     width: ${props => {
-      if (props.$shape === 'wide') return 'clamp(152px, 19vw, 208px)';
-      if (props.$shape === 'portrait') return 'clamp(92px, 9vw, 122px)';
-      return 'clamp(118px, 13vw, 156px)';
+      if (props.$primary && props.$shape === 'wide') return 'clamp(206px, 30vw, 300px)';
+      if (props.$primary && props.$shape === 'portrait') return 'clamp(126px, 18vw, 174px)';
+      if (props.$primary) return 'clamp(160px, 22vw, 220px)';
+      if (props.$shape === 'wide') return 'clamp(166px, 24vw, 238px)';
+      if (props.$shape === 'portrait') return 'clamp(98px, 13vw, 134px)';
+      return 'clamp(126px, 17vw, 172px)';
     }};
   }
 
   @media (max-width: ${MOBILE_BREAKPOINT}px) {
     width: ${props => {
-      if (props.$shape === 'wide') return '38vw';
-      if (props.$shape === 'portrait') return '24vw';
-      return '30vw';
+      if (props.$primary && props.$shape === 'wide') return '52vw';
+      if (props.$primary && props.$shape === 'portrait') return '34vw';
+      if (props.$primary) return '42vw';
+      if (props.$shape === 'wide') return '44vw';
+      if (props.$shape === 'portrait') return '28vw';
+      return '34vw';
     }};
   }
 
@@ -628,24 +644,35 @@ const ModeButton = styled.button<{ $active: boolean; $variant: Mode }>`
   }
 `;
 
-const ProjectorAccent = styled.div<{ $compact: boolean }>`
+const ProjectorAccent = styled.div<{ $compact: boolean; $dragging: boolean }>`
   position: absolute;
-  left: max(16px, calc(env(safe-area-inset-left, 0px) + 10px));
+  left: clamp(72px, 14vw, 180px);
   bottom: max(22px, calc(env(safe-area-inset-bottom, 0px) + 22px));
-  width: ${props => props.$compact ? '150px' : '216px'};
-  height: ${props => props.$compact ? '122px' : '154px'};
+  width: ${props => props.$compact ? '178px' : '232px'};
+  height: ${props => props.$compact ? '140px' : '162px'};
   z-index: 1;
-  opacity: 0.9;
+  opacity: ${props => props.$dragging ? 1 : 0.9};
   transform: translate3d(0, calc(var(--scroll-speed, 0) * -5px), 0);
   transform-origin: left bottom;
   animation: ${projectorDrift} 4.8s ease-in-out infinite;
+  pointer-events: auto;
+  cursor: ${props => props.$dragging ? 'grabbing' : 'grab'};
+  touch-action: none;
+  user-select: none;
+
+  &:focus-visible {
+    outline: 1px solid rgba(246, 235, 207, 0.74);
+    outline-offset: 6px;
+  }
 
   @media (min-width: ${TABLET_BREAKPOINT + 1}px) {
     display: none;
   }
 
   @media (max-width: ${MOBILE_BREAKPOINT}px) {
+    left: max(26px, calc(env(safe-area-inset-left, 0px) + 26px));
     bottom: max(26px, calc(env(safe-area-inset-bottom, 0px) + 26px));
+    transform: translate3d(0, calc(var(--scroll-speed, 0) * -5px), 0);
   }
 `;
 
@@ -694,17 +721,17 @@ const ProjectorMachine = styled.div<{ $compact: boolean }>`
   position: absolute;
   left: 0;
   bottom: 0;
-  width: ${props => props.$compact ? '114px' : '154px'};
-  height: ${props => props.$compact ? '88px' : '112px'};
+  width: ${props => props.$compact ? '136px' : '164px'};
+  height: ${props => props.$compact ? '102px' : '116px'};
   filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.34));
 `;
 
 const ProjectorBody = styled.div<{ $compact: boolean }>`
   position: absolute;
-  left: ${props => props.$compact ? '16px' : '22px'};
+  left: ${props => props.$compact ? '24px' : '24px'};
   bottom: ${props => props.$compact ? '18px' : '22px'};
-  width: ${props => props.$compact ? '62px' : '84px'};
-  height: ${props => props.$compact ? '36px' : '46px'};
+  width: ${props => props.$compact ? '74px' : '88px'};
+  height: ${props => props.$compact ? '42px' : '48px'};
   border: 1px solid rgba(246, 235, 207, 0.32);
   border-radius: 10px;
   background:
@@ -740,10 +767,10 @@ const ProjectorBody = styled.div<{ $compact: boolean }>`
 
 const ProjectorPanel = styled.div<{ $compact: boolean }>`
   position: absolute;
-  left: ${props => props.$compact ? '24px' : '31px'};
-  bottom: ${props => props.$compact ? '30px' : '38px'};
-  width: ${props => props.$compact ? '32px' : '42px'};
-  height: ${props => props.$compact ? '14px' : '18px'};
+  left: ${props => props.$compact ? '34px' : '34px'};
+  bottom: ${props => props.$compact ? '33px' : '40px'};
+  width: ${props => props.$compact ? '38px' : '44px'};
+  height: ${props => props.$compact ? '16px' : '18px'};
   border: 1px solid rgba(201, 154, 52, 0.3);
   border-radius: 7px;
   background: rgba(8, 6, 4, 0.5);
@@ -786,7 +813,7 @@ const ProjectorReel = styled.div<{ $size: number; $left: number; $top: number }>
   box-shadow:
     inset 0 0 0 1px rgba(246, 235, 207, 0.08),
     0 6px 14px rgba(0, 0, 0, 0.22);
-  transform: rotate(calc(var(--scroll-velocity, 0) * 18deg));
+  transform: rotate(calc(var(--projector-handle-angle, 18deg) + (var(--scroll-velocity, 0) * 18deg)));
 
   &::before,
   &::after {
@@ -818,38 +845,80 @@ const ProjectorReel = styled.div<{ $size: number; $left: number; $top: number }>
   }
 `;
 
-const ProjectorHandle = styled.div<{ $compact: boolean }>`
+const ProjectorHandle = styled.div<{ $compact: boolean; $dragging: boolean }>`
   position: absolute;
-  left: ${props => props.$compact ? '2px' : '6px'};
-  top: ${props => props.$compact ? '46px' : '56px'};
-  width: ${props => props.$compact ? '26px' : '32px'};
-  height: 2px;
-  background: rgba(246, 235, 207, 0.28);
-  transform-origin: right center;
-  transform: rotate(calc(18deg + (var(--scroll-velocity, 0) * 24deg)));
+  left: ${props => props.$compact ? '-6px' : '-4px'};
+  top: ${props => props.$compact ? '25px' : '36px'};
+  z-index: 5;
+  width: ${props => props.$compact ? '48px' : '54px'};
+  height: ${props => props.$compact ? '48px' : '54px'};
+  border-radius: 999px;
+  border: 3px solid ${props => props.$dragging ? 'rgba(246, 235, 207, 0.96)' : 'rgba(201, 154, 52, 0.82)'};
+  background:
+    radial-gradient(circle at center, rgba(246, 235, 207, 0.72) 0 9%, rgba(8, 6, 4, 0.92) 10% 18%, transparent 19%),
+    conic-gradient(
+      from 10deg,
+      transparent 0deg 28deg,
+      rgba(246, 235, 207, 0.58) 28deg 35deg,
+      transparent 35deg 88deg,
+      rgba(246, 235, 207, 0.5) 88deg 95deg,
+      transparent 95deg 148deg,
+      rgba(246, 235, 207, 0.58) 148deg 155deg,
+      transparent 155deg 208deg,
+      rgba(246, 235, 207, 0.5) 208deg 215deg,
+      transparent 215deg 268deg,
+      rgba(246, 235, 207, 0.58) 268deg 275deg,
+      transparent 275deg 360deg
+    ),
+    rgba(12, 9, 6, 0.94);
+  box-shadow:
+    0 0 0 1px rgba(8, 6, 4, 0.58),
+    0 0 18px rgba(201, 154, 52, 0.32),
+    inset 0 0 0 2px rgba(8, 6, 4, 0.62);
+  transform-origin: center;
+  transform: rotate(calc(var(--projector-handle-angle, 18deg) + (var(--scroll-velocity, 0) * 14deg)));
+  transition: border-color 160ms ease, box-shadow 160ms ease;
 
   &::before {
     content: "";
     position: absolute;
-    right: -3px;
+    left: 50%;
     top: 50%;
-    width: ${props => props.$compact ? '8px' : '10px'};
-    height: ${props => props.$compact ? '8px' : '10px'};
+    width: 2px;
+    height: 50%;
     border-radius: 999px;
-    border: 1px solid rgba(201, 154, 52, 0.4);
-    background: rgba(23, 18, 13, 0.96);
-    transform: translateY(-50%);
+    background:
+      linear-gradient(180deg, rgba(246, 235, 207, 0.88), rgba(201, 154, 52, 0.42));
+    transform: translate(-50%, -100%);
+    transform-origin: center bottom;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: ${props => props.$compact ? '-13px' : '-15px'};
+    width: ${props => props.$compact ? '18px' : '21px'};
+    height: ${props => props.$compact ? '18px' : '21px'};
+    border-radius: 999px;
+    border: 2px solid ${props => props.$dragging ? 'rgba(246, 235, 207, 0.98)' : 'rgba(201, 154, 52, 0.82)'};
+    background:
+      radial-gradient(circle at 35% 35%, rgba(246, 235, 207, 0.92), rgba(201, 154, 52, 0.32) 38%, rgba(23, 18, 13, 0.96) 70%);
+    box-shadow:
+      inset 0 0 0 2px rgba(8, 6, 4, 0.72),
+      0 5px 12px rgba(0, 0, 0, 0.42);
+    transform: translateX(-50%);
   }
 `;
 
 const ProjectorLabel = styled.div<{ $compact: boolean }>`
   position: absolute;
-  left: ${props => props.$compact ? '18px' : '26px'};
-  bottom: ${props => props.$compact ? '58px' : '72px'};
-  color: rgba(246, 235, 207, 0.56);
+  left: ${props => props.$compact ? '76px' : '86px'};
+  bottom: ${props => props.$compact ? '70px' : '76px'};
+  color: rgba(246, 235, 207, 0.66);
   font-family: var(--font-bebas-neue), var(--font-inter), sans-serif;
-  font-size: ${props => props.$compact ? '0.58rem' : '0.72rem'};
-  letter-spacing: 0.18em;
+  font-size: ${props => props.$compact ? '0.56rem' : '0.7rem'};
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   white-space: nowrap;
 `;
@@ -1048,6 +1117,17 @@ function positiveModulo(value: number, length: number) {
   return ((value % length) + length) % length;
 }
 
+function normalizeAngleDelta(delta: number) {
+  return ((delta + 180) % 360 + 360) % 360 - 180;
+}
+
+function getProjectorHandleAngle(event: ReactPointerEvent<HTMLElement>, compact: boolean) {
+  const rect = event.currentTarget.getBoundingClientRect();
+  const pivotX = rect.left + (compact ? 18 : 23);
+  const pivotY = rect.bottom - (compact ? 102 : 116) + (compact ? 49 : 63);
+  return Math.atan2(event.clientY - pivotY, event.clientX - pivotX) * 180 / Math.PI;
+}
+
 function getLoopIndex(scroll: number, sectionWidth: number, groupCount: number) {
   if (sectionWidth <= 0 || groupCount <= 0) return 0;
   const loopWidth = sectionWidth * groupCount;
@@ -1094,6 +1174,11 @@ export default function HomeClient() {
     velocity: number;
     maxAbsDelta: number;
   } | null>(null);
+  const projectorGestureRef = useRef<{
+    pointerId: number;
+    lastAngle: number;
+    lastMoveTime: number;
+  } | null>(null);
   const suppressFullCenterClickRef = useRef(false);
 
   const [photos, setPhotos] = useState<GalleryItem[]>([]);
@@ -1105,6 +1190,8 @@ export default function HomeClient() {
   const [viewport, setViewport] = useState<Viewport>({ width: 1440, height: 900 });
   const [modalPhoto, setModalPhoto] = useState<GalleryItem | null>(null);
   const [modalSession, setModalSession] = useState(0);
+  const [projectorHandleAngle, setProjectorHandleAngle] = useState(18);
+  const [isProjectorDragging, setIsProjectorDragging] = useState(false);
   const isMobileViewport = viewport.width < MOBILE_BREAKPOINT;
   const isTabletViewport = viewport.width < TABLET_BREAKPOINT;
   const currentSlotLayout = isMobileViewport
@@ -1168,10 +1255,10 @@ export default function HomeClient() {
   }, [photos]);
 
   const sectionWidth = isMobileViewport
-    ? Math.min(Math.max(168, viewport.width * 0.44), 216)
+    ? Math.min(Math.max(320, viewport.width * 0.88), 520)
     : isTabletViewport
-      ? Math.min(Math.max(196, viewport.width * 0.23), 272)
-      : Math.min(Math.max(164, viewport.width * 0.17), 232);
+      ? Math.min(Math.max(560, viewport.width * 0.78), 840)
+      : Math.min(Math.max(760, viewport.width * 0.58), 1080);
   const streamSectionCount = Math.max(18, Math.min(42, Math.ceil(Math.max(photoPool.length, 1) / currentSlotLayout.length)));
   const loopWidth = sectionWidth * streamSectionCount;
   const randomSections = useMemo(() => {
@@ -1260,6 +1347,8 @@ export default function HomeClient() {
   useEffect(() => {
     if (!isModalOpen) return;
     fullMobileGestureRef.current = null;
+    projectorGestureRef.current = null;
+    setIsProjectorDragging(false);
   }, [isModalOpen]);
 
   const { handlePointerDown, handlePointerMove, handlePointerUp } = useHomeCanvasPointerScroll({
@@ -1267,8 +1356,80 @@ export default function HomeClient() {
     isModalOpen,
     isMobileViewport,
     isTabletViewport,
+    mode,
     scrollTargetRef,
   });
+
+  const handleProjectorPointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (isModalOpen || mode !== 'grid' || !isTabletViewport) return;
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      const angle = getProjectorHandleAngle(event, isMobileViewport);
+      projectorGestureRef.current = {
+        pointerId: event.pointerId,
+        lastAngle: angle,
+        lastMoveTime: performance.now(),
+      };
+      setProjectorHandleAngle(angle);
+      setIsProjectorDragging(true);
+      event.currentTarget.setPointerCapture(event.pointerId);
+    },
+    [isMobileViewport, isModalOpen, isTabletViewport, mode]
+  );
+
+  const handleProjectorPointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const gesture = projectorGestureRef.current;
+      if (!gesture || gesture.pointerId !== event.pointerId) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      const nextAngle = getProjectorHandleAngle(event, isMobileViewport);
+      const delta = normalizeAngleDelta(nextAngle - gesture.lastAngle);
+      const now = performance.now();
+      const elapsed = Math.max(now - gesture.lastMoveTime, 16);
+
+      scrollTargetRef.current += delta * PROJECTOR_HANDLE_SCROLL_PER_DEGREE * (isMobileViewport ? 0.86 : 1);
+      // 速く回したときだけ少し慣性を足し、手回し感を出す。
+      scrollTargetRef.current += (delta / elapsed) * sectionWidth * 0.18;
+      gesture.lastAngle = nextAngle;
+      gesture.lastMoveTime = now;
+      setProjectorHandleAngle(nextAngle);
+    },
+    [isMobileViewport, sectionWidth]
+  );
+
+  const handleProjectorPointerEnd = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    const gesture = projectorGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    projectorGestureRef.current = null;
+    setIsProjectorDragging(false);
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      /* capture 済みでない環境向け */
+    }
+  }, []);
+
+  const handleProjectorKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLDivElement>) => {
+      if (isModalOpen || mode !== 'grid' || !isTabletViewport) return;
+      const direction = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+      if (direction === 0) return;
+
+      event.preventDefault();
+      const angleDelta = direction * 28;
+      setProjectorHandleAngle((angle) => angle + angleDelta);
+      scrollTargetRef.current += angleDelta * PROJECTOR_HANDLE_SCROLL_PER_DEGREE;
+    },
+    [isModalOpen, isTabletViewport, mode]
+  );
 
   const handleFullMobileActivePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLButtonElement>) => {
@@ -1356,6 +1517,10 @@ export default function HomeClient() {
     scrollTargetRef.current += sectionWidth * (isMobileViewport ? 1.05 : isTabletViewport ? 1.7 : 2.5);
   };
 
+  const projectorStyle = {
+    '--projector-handle-angle': `${projectorHandleAngle.toFixed(2)}deg`,
+  } as CSSProperties & Record<'--projector-handle-angle', string>;
+
   return (
     <Page
       ref={pageRef}
@@ -1411,7 +1576,7 @@ export default function HomeClient() {
                             type="button"
                             $active={active}
                             $shape={layout.shape}
-                            $primary={false}
+                            $primary={layout.primary}
                             onClick={() => openPhoto(photo.photo)}
                             aria-label={`${photo.photo.title || 'Photo'}を表示`}
                           >
@@ -1473,13 +1638,28 @@ export default function HomeClient() {
           <FixedUi>
             <Cross />
             {showProjectorAccent && (
-              <ProjectorAccent $compact={isMobileViewport} aria-hidden="true">
+              <ProjectorAccent
+                $compact={isMobileViewport}
+                $dragging={isProjectorDragging}
+                aria-label="射影機ハンドルを回して写真を送る"
+                aria-valuemax={180}
+                aria-valuemin={-180}
+                aria-valuenow={Math.round(projectorHandleAngle)}
+                onPointerCancel={handleProjectorPointerEnd}
+                onPointerDown={handleProjectorPointerDown}
+                onPointerMove={handleProjectorPointerMove}
+                onPointerUp={handleProjectorPointerEnd}
+                onKeyDown={handleProjectorKeyDown}
+                role="slider"
+                style={projectorStyle}
+                tabIndex={0}
+              >
                 <ProjectorBeam $compact={isMobileViewport} />
                 <ProjectorMachine $compact={isMobileViewport}>
                   <ProjectorLabel $compact={isMobileViewport}>Hand Crank Cinema</ProjectorLabel>
                   <ProjectorReel $size={isMobileViewport ? 30 : 42} $left={isMobileViewport ? 12 : 16} $top={isMobileViewport ? 10 : 12} />
                   <ProjectorReel $size={isMobileViewport ? 24 : 34} $left={isMobileViewport ? 48 : 64} $top={isMobileViewport ? 2 : 4} />
-                  <ProjectorHandle $compact={isMobileViewport} />
+                  <ProjectorHandle $compact={isMobileViewport} $dragging={isProjectorDragging} />
                   <ProjectorBody $compact={isMobileViewport} />
                   <ProjectorPanel $compact={isMobileViewport} />
                   <ProjectorLeg $compact={isMobileViewport} $left={isMobileViewport ? 28 : 40} />

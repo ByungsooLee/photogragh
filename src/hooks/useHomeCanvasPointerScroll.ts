@@ -8,6 +8,7 @@ type Options = {
   isModalOpen: boolean;
   isMobileViewport: boolean;
   isTabletViewport: boolean;
+  mode?: 'grid' | 'full';
   scrollTargetRef: MutableRefObject<number>;
 };
 
@@ -20,6 +21,7 @@ export function useHomeCanvasPointerScroll({
   isModalOpen,
   isMobileViewport,
   isTabletViewport,
+  mode = 'grid',
   scrollTargetRef,
 }: Options) {
   const touchStartRef = useRef<{ x: number; y: number; scroll: number } | null>(null);
@@ -48,6 +50,7 @@ export function useHomeCanvasPointerScroll({
   const handlePointerDown = useCallback(
     (event: PointerEvent<HTMLElement>) => {
       if (isModalOpen) return;
+      if (isTabletViewport && mode === 'grid') return;
       if ((event.target as HTMLElement).closest('button, a')) return;
       touchStartRef.current = {
         x: event.clientX,
@@ -56,7 +59,7 @@ export function useHomeCanvasPointerScroll({
       };
       event.currentTarget.setPointerCapture(event.pointerId);
     },
-    [isModalOpen, scrollTargetRef]
+    [isModalOpen, isTabletViewport, mode, scrollTargetRef]
   );
 
   const handlePointerMove = useCallback(

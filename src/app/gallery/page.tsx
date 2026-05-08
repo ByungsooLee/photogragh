@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import styled from 'styled-components';
-import Header from '@/components/Header';
+import Header, { HeaderFlowSpacer } from '@/components/Header';
 import Modal from '@/components/Modal';
 import { getAllGallery, type GalleryItem } from '@/lib/microcms';
 
@@ -274,7 +274,8 @@ export default function Gallery() {
 
   return (
     <Page>
-      <Header />
+      <Header fixed />
+      <HeaderFlowSpacer aria-hidden="true" />
       <Toolbar>
         <TitleBlock>
           <Eyebrow>/{filteredPhotos.length || photos.length || 100} Photos</Eyebrow>
