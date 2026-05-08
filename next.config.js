@@ -31,25 +31,31 @@ const nextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   async headers() {
+    const isProduction = process.env.NODE_ENV === 'production';
+
     return [
-      {
-        source: '/:all*(svg|jpg|jpeg|png|gif|ico|webp|avif)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        source: '/:all*(js|css)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
+      ...(isProduction
+        ? [
+            {
+              source: '/:all*(svg|jpg|jpeg|png|gif|ico|webp|avif)',
+              headers: [
+                {
+                  key: 'Cache-Control',
+                  value: 'public, max-age=31536000, immutable',
+                },
+              ],
+            },
+            {
+              source: '/:all*(js|css)',
+              headers: [
+                {
+                  key: 'Cache-Control',
+                  value: 'public, max-age=31536000, immutable',
+                },
+              ],
+            },
+          ]
+        : []),
       {
         source: '/:path*',
         headers: [

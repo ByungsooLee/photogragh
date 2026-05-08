@@ -107,8 +107,8 @@ const OptionList = styled.ul<{ $isOpen: boolean }>`
   padding: 0.2rem 0;
   @media (max-width: 600px) {
     border-radius: 8px;
-    box-shadow: 0 4px 16px 0 #d4af37cc, 0 0 0 2px #000;
-    background: linear-gradient(90deg, #18120a 60%, #2d230c 100%);
+    box-shadow: 0 4px 16px 0 rgba(248, 245, 239, 0.24), 0 0 0 2px #000;
+    background: linear-gradient(90deg, #0b0c0f 60%, #181a1f 100%);
     border-width: 2px;
     padding: 0.1rem 0;
     max-height: 180px;
@@ -123,13 +123,13 @@ const OptionList = styled.ul<{ $isOpen: boolean }>`
 const OptionItem = styled.li<{ selected: boolean }>`
   padding: 0.6rem 1rem;
   color: ${props => (props.selected ? 'var(--gold)' : '#fff')};
-  background: ${props => (props.selected ? 'rgba(212,175,55,0.08)' : 'transparent')};
+  background: ${props => (props.selected ? 'rgba(248, 245, 239, 0.08)' : 'transparent')};
   font-size: 1rem;
   font-family: inherit;
   cursor: pointer;
   transition: background 0.18s, color 0.18s;
   &:hover {
-    background: linear-gradient(90deg, rgba(212,175,55,0.18) 0%, rgba(10,10,10,0.98) 100%);
+    background: linear-gradient(90deg, rgba(248, 245, 239, 0.16) 0%, rgba(10,10,10,0.98) 100%);
     color: var(--gold);
   }
   @media (max-width: 600px) {
@@ -139,7 +139,7 @@ const OptionItem = styled.li<{ selected: boolean }>`
     margin: 0.05rem 0.1rem;
     font-weight: 600;
     letter-spacing: 1px;
-    box-shadow: ${props => (props.selected ? '0 1px 4px #d4af37cc' : 'none')};
+    box-shadow: ${props => (props.selected ? '0 1px 4px rgba(248, 245, 239, 0.28)' : 'none')};
   }
   @media (max-width: 400px) {
     font-size: 0.88rem;

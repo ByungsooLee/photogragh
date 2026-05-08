@@ -132,7 +132,7 @@ const projectorHandleGlow = keyframes`
     box-shadow:
       0 0 0 1px rgba(8, 6, 4, 0.58),
       0 0 26px rgba(246, 235, 207, 0.42),
-      0 0 42px rgba(201, 154, 52, 0.18),
+      0 0 42px rgba(248, 245, 239, 0.14),
       inset 0 0 0 2px rgba(8, 6, 4, 0.62);
     filter: brightness(1.18);
   }
@@ -1396,7 +1396,7 @@ export default function HomeClient() {
   const tone = 'dark';
   const isImmersiveMobile = isMobileViewport && isModalOpen;
   const thumbnailSizes = isMobileViewport ? '38vw' : isTabletViewport ? '18vw' : '12vw';
-  const showProjectorAccent = mode === 'grid' && !isImmersiveMobile;
+  const showProjectorAccent = !isImmersiveMobile;
 
   useEffect(() => {
     const tick = () => {
@@ -1454,7 +1454,7 @@ export default function HomeClient() {
 
   const handleProjectorPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (isModalOpen || mode !== 'grid') return;
+      if (isModalOpen) return;
       if (event.pointerType === 'mouse' && event.button !== 0) return;
 
       event.preventDefault();
@@ -1469,7 +1469,7 @@ export default function HomeClient() {
       setIsProjectorDragging(true);
       event.currentTarget.setPointerCapture(event.pointerId);
     },
-    [isMobileViewport, isModalOpen, mode]
+    [isMobileViewport, isModalOpen]
   );
 
   const handleProjectorPointerMove = useCallback(
@@ -1511,7 +1511,7 @@ export default function HomeClient() {
 
   const handleProjectorKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLDivElement>) => {
-      if (isModalOpen || mode !== 'grid') return;
+      if (isModalOpen) return;
       const direction = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
       if (direction === 0) return;
 
@@ -1520,7 +1520,7 @@ export default function HomeClient() {
       setProjectorHandleAngle((angle) => angle + angleDelta);
       scrollTargetRef.current += angleDelta * PROJECTOR_HANDLE_SCROLL_PER_DEGREE;
     },
-    [isModalOpen, mode]
+    [isModalOpen]
   );
 
   const handleFullMobileActivePointerDown = useCallback(

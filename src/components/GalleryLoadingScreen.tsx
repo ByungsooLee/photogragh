@@ -65,7 +65,7 @@ const ProgressContainer = styled.div`
 const ProgressBar = styled.div<{ $progress: number }>`
   width: ${props => props.$progress}%;
   height: 100%;
-  background: linear-gradient(90deg, #fff 0%, #d4af37 100%);
+  background: linear-gradient(90deg, #fff 0%, #c8ccd2 100%);
   border-radius: 8px;
   transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
   will-change: width;
