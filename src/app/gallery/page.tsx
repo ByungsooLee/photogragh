@@ -69,6 +69,14 @@ const MobileIntro = styled.section`
     background: linear-gradient(180deg, rgba(8, 9, 11, 0.92), rgba(8, 9, 11, 0.84));
     border-bottom: 1px solid var(--line);
   }
+
+  @media (min-width: ${MOBILE_BREAKPOINT + 1}px) and (max-width: ${TABLET_BREAKPOINT}px) {
+    gap: 14px;
+    padding:
+      calc(env(safe-area-inset-top, 0px) + 10px)
+      22px
+      16px;
+  }
 `;
 
 const MobileBrand = styled(Link)`
@@ -90,6 +98,16 @@ const MobileBrand = styled(Link)`
     letter-spacing: 0.22em;
     color: rgba(248, 245, 239, 0.62);
     text-shadow: none;
+  }
+
+  @media (min-width: ${MOBILE_BREAKPOINT + 1}px) and (max-width: ${TABLET_BREAKPOINT}px) {
+    font-size: clamp(1.7rem, 4.4vw, 2.4rem);
+    letter-spacing: 0.04em;
+
+    small {
+      font-size: 0.58rem;
+      letter-spacing: 0.2em;
+    }
   }
 `;
 
@@ -116,6 +134,11 @@ const MobileNavLink = styled(Link)<{ $active?: boolean }>`
   &:focus-visible {
     opacity: 1;
     border-color: currentColor;
+  }
+
+  @media (min-width: ${MOBILE_BREAKPOINT + 1}px) and (max-width: ${TABLET_BREAKPOINT}px) {
+    padding: 6px 10px 4px;
+    font-size: 0.96rem;
   }
 `;
 
@@ -145,6 +168,13 @@ const MobileCompactBar = styled.div<{ $visible: boolean }>`
     transform: translateY(${props => props.$visible ? '0' : '-120%'});
     transition: opacity 220ms ease, transform 220ms ease;
   }
+
+  @media (min-width: ${MOBILE_BREAKPOINT + 1}px) and (max-width: ${TABLET_BREAKPOINT}px) {
+    padding:
+      calc(env(safe-area-inset-top, 0px) + 10px)
+      22px
+      10px;
+  }
 `;
 
 const CompactBrand = styled(Link)`
@@ -155,6 +185,10 @@ const CompactBrand = styled(Link)`
   letter-spacing: 0.05em;
   line-height: 0.9;
   text-transform: uppercase;
+
+  @media (min-width: ${MOBILE_BREAKPOINT + 1}px) and (max-width: ${TABLET_BREAKPOINT}px) {
+    font-size: 1.55rem;
+  }
 `;
 
 const CompactMenuButton = styled.button`
@@ -177,6 +211,15 @@ const CompactMenuButton = styled.button`
   span:last-child {
     font-size: 0.72rem;
     font-weight: 700;
+  }
+
+  @media (min-width: ${MOBILE_BREAKPOINT + 1}px) and (max-width: ${TABLET_BREAKPOINT}px) {
+    gap: 8px;
+    padding: 8px 10px;
+
+    span:last-child {
+      font-size: 0.68rem;
+    }
   }
 `;
 
@@ -246,11 +289,24 @@ const MobileMenuPanel = styled.aside<{ $open: boolean }>`
     display: grid;
     gap: 18px;
   }
+
+  @media (min-width: ${MOBILE_BREAKPOINT + 1}px) and (max-width: ${TABLET_BREAKPOINT}px) {
+    top: calc(env(safe-area-inset-top, 0px) + 58px);
+    right: 18px;
+    left: auto;
+    width: min(380px, calc(100vw - 36px));
+    padding: 15px;
+    gap: 14px;
+  }
 `;
 
 const MobileMenuSection = styled.section`
   display: grid;
   gap: 10px;
+
+  @media (min-width: ${MOBILE_BREAKPOINT + 1}px) and (max-width: ${TABLET_BREAKPOINT}px) {
+    gap: 8px;
+  }
 `;
 
 const MobileMenuLabel = styled.span`
@@ -259,6 +315,10 @@ const MobileMenuLabel = styled.span`
   font-weight: 700;
   letter-spacing: 0.22em;
   text-transform: uppercase;
+
+  @media (min-width: ${MOBILE_BREAKPOINT + 1}px) and (max-width: ${TABLET_BREAKPOINT}px) {
+    font-size: 0.62rem;
+  }
 `;
 
 const MobileMenuTitle = styled.h2`
@@ -269,6 +329,10 @@ const MobileMenuTitle = styled.h2`
   line-height: 0.84;
   text-transform: uppercase;
   color: var(--ink);
+
+  @media (min-width: ${MOBILE_BREAKPOINT + 1}px) and (max-width: ${TABLET_BREAKPOINT}px) {
+    font-size: clamp(2rem, 5vw, 2.7rem);
+  }
 `;
 
 const MobileMenuCount = styled.div`
@@ -276,6 +340,10 @@ const MobileMenuCount = styled.div`
   font-size: 0.86rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+
+  @media (min-width: ${MOBILE_BREAKPOINT + 1}px) and (max-width: ${TABLET_BREAKPOINT}px) {
+    font-size: 0.78rem;
+  }
 `;
 
 const Toolbar = styled.section`
@@ -301,6 +369,11 @@ const Toolbar = styled.section`
     z-index: 1;
     padding: 18px;
   }
+
+  @media (min-width: ${MOBILE_BREAKPOINT + 1}px) and (max-width: ${TABLET_BREAKPOINT}px) {
+    gap: 16px;
+    padding: 16px 20px 14px;
+  }
 `;
 
 const TitleBlock = styled.div`
@@ -314,6 +387,11 @@ const Eyebrow = styled.div`
   letter-spacing: 0.22em;
   margin-bottom: 7px;
   text-transform: uppercase;
+
+  @media (min-width: ${MOBILE_BREAKPOINT + 1}px) and (max-width: ${TABLET_BREAKPOINT}px) {
+    font-size: 0.66rem;
+    margin-bottom: 4px;
+  }
 `;
 
 const Title = styled.h1`
@@ -325,6 +403,11 @@ const Title = styled.h1`
   text-transform: uppercase;
   color: var(--ink);
   text-shadow: 0 18px 42px rgba(0, 0, 0, 0.58);
+
+  @media (min-width: ${MOBILE_BREAKPOINT + 1}px) and (max-width: ${TABLET_BREAKPOINT}px) {
+    font-size: clamp(2.4rem, 5.8vw, 3.8rem);
+    line-height: 0.86;
+  }
 `;
 
 const Filters = styled.div`
@@ -335,6 +418,10 @@ const Filters = styled.div`
 
   @media (max-width: ${TABLET_BREAKPOINT}px) {
     justify-content: flex-start;
+  }
+
+  @media (min-width: ${MOBILE_BREAKPOINT + 1}px) and (max-width: ${TABLET_BREAKPOINT}px) {
+    gap: 8px 10px;
   }
 `;
 
@@ -358,6 +445,11 @@ const FilterButton = styled.button<{ $active?: boolean }>`
 
   &:focus-visible {
     outline: none;
+  }
+
+  @media (min-width: ${MOBILE_BREAKPOINT + 1}px) and (max-width: ${TABLET_BREAKPOINT}px) {
+    padding: 5px 9px 4px;
+    font-size: 0.74rem;
   }
 `;
 
