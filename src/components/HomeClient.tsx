@@ -543,7 +543,8 @@ const FullPanel = styled.button<{
   }
 
   img {
-    object-fit: cover;
+    object-fit: contain;
+    object-position: center;
     opacity: 1;
     inset: ${props => props.$active ? '20px 24px' : '14px 18px'} !important;
     width: ${props => props.$active ? 'calc(100% - 48px)' : 'calc(100% - 36px)'} !important;
@@ -555,7 +556,7 @@ const FullPanel = styled.button<{
     will-change: transform;
   }
 
-  @media (max-width: ${MOBILE_BREAKPOINT}px) {
+  @media (max-width: ${TABLET_BREAKPOINT}px) {
     display: ${props => props.$side ? 'none' : 'block'};
     left: 0;
     top: 0;
@@ -1256,6 +1257,7 @@ export default function HomeClient() {
   const [isProjectorDragging, setIsProjectorDragging] = useState(false);
   const isMobileViewport = viewport.width < MOBILE_BREAKPOINT;
   const isTabletViewport = viewport.width < TABLET_BREAKPOINT;
+  const isCompactViewport = viewport.width < TABLET_BREAKPOINT;
   const currentSlotLayout = isMobileViewport
     ? mobileSlotLayout
     : isTabletViewport
@@ -1362,11 +1364,11 @@ export default function HomeClient() {
   const prevPhoto = getSectionPhoto(fullPhotos, fullIndex - 1 + Math.max(fullPhotos.length, 1));
   const nextPhoto = getSectionPhoto(fullPhotos, fullIndex + 1);
   const modalUrls = parseImageUrls(modalPhoto?.imageUrls);
-  const modalImage = getModalPreviewImage(modalUrls, isMobileViewport);
-  const modalFullImage = getModalFullImage(modalUrls, isMobileViewport);
+  const modalImage = getModalPreviewImage(modalUrls, isCompactViewport);
+  const modalFullImage = getModalFullImage(modalUrls, isCompactViewport);
   const isModalOpen = Boolean(modalPhoto && isValidUrl(modalImage));
   const tone = 'dark';
-  const isImmersiveMobile = isMobileViewport && isModalOpen;
+  const isImmersiveMobile = isCompactViewport && isModalOpen;
   const thumbnailSizes = isMobileViewport ? '38vw' : isTabletViewport ? '18vw' : '12vw';
   const showProjectorAccent = !isImmersiveMobile;
 
@@ -1497,7 +1499,7 @@ export default function HomeClient() {
 
   const handleFullMobileActivePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLButtonElement>) => {
-      if (isModalOpen || !isMobileViewport || mode !== 'full') return;
+      if (isModalOpen || !isCompactViewport || mode !== 'full') return;
       if (event.pointerType === 'mouse' && event.button !== 0) return;
 
       const startScrollTarget = scrollTargetRef.current;
@@ -1514,7 +1516,7 @@ export default function HomeClient() {
       };
       event.currentTarget.setPointerCapture(event.pointerId);
     },
-    [isModalOpen, isMobileViewport, mode]
+    [isCompactViewport, isModalOpen, mode]
   );
 
   const handleFullMobileActivePointerMove = useCallback((event: ReactPointerEvent<HTMLButtonElement>) => {
@@ -1578,7 +1580,7 @@ export default function HomeClient() {
   const switchMode = (nextMode: Mode) => {
     if (nextMode === mode) return;
     setMode(nextMode);
-    scrollTargetRef.current += sectionWidth * (isMobileViewport ? 1.05 : isTabletViewport ? 1.7 : 2.5);
+    scrollTargetRef.current += sectionWidth * (isCompactViewport ? 1.05 : 2.5);
   };
 
   const projectorStyle = {
@@ -1675,16 +1677,16 @@ export default function HomeClient() {
                 $width={panel.active ? Math.min(viewport.width * 0.58, 920) : Math.min(viewport.width * 0.48, 760)}
                 $active={panel.active}
                 $side={!panel.active}
-                onPointerDown={panel.active && isMobileViewport && mode === 'full' ? handleFullMobileActivePointerDown : undefined}
-                onPointerMove={panel.active && isMobileViewport && mode === 'full' ? handleFullMobileActivePointerMove : undefined}
-                onPointerUp={panel.active && isMobileViewport && mode === 'full' ? handleFullMobileActivePointerEnd : undefined}
-                onPointerCancel={panel.active && isMobileViewport && mode === 'full' ? handleFullMobileActivePointerEnd : undefined}
+                onPointerDown={panel.active && isCompactViewport && mode === 'full' ? handleFullMobileActivePointerDown : undefined}
+                onPointerMove={panel.active && isCompactViewport && mode === 'full' ? handleFullMobileActivePointerMove : undefined}
+                onPointerUp={panel.active && isCompactViewport && mode === 'full' ? handleFullMobileActivePointerEnd : undefined}
+                onPointerCancel={panel.active && isCompactViewport && mode === 'full' ? handleFullMobileActivePointerEnd : undefined}
                 onClick={() => {
                   if (!panel.active) {
                     scrollTargetRef.current += panel.x > 0 ? sectionWidth : -sectionWidth;
                     return;
                   }
-                  if (isMobileViewport && mode === 'full' && suppressFullCenterClickRef.current) {
+                  if (isCompactViewport && mode === 'full' && suppressFullCenterClickRef.current) {
                     suppressFullCenterClickRef.current = false;
                     return;
                   }
@@ -1703,7 +1705,7 @@ export default function HomeClient() {
             <Cross />
             {showProjectorAccent && (
               <ProjectorAccent
-                $compact={isMobileViewport}
+                $compact={isCompactViewport}
                 $dragging={isProjectorDragging}
                 aria-label="Turn the projector handle to move through photos"
                 aria-valuemax={180}
@@ -1718,17 +1720,17 @@ export default function HomeClient() {
                 style={projectorStyle}
                 tabIndex={0}
               >
-                <ProjectorBeam $compact={isMobileViewport} />
-                <ProjectorMachine $compact={isMobileViewport}>
-                  <ProjectorLabel $compact={isMobileViewport}>Hand Crank Cinema</ProjectorLabel>
-                  <ProjectorReel $size={isMobileViewport ? 30 : 42} $left={isMobileViewport ? 12 : 16} $top={isMobileViewport ? 10 : 12} />
-                  <ProjectorReel $size={isMobileViewport ? 24 : 34} $left={isMobileViewport ? 48 : 64} $top={isMobileViewport ? 2 : 4} />
-                  <ProjectorHandle $compact={isMobileViewport} $dragging={isProjectorDragging} />
-                  <ProjectorBody $compact={isMobileViewport} />
-                  <ProjectorPanel $compact={isMobileViewport} />
-                  <ProjectorLeg $compact={isMobileViewport} $left={isMobileViewport ? 28 : 40} />
-                  <ProjectorLeg $compact={isMobileViewport} $left={isMobileViewport ? 54 : 74} />
-                  <ProjectorLeg $compact={isMobileViewport} $left={isMobileViewport ? 80 : 108} />
+                <ProjectorBeam $compact={isCompactViewport} />
+                <ProjectorMachine $compact={isCompactViewport}>
+                  <ProjectorLabel $compact={isCompactViewport}>Hand Crank Cinema</ProjectorLabel>
+                  <ProjectorReel $size={isCompactViewport ? 30 : 42} $left={isCompactViewport ? 12 : 16} $top={isCompactViewport ? 10 : 12} />
+                  <ProjectorReel $size={isCompactViewport ? 24 : 34} $left={isCompactViewport ? 48 : 64} $top={isCompactViewport ? 2 : 4} />
+                  <ProjectorHandle $compact={isCompactViewport} $dragging={isProjectorDragging} />
+                  <ProjectorBody $compact={isCompactViewport} />
+                  <ProjectorPanel $compact={isCompactViewport} />
+                  <ProjectorLeg $compact={isCompactViewport} $left={isCompactViewport ? 28 : 40} />
+                  <ProjectorLeg $compact={isCompactViewport} $left={isCompactViewport ? 54 : 74} />
+                  <ProjectorLeg $compact={isCompactViewport} $left={isCompactViewport ? 80 : 108} />
                 </ProjectorMachine>
               </ProjectorAccent>
             )}
