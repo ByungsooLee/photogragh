@@ -1,3 +1,5 @@
+import 'server-only';
+
 import { createClient } from 'microcms-js-sdk';
 import type { GalleryItem, MicroCMSResponse } from '@/types/microcms';
 // Mock data for local development.
@@ -5,13 +7,14 @@ import type { GalleryItem, MicroCMSResponse } from '@/types/microcms';
 import { mockGallery } from '../../__mocks__/gallery';
 export type { GalleryItem } from '@/types/microcms';
 
-const serviceDomain = process.env.NEXT_PUBLIC_MICROCMS_SERVICE_DOMAIN;
-const apiKey = process.env.NEXT_PUBLIC_MICROCMS_API_KEY;
+const serviceDomain =
+  process.env.MICROCMS_SERVICE_DOMAIN || process.env.NEXT_PUBLIC_MICROCMS_SERVICE_DOMAIN;
+const apiKey = process.env.MICROCMS_API_KEY || process.env.NEXT_PUBLIC_MICROCMS_API_KEY;
 
 if (!serviceDomain || !apiKey) {
   console.error('microCMS environment variables are not configured.');
-  console.error('NEXT_PUBLIC_MICROCMS_SERVICE_DOMAIN:', serviceDomain);
-  console.error('NEXT_PUBLIC_MICROCMS_API_KEY:', apiKey ? 'configured' : 'not configured');
+  console.error('MICROCMS_SERVICE_DOMAIN:', serviceDomain ? 'configured' : 'not configured');
+  console.error('MICROCMS_API_KEY:', apiKey ? 'configured' : 'not configured');
 }
 
 const hasMicrocmsEnv = Boolean(serviceDomain && apiKey);

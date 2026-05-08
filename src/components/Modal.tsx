@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal, flushSync } from 'react-dom';
 import styled, { css, keyframes } from 'styled-components';
@@ -10,6 +11,7 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   imageUrl: string;
+  fullImageUrl?: string;
   title: string;
   caption: string;
   sourcePosition?: { x: number; y: number };
@@ -203,25 +205,22 @@ const ModalCard = styled.div<{ $isLandscape: boolean }>`
   }
 `;
 
-const ModalImage = styled.img`
-  max-width: 100%;
+const ModalImageFrame = styled.div`
+  position: relative;
+  width: 100%;
+  max-width: min(100%, 1200px);
+  min-height: 300px;
   max-height: 80dvh;
   border-radius: 12px;
-  object-fit: contain;
-  box-shadow: 0 0 0 1.5px #23272f inset;
+  overflow: hidden;
   background: #181818;
+  box-shadow: 0 0 0 1.5px #23272f inset;
   z-index: 3;
 
   @media (max-width: ${TABLET_BREAKPOINT}px) {
     max-height: 70dvh;
+    min-height: 220px;
     border-radius: 8px;
-  }
-  @media (max-width: ${MOBILE_BREAKPOINT}px) {
-    max-width: 100%;
-    max-height: 60dvh;
-    border-radius: 0;
-    margin: auto;
-    display: block;
   }
 `;
 
@@ -378,11 +377,10 @@ const MobileImageStage = styled.div`
   &::after { bottom: 1px; }
 `;
 
-const MobileModalImage = styled.img`
+const MobileModalImageFrame = styled.div`
+  position: relative;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: center;
   background: #181818;
 `;
 
@@ -397,6 +395,7 @@ const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
   imageUrl,
+  fullImageUrl,
   title,
   caption,
   sourcePosition
@@ -407,6 +406,9 @@ const Modal: React.FC<ModalProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const isMobileViewport = useIsMaxWidth(MOBILE_BREAKPOINT);
   const [isLandscape, setIsLandscape] = useState(false);
+  const resolvedFullImageUrl = fullImageUrl || imageUrl;
+  const [displayImageUrl, setDisplayImageUrl] = useState(imageUrl);
+  const [hasRequestedFullImage, setHasRequestedFullImage] = useState(false);
   const imageAlt = title || 'Modal image';
   const closeButtonLabel = 'Close modal';
   const swipeHintLabel = 'Swipe up or sideways to close';
@@ -428,6 +430,11 @@ const Modal: React.FC<ModalProps> = ({
   useLayoutEffect(() => {
     resetDragState();
   }, [imageUrl, isOpen, resetDragState]);
+
+  useEffect(() => {
+    setDisplayImageUrl(imageUrl);
+    setHasRequestedFullImage(false);
+  }, [imageUrl, resolvedFullImageUrl, isOpen]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -458,13 +465,18 @@ const Modal: React.FC<ModalProps> = ({
     };
   }, [handleClose, isOpen, resetDragState]);
 
-  useEffect(() => {
-    const img = new Image();
-    img.onload = () => {
-      setIsLandscape(img.width > img.height);
-    };
-    img.src = imageUrl;
-  }, [imageUrl]);
+  const handleImageReady = useCallback((img: HTMLImageElement) => {
+    setIsLandscape(img.naturalWidth > img.naturalHeight);
+
+    if (
+      !hasRequestedFullImage &&
+      resolvedFullImageUrl !== imageUrl &&
+      displayImageUrl === imageUrl
+    ) {
+      setHasRequestedFullImage(true);
+      setDisplayImageUrl(resolvedFullImageUrl);
+    }
+  }, [displayImageUrl, hasRequestedFullImage, imageUrl, resolvedFullImageUrl]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     e.preventDefault();
@@ -558,10 +570,21 @@ const Modal: React.FC<ModalProps> = ({
                 </OverlayCloseButton>
               </MobileModalHeader>
               <MobileImageStage>
-                <MobileModalImage
-                  src={imageUrl}
-                  alt={imageAlt}
-                />
+                <MobileModalImageFrame>
+                  <Image
+                    src={displayImageUrl}
+                    alt={imageAlt}
+                    fill
+                    sizes="100vw"
+                    quality={isMobileViewport ? 68 : 80}
+                    priority
+                    style={{
+                      objectFit: 'contain',
+                      objectPosition: 'center',
+                    }}
+                    onLoadingComplete={handleImageReady}
+                  />
+                </MobileModalImageFrame>
               </MobileImageStage>
               <MobileBottomArea>
                 <BottomSwipeHint>{swipeHintLabel}</BottomSwipeHint>
@@ -591,10 +614,23 @@ const Modal: React.FC<ModalProps> = ({
                 </OverlayCloseButton>
               </ModalHeader>
               <ImageWrapper>
-                <ModalImage 
-                  src={imageUrl} 
-                  alt={imageAlt} 
-                />
+                <ModalImageFrame>
+                  <Image
+                    src={displayImageUrl}
+                    alt={imageAlt}
+                    width={1600}
+                    height={1200}
+                    sizes="(max-width: 760px) 100vw, (max-width: 1200px) 92vw, 80vw"
+                    quality={80}
+                    priority
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                    }}
+                    onLoadingComplete={handleImageReady}
+                  />
+                </ModalImageFrame>
               </ImageWrapper>
               <BottomSwipeHint>{swipeHintLabel}</BottomSwipeHint>
               <InfoPanel>

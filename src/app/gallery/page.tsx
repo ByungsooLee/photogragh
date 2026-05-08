@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import styled from 'styled-components';
@@ -8,17 +8,19 @@ import Header, { HeaderFlowSpacer } from '@/components/Header';
 import Modal from '@/components/Modal';
 import { useIsMaxWidth } from '@/hooks/useIsMaxWidth';
 import { MOBILE_BREAKPOINT, TABLET_BREAKPOINT } from '@/lib/breakpoints';
-import { getAllGallery, type GalleryItem } from '@/lib/microcms';
-
-type ImageSet = {
-  original?: string;
-  large?: string;
-  medium?: string;
-  small?: string;
-  thumb?: string;
-};
+import { fetchGalleryPage, type GalleryCategoryCount } from '@/lib/gallery-api';
+import {
+  getGalleryGridImage,
+  getModalFullImage,
+  getModalPreviewImage,
+  isValidUrl,
+  normalizeCategory,
+  parseImageUrls,
+} from '@/lib/gallery-images';
+import type { GalleryItem } from '@/types/microcms';
 
 const MOBILE_COMPACT_THRESHOLD = 88;
+const PAGE_SIZE = 24;
 
 const Page = styled.main`
   min-height: 100vh;
@@ -545,43 +547,101 @@ const StateMessage = styled.div`
   text-align: center;
 `;
 
-function parseImageUrls(imageUrls: string | string[] | undefined): ImageSet {
-  const raw = Array.isArray(imageUrls) ? imageUrls[0] : imageUrls;
-  if (!raw) return {};
+const WorkImageShell = styled.span<{ $loaded: boolean }>`
+  position: absolute;
+  inset: 0;
+  display: block;
+  background: linear-gradient(135deg, rgba(24, 26, 30, 0.92), rgba(8, 9, 11, 0.98));
 
-  try {
-    const obj = JSON.parse(raw);
-    return {
-      original: obj['オリジナル画像'],
-      large: obj['大サイズ'],
-      medium: obj['中サイズ'],
-      small: obj['小サイズ'],
-      thumb: obj['サムネイル'],
-    };
-  } catch {
-    return { original: raw, large: raw, medium: raw, small: raw, thumb: raw };
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+    transform: translateX(${props => props.$loaded ? '120%' : '-120%'});
+    transition: transform 680ms ease;
+    pointer-events: none;
+    z-index: 1;
   }
-}
 
-function isValidUrl(url?: string): url is string {
-  if (!url) return false;
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
+  img {
+    opacity: ${props => props.$loaded ? 1 : 0};
+    transition: opacity 260ms ease;
   }
-}
+`;
 
-function normalizeCategory(photo: GalleryItem) {
-  const raw = Array.isArray(photo.category3) ? photo.category3[0] : photo.category3;
-  return raw || photo.tags?.[0] || 'Work';
+const LoadMoreRow = styled.div`
+  grid-column: 1 / -1;
+  display: grid;
+  place-items: center;
+  padding-top: 10px;
+`;
+
+const LoadMoreButton = styled.button`
+  border: 1px solid rgba(248, 245, 239, 0.22);
+  background: rgba(248, 245, 239, 0.06);
+  color: var(--ink);
+  padding: 12px 18px 10px;
+  min-width: 220px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+
+  &:hover,
+  &:focus-visible {
+    background: rgba(248, 245, 239, 0.12);
+    border-color: rgba(248, 245, 239, 0.42);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.65;
+    transform: none;
+  }
+`;
+
+type WorkCardImageProps = {
+  src: string;
+  alt: string;
+  priority: boolean;
+  quality: number;
+};
+
+function WorkCardImage({ src, alt, priority, quality }: WorkCardImageProps) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  return (
+    <WorkImageShell $loaded={isLoaded}>
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes="(max-width: 760px) 50vw, (max-width: 980px) 50vw, (max-width: 1400px) 25vw, 22vw"
+        style={{ objectFit: 'cover' }}
+        priority={priority}
+        loading={priority ? 'eager' : 'lazy'}
+        quality={quality}
+        fetchPriority={priority ? 'high' : 'auto'}
+        onLoad={() => setIsLoaded(true)}
+      />
+    </WorkImageShell>
+  );
 }
 
 export default function Gallery() {
   const [photos, setPhotos] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    if (typeof window === 'undefined') return 'all';
+    return new URLSearchParams(window.location.search).get('category')?.toLowerCase() || 'all';
+  });
+  const [categoryCounts, setCategoryCounts] = useState<GalleryCategoryCount[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [nextOffset, setNextOffset] = useState<number | null>(null);
+  const [gridImageQuality, setGridImageQuality] = useState(74);
   const [modalPhoto, setModalPhoto] = useState<GalleryItem | null>(null);
   const [modalSession, setModalSession] = useState(0);
   const [isCompactHeader, setIsCompactHeader] = useState(false);
@@ -590,26 +650,85 @@ export default function Gallery() {
   const isMobileViewport = useIsMaxWidth(TABLET_BREAKPOINT);
 
   useEffect(() => {
-    const fetchPhotos = async () => {
-      setIsLoading(true);
-      try {
-        const items = await getAllGallery();
-        setPhotos(items);
-      } catch {
-        setPhotos([]);
-      } finally {
-        setIsLoading(false);
+    const connection = (
+      navigator as Navigator & {
+        connection?: {
+          effectiveType?: string;
+          saveData?: boolean;
+          addEventListener?: (type: string, listener: () => void) => void;
+          removeEventListener?: (type: string, listener: () => void) => void;
+        };
       }
+    ).connection;
+
+    const syncQuality = () => {
+      if (connection?.saveData) {
+        setGridImageQuality(56);
+        return;
+      }
+
+      if (connection?.effectiveType === '2g') {
+        setGridImageQuality(52);
+        return;
+      }
+
+      if (connection?.effectiveType === '3g') {
+        setGridImageQuality(60);
+        return;
+      }
+
+      setGridImageQuality(74);
     };
 
-    fetchPhotos();
+    syncQuality();
+    connection?.addEventListener?.('change', syncQuality);
+    return () => connection?.removeEventListener?.('change', syncQuality);
   }, []);
 
+  const loadPhotos = useCallback(async (options?: { offset?: number; append?: boolean; category?: string }) => {
+    const offset = options?.offset ?? 0;
+    const append = options?.append ?? false;
+    const category = options?.category ?? selectedCategory;
+
+    if (append) {
+      setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
+    }
+
+    try {
+      const response = await fetchGalleryPage({
+        limit: PAGE_SIZE,
+        offset,
+        category: category === 'all' ? undefined : category,
+      });
+
+      setCategoryCounts(response.categoryCounts);
+      setTotalCount(response.totalCount);
+      setNextOffset(response.nextOffset);
+      setPhotos((current) => {
+        if (!append) return response.items;
+
+        const currentIds = new Set(current.map((item) => item.id));
+        const nextItems = response.items.filter((item) => !currentIds.has(item.id));
+        return [...current, ...nextItems];
+      });
+    } catch {
+      if (!append) {
+        setPhotos([]);
+        setCategoryCounts([]);
+        setTotalCount(0);
+        setNextOffset(null);
+      }
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  }, [selectedCategory]);
+
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const category = params.get('category');
-    if (category) setSelectedCategory(category.toLowerCase());
-  }, []);
+    loadPhotos({ category: selectedCategory });
+  }, [loadPhotos, selectedCategory]);
 
   useEffect(() => {
     const viewport = scrollViewportRef.current;
@@ -634,24 +753,13 @@ export default function Gallery() {
     }
   }, [isCompactHeader, isMobileViewport]);
 
-  const categories = useMemo(() => {
-    const counts = new Map<string, number>();
-    photos.forEach((photo) => {
-      const category = normalizeCategory(photo);
-      counts.set(category.toLowerCase(), (counts.get(category.toLowerCase()) || 0) + 1);
-    });
-    return Array.from(counts.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [photos]);
-
-  const filteredPhotos = useMemo(() => {
-    if (selectedCategory === 'all') return photos;
-    return photos.filter((photo) => normalizeCategory(photo).toLowerCase() === selectedCategory);
-  }, [photos, selectedCategory]);
+  const categories = useMemo(() => categoryCounts, [categoryCounts]);
 
   const modalUrls = parseImageUrls(modalPhoto?.imageUrls);
-  const modalImage = modalUrls.original || modalUrls.large || modalUrls.medium || '';
-  const isModalOpen = Boolean(modalPhoto && isValidUrl(modalImage));
-  const photoCount = selectedCategory === 'all' ? (photos.length || 100) : filteredPhotos.length;
+  const modalPreviewImage = getModalPreviewImage(modalUrls, isMobileViewport);
+  const modalFullImage = getModalFullImage(modalUrls, isMobileViewport);
+  const isModalOpen = Boolean(modalPhoto && isValidUrl(modalPreviewImage));
+  const photoCount = totalCount || photos.length;
 
   const openPhoto = (photo: GalleryItem) => {
     setModalSession((session) => session + 1);
@@ -659,8 +767,20 @@ export default function Gallery() {
   };
 
   const handleCategorySelect = (category: string) => {
+    if (category === selectedCategory) {
+      setIsMobileMenuOpen(false);
+      return;
+    }
+
     setSelectedCategory(category);
     setIsMobileMenuOpen(false);
+    setModalPhoto(null);
+    scrollViewportRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleLoadMore = async () => {
+    if (nextOffset === null || isLoadingMore) return;
+    await loadPhotos({ offset: nextOffset, append: true });
   };
 
   return (
@@ -726,14 +846,14 @@ export default function Gallery() {
             >
               All
             </FilterButton>
-            {categories.map(([category, count]) => (
+            {categories.map(({ key, label, count }) => (
               <FilterButton
-                key={category}
+                key={key}
                 type="button"
-                $active={selectedCategory === category}
-                onClick={() => handleCategorySelect(category)}
+                $active={selectedCategory === key}
+                onClick={() => handleCategorySelect(key)}
               >
-                {category} ({count})
+                {label} ({count})
               </FilterButton>
             ))}
           </Filters>
@@ -770,14 +890,14 @@ export default function Gallery() {
               >
                 All
               </FilterButton>
-              {categories.map(([category, count]) => (
+            {categories.map(({ key, label, count }) => (
                 <FilterButton
-                  key={category}
+                key={key}
                   type="button"
-                  $active={selectedCategory === category}
-                  onClick={() => handleCategorySelect(category)}
+                $active={selectedCategory === key}
+                onClick={() => handleCategorySelect(key)}
                 >
-                  {category} ({count})
+                {label} ({count})
                 </FilterButton>
               ))}
             </Filters>
@@ -786,10 +906,10 @@ export default function Gallery() {
 
         <Grid aria-busy={isLoading}>
           {isLoading && <StateMessage>Loading...</StateMessage>}
-          {!isLoading && filteredPhotos.length === 0 && <StateMessage>No photos in this category.</StateMessage>}
-          {filteredPhotos.map((photo, index) => {
+          {!isLoading && photos.length === 0 && <StateMessage>No photos in this category.</StateMessage>}
+          {photos.map((photo, index) => {
             const urls = parseImageUrls(photo.imageUrls);
-            const src = urls.large || urls.medium || urls.original;
+            const src = getGalleryGridImage(urls);
             if (!isValidUrl(src)) return null;
             return (
               <WorkItem
@@ -800,14 +920,11 @@ export default function Gallery() {
                 $tall={index % 7 === 2 || index % 7 === 4}
                 aria-label={`View ${photo.title || 'photo'}`}
               >
-                <Image
+                <WorkCardImage
                   src={src}
                   alt={photo.title || ''}
-                  fill
-                  sizes="(max-width: 760px) 50vw, (max-width: 980px) 50vw, 33vw"
-                  style={{ objectFit: 'cover' }}
-                  priority={index < 6}
-                  quality={88}
+                  priority={index < 4}
+                  quality={gridImageQuality}
                 />
                 <Overlay>
                   <WorkTitle>{photo.title}</WorkTitle>
@@ -816,6 +933,13 @@ export default function Gallery() {
               </WorkItem>
             );
           })}
+          {!isLoading && nextOffset !== null && (
+            <LoadMoreRow>
+              <LoadMoreButton type="button" onClick={handleLoadMore} disabled={isLoadingMore}>
+                {isLoadingMore ? 'Loading More...' : 'Load More Photos'}
+              </LoadMoreButton>
+            </LoadMoreRow>
+          )}
         </Grid>
       </ScrollViewport>
 
@@ -824,7 +948,8 @@ export default function Gallery() {
           key={`gallery-modal-${modalSession}`}
           isOpen
           onClose={() => setModalPhoto(null)}
-          imageUrl={modalImage}
+          imageUrl={modalPreviewImage}
+          fullImageUrl={modalFullImage}
           title={modalPhoto?.title || ''}
           caption={modalPhoto?.description || ''}
         />

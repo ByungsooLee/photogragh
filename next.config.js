@@ -9,8 +9,8 @@ const nextConfig = {
   },
   images: {
     formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    deviceSizes: [360, 540, 640, 750, 828, 1080, 1200, 1600],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 320, 384],
     minimumCacheTTL: 60 * 60 * 24 * 365, // 1年
     remotePatterns: [
       {
@@ -21,13 +21,8 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'pub-d725f2ba7c6b4036a81b2fe1e64121a9.r2.dev',
       },
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
     ],
     unoptimized: false,
-    dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   async headers() {

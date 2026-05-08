@@ -8,15 +8,16 @@ import { useHomeCanvasPointerScroll } from '@/hooks/useHomeCanvasPointerScroll';
 import { MOBILE_BREAKPOINT, TABLET_BREAKPOINT } from '@/lib/breakpoints';
 import Header from './Header';
 import Modal from './Modal';
-import { getAllGallery, type GalleryItem } from '../lib/microcms';
-
-type ImageSet = {
-  original?: string;
-  large?: string;
-  medium?: string;
-  small?: string;
-  thumb?: string;
-};
+import { fetchGalleryPage } from '@/lib/gallery-api';
+import {
+  getModalFullImage,
+  getModalPreviewImage,
+  getPhotoImageByPreference,
+  isValidUrl,
+  normalizeCategory as normalizeGalleryCategory,
+  parseImageUrls,
+} from '@/lib/gallery-images';
+import type { GalleryItem } from '@/types/microcms';
 
 type Mode = 'grid' | 'full';
 
@@ -1161,47 +1162,16 @@ const SplashBottom = styled.div`
   }
 `;
 
-function parseImageUrls(imageUrls: string | string[] | undefined): ImageSet {
-  const raw = Array.isArray(imageUrls) ? imageUrls[0] : imageUrls;
-  if (!raw) return {};
-
-  try {
-    const obj = JSON.parse(raw);
-    return {
-      original: obj['オリジナル画像'],
-      large: obj['大サイズ'],
-      medium: obj['中サイズ'],
-      small: obj['小サイズ'],
-      thumb: obj['サムネイル'],
-    };
-  } catch {
-    return { original: raw, large: raw, medium: raw, small: raw, thumb: raw };
-  }
-}
-
-function isValidUrl(url?: string): url is string {
-  if (!url) return false;
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 function normalizeCategory(photo: GalleryItem) {
-  const raw = Array.isArray(photo.category3) ? photo.category3[0] : photo.category3;
-  const value = raw || photo.tags?.[0] || 'Interior';
-  if (value.toLowerCase().includes('portrait') || value.toLowerCase().includes('person')) return 'Portrait';
-  if (value.toLowerCase().includes('landscape')) return 'Landscape';
-  if (value.toLowerCase().includes('bath')) return 'Interior';
-  return value.charAt(0).toUpperCase() + value.slice(1);
+  return normalizeGalleryCategory(photo, 'Interior');
 }
 
-function photoSrc(photo?: GalleryItem | null, size: keyof ImageSet = 'medium') {
+function photoSrc(
+  photo?: GalleryItem | null,
+  size: 'original' | 'large' | 'medium' | 'small' | 'thumb' = 'medium'
+) {
   if (!photo) return '';
-  const urls = parseImageUrls(photo.imageUrls);
-  return urls[size] || urls.large || urls.medium || urls.original || '';
+  return getPhotoImageByPreference(photo, [size, 'large', 'medium', 'small', 'original', 'thumb']);
 }
 
 function positiveModulo(value: number, length: number) {
@@ -1298,8 +1268,8 @@ export default function HomeClient() {
     const fetchPhotos = async () => {
       setIsLoading(true);
       try {
-        const items = await getAllGallery({ pageSize: 100 });
-        setPhotos(items);
+        const response = await fetchGalleryPage({ all: true });
+        setPhotos(response.items);
       } catch {
         setPhotos([]);
       } finally {
@@ -1391,7 +1361,9 @@ export default function HomeClient() {
   const currentPhoto = getSectionPhoto(fullPhotos, fullIndex);
   const prevPhoto = getSectionPhoto(fullPhotos, fullIndex - 1 + Math.max(fullPhotos.length, 1));
   const nextPhoto = getSectionPhoto(fullPhotos, fullIndex + 1);
-  const modalImage = photoSrc(modalPhoto, 'original');
+  const modalUrls = parseImageUrls(modalPhoto?.imageUrls);
+  const modalImage = getModalPreviewImage(modalUrls, isMobileViewport);
+  const modalFullImage = getModalFullImage(modalUrls, isMobileViewport);
   const isModalOpen = Boolean(modalPhoto && isValidUrl(modalImage));
   const tone = 'dark';
   const isImmersiveMobile = isMobileViewport && isModalOpen;
@@ -1800,6 +1772,7 @@ export default function HomeClient() {
           isOpen
           onClose={() => setModalPhoto(null)}
           imageUrl={modalImage}
+          fullImageUrl={modalFullImage}
           title={modalPhoto?.title || ''}
           caption={modalPhoto?.description || ''}
         />
